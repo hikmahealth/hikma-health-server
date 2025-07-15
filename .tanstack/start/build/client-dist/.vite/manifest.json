@@ -1,0 +1,140 @@
+{
+  "../../../../../~start/default-client-entry.tsx": {
+    "file": "assets/main-Cc0Z4-Ho.js",
+    "name": "main",
+    "src": "../../../../../~start/default-client-entry.tsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "src/routes/index.tsx?tsr-split=component",
+      "src/routes/app/index.tsx?tsr-split=component",
+      "src/routes/demo.tanstack-query.tsx?tsr-split=component",
+      "src/routes/demo.table.tsx?tsr-split=component",
+      "src/routes/demo.store.tsx?tsr-split=component",
+      "src/routes/demo.start.server-funcs.tsx?tsr-split=component",
+      "src/routes/demo.start.api-request.tsx?tsr-split=component",
+      "src/routes/demo.sentry.testing.tsx?tsr-split=component",
+      "src/routes/demo.form.simple.tsx?tsr-split=component",
+      "src/routes/demo.form.address.tsx?tsr-split=component"
+    ],
+    "css": [
+      "assets/styles-D9cmTpc5.css"
+    ],
+    "assets": [
+      "assets/styles-D9cmTpc5.css"
+    ]
+  },
+  "/Users/ally/HikmaHealth/v2/hikma-health-server/src/styles.css": {
+    "file": "assets/styles-D9cmTpc5.css",
+    "src": "/Users/ally/HikmaHealth/v2/hikma-health-server/src/styles.css"
+  },
+  "_demo.form-jWJriE_Y.js": {
+    "file": "assets/demo.form-jWJriE_Y.js",
+    "name": "demo.form",
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx",
+      "_label-BWjXgZvc.js"
+    ]
+  },
+  "_label-BWjXgZvc.js": {
+    "file": "assets/label-BWjXgZvc.js",
+    "name": "label",
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/app/index.tsx?tsr-split=component": {
+    "file": "assets/index-BSKi0mws.js",
+    "name": "index",
+    "src": "src/routes/app/index.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/demo.form.address.tsx?tsr-split=component": {
+    "file": "assets/demo.form.address-CjlkDCpe.js",
+    "name": "demo.form.address",
+    "src": "src/routes/demo.form.address.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx",
+      "_demo.form-jWJriE_Y.js",
+      "_label-BWjXgZvc.js"
+    ]
+  },
+  "src/routes/demo.form.simple.tsx?tsr-split=component": {
+    "file": "assets/demo.form.simple-t00mnVPP.js",
+    "name": "demo.form.simple",
+    "src": "src/routes/demo.form.simple.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx",
+      "_demo.form-jWJriE_Y.js",
+      "_label-BWjXgZvc.js"
+    ]
+  },
+  "src/routes/demo.sentry.testing.tsx?tsr-split=component": {
+    "file": "assets/demo.sentry.testing-x8tSQNiN.js",
+    "name": "demo.sentry.testing",
+    "src": "src/routes/demo.sentry.testing.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/demo.start.api-request.tsx?tsr-split=component": {
+    "file": "assets/demo.start.api-request-DD_h4tZ8.js",
+    "name": "demo.start.api-request",
+    "src": "src/routes/demo.start.api-request.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/demo.start.server-funcs.tsx?tsr-split=component": {
+    "file": "assets/demo.start.server-funcs-DMibix53.js",
+    "name": "demo.start.server-funcs",
+    "src": "src/routes/demo.start.server-funcs.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/demo.store.tsx?tsr-split=component": {
+    "file": "assets/demo.store-ylEqUYjX.js",
+    "name": "demo.store",
+    "src": "src/routes/demo.store.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/demo.table.tsx?tsr-split=component": {
+    "file": "assets/demo.table-DmWuMvmB.js",
+    "name": "demo.table",
+    "src": "src/routes/demo.table.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/demo.tanstack-query.tsx?tsr-split=component": {
+    "file": "assets/demo.tanstack-query-oGA68D9X.js",
+    "name": "demo.tanstack-query",
+    "src": "src/routes/demo.tanstack-query.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx"
+    ]
+  },
+  "src/routes/index.tsx?tsr-split=component": {
+    "file": "assets/index-DmUOPbNJ.js",
+    "name": "index",
+    "src": "src/routes/index.tsx?tsr-split=component",
+    "isDynamicEntry": true,
+    "imports": [
+      "../../../../../~start/default-client-entry.tsx",
+      "_label-BWjXgZvc.js"
+    ]
+  }
+}
