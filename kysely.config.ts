@@ -1,9 +1,22 @@
 import { defineConfig } from "kysely-ctl";
+import { Pool } from "pg";
 
 export default defineConfig({
   destroyOnExit: true, // optional. dictates whether the (resolved) `kysely` instance should be destroyed when a command is finished executing. default is `true`.
-  dialect: "postgres", // a `Kysely` dialect instance OR the name of an underlying driver library (e.g. `'pg'`).
-  dialectConfig: {}, // optional. when `dialect` is the name of an underlying driver library, `dialectConfig` is the options passed to the Kysely dialect that matches that library.
+  dialect: "pg", // a `Kysely` dialect instance OR the name of an underlying driver library (e.g. `'pg'`).
+  dialectConfig: {
+    pool: new Pool({
+      database: process.env.DB_NAME,
+      host: process.env.DB_HOST,
+      max: 10,
+      port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : undefined,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    }),
+  }, // optional. when `dialect` is the name of an underlying driver library, `dialectConfig` is the options passed to the Kysely dialect that matches that library.
   migrations: {
     // optional.
     allowJS: false, // optional. controls whether `.js`, `.cjs` or `.mjs` migrations are allowed. default is `false`.

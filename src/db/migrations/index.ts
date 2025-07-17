@@ -7,7 +7,6 @@ import * as increaseSexTextLength from "./20240821_increase_sex_text_length";
 import * as addAppointmentsTable from "./20240901_add_appointments_table";
 import * as addPrescriptionsTable from "./20240926_add_prescriptions_table";
 import * as createServerVariablesTable from "./20250313_create_server_variables_table";
-import * as createResourcesTable from "./20250320_create_resources_table";
 
 // Migration object that follows the Kysely migrations format
 export const migrations = {
@@ -43,10 +42,6 @@ export const migrations = {
   "20250313_create_server_variables_table": {
     up: createServerVariablesTable.up,
     down: createServerVariablesTable.down,
-  },
-  "20250320_create_resources_table": {
-    up: createResourcesTable.up,
-    down: createResourcesTable.down,
   },
 };
 

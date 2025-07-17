@@ -8,3 +8,8 @@ count.txt
 .output
 .vinxi
 count.txt
+
+.env.*
+
+# local dumps for testing stuff
+*.dump
