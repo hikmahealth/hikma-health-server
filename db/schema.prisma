@@ -1,0 +1,310 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model appointments {
+  id                                             String    @id @db.Uuid
+  provider_id                                    String?   @db.Uuid
+  clinic_id                                      String    @db.Uuid
+  patient_id                                     String    @db.Uuid
+  user_id                                        String    @db.Uuid
+  current_visit_id                               String    @db.Uuid
+  fulfilled_visit_id                             String?   @db.Uuid
+  timestamp                                      DateTime  @db.Timestamptz(6)
+  duration                                       Int       @db.SmallInt
+  reason                                         String    @db.VarChar
+  notes                                          String    @db.VarChar
+  status                                         String    @db.VarChar
+  metadata                                       Json      @default("{}") @db.Json
+  is_deleted                                     Boolean
+  created_at                                     DateTime  @db.Timestamptz(6)
+  updated_at                                     DateTime  @db.Timestamptz(6)
+  last_modified                                  DateTime  @db.Timestamptz(6)
+  server_created_at                              DateTime  @db.Timestamptz(6)
+  deleted_at                                     DateTime? @db.Timestamptz(6)
+  clinics                                        clinics   @relation(fields: [clinic_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_clinic")
+  visits_appointments_current_visit_idTovisits   visits    @relation("appointments_current_visit_idTovisits", fields: [current_visit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_current_visit")
+  visits_appointments_fulfilled_visit_idTovisits visits?   @relation("appointments_fulfilled_visit_idTovisits", fields: [fulfilled_visit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_fulfilled_visit")
+  patients                                       patients  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_patient")
+  users_appointments_provider_idTousers          users?    @relation("appointments_provider_idTousers", fields: [provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_provider")
+  users_appointments_user_idTousers              users     @relation("appointments_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_user")
+
+  @@index([timestamp], map: "ix_timestamp")
+}
+
+model clinics {
+  id                         String                       @id @db.Uuid
+  name                       String?
+  is_deleted                 Boolean?                     @default(false)
+  created_at                 DateTime?                    @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime?                    @default(now()) @db.Timestamptz(6)
+  last_modified              DateTime?                    @default(now()) @db.Timestamptz(6)
+  server_created_at          DateTime?                    @default(now()) @db.Timestamptz(6)
+  deleted_at                 DateTime?                    @db.Timestamptz(6)
+  attributes                 String[]                     @default([])
+  metadata                   Json                         @default("{}")
+  address                    String?
+  appointments               appointments[]
+  patient_registration_forms patient_registration_forms[]
+  prescriptions              prescriptions[]
+  users                      users[]
+  visits                     visits[]
+
+  @@index([attributes], map: "attributes_hash_ix", type: Hash)
+}
+
+model event_forms {
+  id                String    @id @db.Uuid
+  name              String?
+  description       String?
+  language          String    @default("en")
+  is_editable       Boolean?  @default(true)
+  is_snapshot_form  Boolean?  @default(false)
+  form_fields       Json      @default("[]")
+  metadata          Json      @default("{}")
+  is_deleted        Boolean?  @default(false)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+  last_modified     DateTime? @default(now()) @db.Timestamptz(6)
+  server_created_at DateTime? @default(now()) @db.Timestamptz(6)
+  deleted_at        DateTime? @db.Timestamptz(6)
+  events            events[]
+}
+
+model events {
+  id                String       @id @db.Uuid
+  patient_id        String?      @db.Uuid
+  visit_id          String?      @db.Uuid
+  form_id           String?      @db.Uuid
+  event_type        String?
+  form_data         Json         @default("{}")
+  metadata          Json         @default("{}")
+  is_deleted        Boolean?     @default(false)
+  created_at        DateTime?    @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime?    @default(now()) @db.Timestamptz(6)
+  last_modified     DateTime?    @default(now()) @db.Timestamptz(6)
+  server_created_at DateTime?    @default(now()) @db.Timestamptz(6)
+  deleted_at        DateTime?    @db.Timestamptz(6)
+  event_forms       event_forms? @relation(fields: [form_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  patients          patients?    @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  visits            visits?      @relation(fields: [visit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// NOTE: these may not be required
+// model kysely_migration {
+//   name      String @id @db.VarChar(255)
+//   timestamp String @db.VarChar(255)
+// }
+
+// model kysely_migration_lock {
+//   id        String @id @db.VarChar(255)
+//   is_locked Int    @default(0)
+// }
+
+model patient_additional_attributes {
+  id                String    @db.Uuid
+  attribute_id      String    @db.VarChar
+  attribute         String    @db.VarChar
+  number_value      Float?
+  string_value      String?   @db.VarChar
+  date_value        DateTime? @db.Timestamptz(6)
+  boolean_value     Boolean?
+  metadata          Json      @default("{}") @db.Json
+  is_deleted        Boolean
+  created_at        DateTime  @db.Timestamptz(6)
+  updated_at        DateTime  @db.Timestamptz(6)
+  last_modified     DateTime  @db.Timestamptz(6)
+  server_created_at DateTime  @db.Timestamptz(6)
+  deleted_at        DateTime? @db.Timestamptz(6)
+  patient_id        String    @db.Uuid
+
+  @@id([patient_id, attribute_id])
+  @@index([attribute_id], map: "ix_patient_additional_attributes_attribute_id")
+  @@index([patient_id], map: "ix_patient_additional_attributes_patient_id")
+}
+
+model patient_registration_forms {
+  id                String    @id @db.Uuid
+  clinic_id         String?   @db.Uuid
+  name              String    @default("")
+  fields            Json      @default("[]")
+  metadata          Json      @default("{}")
+  is_deleted        Boolean?  @default(false)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+  last_modified     DateTime? @default(now()) @db.Timestamptz(6)
+  server_created_at DateTime? @default(now()) @db.Timestamptz(6)
+  deleted_at        DateTime? @db.Timestamptz(6)
+  clinics           clinics?  @relation(fields: [clinic_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model patients {
+  id                  String          @id @db.Uuid
+  given_name          String?
+  surname             String?
+  date_of_birth       DateTime?       @db.Date
+  citizenship         String?
+  hometown            String?
+  phone               String?
+  sex                 String?         @db.VarChar(24)
+  camp                String?         @db.VarChar(50)
+  additional_data     Json            @default("{}")
+  image_timestamp     DateTime?       @db.Timestamptz(6)
+  metadata            Json            @default("{}")
+  photo_url           String?
+  is_deleted          Boolean?        @default(false)
+  created_at          DateTime?       @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime?       @default(now()) @db.Timestamptz(6)
+  last_modified       DateTime?       @default(now()) @db.Timestamptz(6)
+  server_created_at   DateTime?       @default(now()) @db.Timestamptz(6)
+  deleted_at          DateTime?       @db.Timestamptz(6)
+  government_id       String?         @db.VarChar(100)
+  external_patient_id String?         @db.VarChar(100)
+  appointments        appointments[]
+  events              events[]
+  prescriptions       prescriptions[]
+  visits              visits[]
+}
+
+model prescriptions {
+  id                                     String    @id(map: "pk_prescriptions") @db.Uuid
+  patient_id                             String    @db.Uuid
+  provider_id                            String    @db.Uuid
+  filled_by                              String?   @db.Uuid
+  pickup_clinic_id                       String    @db.Uuid
+  visit_id                               String?   @db.Uuid
+  priority                               String?   @default("normal") @db.VarChar
+  expiration_date                        DateTime? @db.Timestamptz(6)
+  prescribed_at                          DateTime  @default(now()) @db.Timestamptz(6)
+  filled_at                              DateTime? @db.Timestamptz(6)
+  status                                 String    @default("pending") @db.VarChar
+  items                                  Json      @default("[]") @db.Json
+  notes                                  String    @default("") @db.VarChar
+  metadata                               Json      @default("{}") @db.Json
+  is_deleted                             Boolean   @default(false)
+  created_at                             DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                             DateTime  @default(now()) @db.Timestamptz(6)
+  deleted_at                             DateTime? @db.Timestamptz(6)
+  last_modified                          DateTime  @default(now()) @db.Timestamptz(6)
+  server_created_at                      DateTime  @default(now()) @db.Timestamptz(6)
+  patients                               patients  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescriptions_patient")
+  clinics                                clinics   @relation(fields: [pickup_clinic_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescriptions_pickup_clinic")
+  users_prescriptions_provider_idTousers users     @relation("prescriptions_provider_idTousers", fields: [provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescriptions_provider")
+
+  @@index([patient_id], map: "ix_prescriptions_patient_id")
+  @@index([pickup_clinic_id], map: "ix_prescriptions_pickup_clinic_id")
+}
+
+model resources {
+  id                String    @id @db.Uuid
+  description       String?
+  store             String    @db.VarChar(42)
+  store_version     String    @db.VarChar(42)
+  uri               String
+  hash              String?   @db.VarChar(512)
+  mimetype          String
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+  last_modified     DateTime? @default(now()) @db.Timestamptz(6)
+  server_created_at DateTime? @default(now()) @db.Timestamptz(6)
+  deleted_at        DateTime? @db.Timestamptz(6)
+  is_deleted        Boolean?  @default(false)
+
+  @@unique([store, uri], map: "unique_resource_ix")
+  @@index([store], map: "store_type_ix")
+}
+
+model server_variables {
+  id          String    @id @db.Uuid
+  key         String    @unique(map: "unique_server_key") @db.VarChar(128)
+  description String?
+  value_type  String    @db.VarChar(42)
+  value_data  Bytes?
+  value_hash  String?   @db.VarChar(512)
+  created_at  DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([value_type], map: "server_value_hash", type: Hash)
+}
+
+model string_content {
+  id                String      @id @db.Uuid
+  language          String?     @db.VarChar(5)
+  content           String?
+  updated_at        DateTime?   @db.Timestamptz(6)
+  last_modified     DateTime?   @default(now()) @db.Timestamptz(6)
+  server_created_at DateTime?   @default(now()) @db.Timestamptz(6)
+  is_deleted        Boolean?    @default(false)
+  deleted_at        DateTime?   @db.Timestamptz(6)
+  string_ids        string_ids? @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([id, language], map: "string_content_id_language_idx")
+}
+
+model string_ids {
+  id                String           @id @db.Uuid
+  last_modified     DateTime?        @default(now()) @db.Timestamptz(6)
+  server_created_at DateTime?        @default(now()) @db.Timestamptz(6)
+  is_deleted        Boolean?         @default(false)
+  deleted_at        DateTime?        @db.Timestamptz(6)
+  string_content    string_content[]
+}
+
+model tokens {
+  user_id String   @id @db.Uuid
+  token   String
+  expiry  DateTime @default(dbgenerated("(now() + '01:00:00'::interval)")) @db.Timestamptz(6)
+  users   users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([token])
+}
+
+model users {
+  id                                             String          @id @db.Uuid
+  name                                           String
+  role                                           String
+  email                                          String          @unique(map: "users_email_idx")
+  hashed_password                                String
+  instance_url                                   String?
+  clinic_id                                      String?         @db.Uuid
+  is_deleted                                     Boolean?        @default(false)
+  created_at                                     DateTime?       @default(now()) @db.Timestamptz(6)
+  updated_at                                     DateTime?       @default(now()) @db.Timestamptz(6)
+  last_modified                                  DateTime?       @default(now()) @db.Timestamptz(6)
+  server_created_at                              DateTime?       @default(now()) @db.Timestamptz(6)
+  deleted_at                                     DateTime?       @db.Timestamptz(6)
+  appointments_appointments_provider_idTousers   appointments[]  @relation("appointments_provider_idTousers")
+  appointments_appointments_user_idTousers       appointments[]  @relation("appointments_user_idTousers")
+  prescriptions_prescriptions_provider_idTousers prescriptions[] @relation("prescriptions_provider_idTousers")
+  tokens                                         tokens[]
+  clinics                                        clinics?        @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  visits                                         visits[]
+}
+
+model visits {
+  id                                                   String         @id @db.Uuid
+  patient_id                                           String?        @db.Uuid
+  clinic_id                                            String?        @db.Uuid
+  provider_id                                          String?        @db.Uuid
+  provider_name                                        String?
+  check_in_timestamp                                   DateTime?      @db.Timestamptz(6)
+  is_deleted                                           Boolean?       @default(false)
+  metadata                                             Json           @default("{}")
+  created_at                                           DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_at                                           DateTime?      @default(now()) @db.Timestamptz(6)
+  last_modified                                        DateTime?      @default(now()) @db.Timestamptz(6)
+  server_created_at                                    DateTime?      @default(now()) @db.Timestamptz(6)
+  deleted_at                                           DateTime?      @db.Timestamptz(6)
+  appointments_appointments_current_visit_idTovisits   appointments[] @relation("appointments_current_visit_idTovisits")
+  appointments_appointments_fulfilled_visit_idTovisits appointments[] @relation("appointments_fulfilled_visit_idTovisits")
+  events                                               events[]
+  clinics                                              clinics?       @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  patients                                             patients?      @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                                                users?         @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// NOTE: this is no longer required. residue from old db migration operations
+// model alembic_version {
+//   version_num String @id(map: "alembic_version_pkc") @db.VarChar(32)
+// }
