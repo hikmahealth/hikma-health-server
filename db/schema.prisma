@@ -12,23 +12,23 @@ model appointments {
   current_visit_id                               String    @db.Uuid
   fulfilled_visit_id                             String?   @db.Uuid
   timestamp                                      DateTime  @db.Timestamptz(6)
-  duration                                       Int       @db.SmallInt
-  reason                                         String    @db.VarChar
-  notes                                          String    @db.VarChar
-  status                                         String    @db.VarChar
-  metadata                                       Json      @default("{}") @db.Json
-  is_deleted                                     Boolean
-  created_at                                     DateTime  @db.Timestamptz(6)
-  updated_at                                     DateTime  @db.Timestamptz(6)
-  last_modified                                  DateTime  @db.Timestamptz(6)
-  server_created_at                              DateTime  @db.Timestamptz(6)
+  duration                                       Int       @default(60) @db.SmallInt
+  reason                                         String    @default("") @db.VarChar
+  notes                                          String    @default("") @db.VarChar
+  status                                         String    @default("pending") @db.VarChar
+  metadata                                       Json      @default("{}")
+  is_deleted                                     Boolean   @default(false)
+  created_at                                     DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                                     DateTime  @default(now()) @db.Timestamptz(6)
+  last_modified                                  DateTime  @default(now()) @db.Timestamptz(6)
+  server_created_at                              DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at                                     DateTime? @db.Timestamptz(6)
-  clinics                                        clinics   @relation(fields: [clinic_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_clinic")
-  visits_appointments_current_visit_idTovisits   visits    @relation("appointments_current_visit_idTovisits", fields: [current_visit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_current_visit")
-  visits_appointments_fulfilled_visit_idTovisits visits?   @relation("appointments_fulfilled_visit_idTovisits", fields: [fulfilled_visit_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_fulfilled_visit")
-  patients                                       patients  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_patient")
-  users_appointments_provider_idTousers          users?    @relation("appointments_provider_idTousers", fields: [provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_provider")
-  users_appointments_user_idTousers              users     @relation("appointments_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_appointment_user")
+  clinics                                        clinics   @relation(fields: [clinic_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  visits_appointments_current_visit_idTovisits   visits    @relation("appointments_current_visit_idTovisits", fields: [current_visit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  visits_appointments_fulfilled_visit_idTovisits visits?   @relation("appointments_fulfilled_visit_idTovisits", fields: [fulfilled_visit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patients                                       patients  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_appointments_provider_idTousers          users?    @relation("appointments_provider_idTousers", fields: [provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_appointments_user_idTousers              users     @relation("appointments_user_idTousers", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([timestamp], map: "ix_timestamp")
 }
@@ -42,16 +42,11 @@ model clinics {
   last_modified              DateTime?                    @default(now()) @db.Timestamptz(6)
   server_created_at          DateTime?                    @default(now()) @db.Timestamptz(6)
   deleted_at                 DateTime?                    @db.Timestamptz(6)
-  attributes                 String[]                     @default([])
-  metadata                   Json                         @default("{}")
-  address                    String?
   appointments               appointments[]
   patient_registration_forms patient_registration_forms[]
   prescriptions              prescriptions[]
   users                      users[]
   visits                     visits[]
-
-  @@index([attributes], map: "attributes_hash_ix", type: Hash)
 }
 
 model event_forms {
@@ -91,37 +86,35 @@ model events {
   visits            visits?      @relation(fields: [visit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
-/// NOTE: these may not be required
-// model kysely_migration {
-//   name      String @id @db.VarChar(255)
-//   timestamp String @db.VarChar(255)
-// }
+model kysely_migration {
+  name      String @id @db.VarChar(255)
+  timestamp String @db.VarChar(255)
+}
 
-// model kysely_migration_lock {
-//   id        String @id @db.VarChar(255)
-//   is_locked Int    @default(0)
-// }
+model kysely_migration_lock {
+  id        String @id @db.VarChar(255)
+  is_locked Int    @default(0)
+}
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model patient_additional_attributes {
-  id                String    @db.Uuid
+  id                String    @id @db.Uuid
   attribute_id      String    @db.VarChar
-  attribute         String    @db.VarChar
+  attribute         String    @default("") @db.VarChar
   number_value      Float?
   string_value      String?   @db.VarChar
   date_value        DateTime? @db.Timestamptz(6)
   boolean_value     Boolean?
-  metadata          Json      @default("{}") @db.Json
-  is_deleted        Boolean
-  created_at        DateTime  @db.Timestamptz(6)
-  updated_at        DateTime  @db.Timestamptz(6)
-  last_modified     DateTime  @db.Timestamptz(6)
-  server_created_at DateTime  @db.Timestamptz(6)
+  metadata          Json      @default("{}")
+  is_deleted        Boolean   @default(false)
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime  @default(now()) @db.Timestamptz(6)
+  last_modified     DateTime  @default(now()) @db.Timestamptz(6)
+  server_created_at DateTime  @default(now()) @db.Timestamptz(6)
   deleted_at        DateTime? @db.Timestamptz(6)
-  patient_id        String    @db.Uuid
+  patient_id        String?   @db.Uuid
 
-  @@id([patient_id, attribute_id])
   @@index([attribute_id], map: "ix_patient_additional_attributes_attribute_id")
-  @@index([patient_id], map: "ix_patient_additional_attributes_patient_id")
 }
 
 model patient_registration_forms {
@@ -168,7 +161,7 @@ model patients {
 }
 
 model prescriptions {
-  id                                     String    @id(map: "pk_prescriptions") @db.Uuid
+  id                                     String    @db.Uuid
   patient_id                             String    @db.Uuid
   provider_id                            String    @db.Uuid
   filled_by                              String?   @db.Uuid
@@ -188,10 +181,13 @@ model prescriptions {
   deleted_at                             DateTime? @db.Timestamptz(6)
   last_modified                          DateTime  @default(now()) @db.Timestamptz(6)
   server_created_at                      DateTime  @default(now()) @db.Timestamptz(6)
-  patients                               patients  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescriptions_patient")
-  clinics                                clinics   @relation(fields: [pickup_clinic_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescriptions_pickup_clinic")
-  users_prescriptions_provider_idTousers users     @relation("prescriptions_provider_idTousers", fields: [provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prescriptions_provider")
+  users_prescriptions_filled_byTousers   users?    @relation("prescriptions_filled_byTousers", fields: [filled_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  patients                               patients  @relation(fields: [patient_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  clinics                                clinics   @relation(fields: [pickup_clinic_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_prescriptions_provider_idTousers users     @relation("prescriptions_provider_idTousers", fields: [provider_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  visits                                 visits?   @relation(fields: [visit_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@id([id], map: "pk_prescriptions")
   @@index([patient_id], map: "ix_prescriptions_patient_id")
   @@index([pickup_clinic_id], map: "ix_prescriptions_pickup_clinic_id")
 }
@@ -209,7 +205,6 @@ model resources {
   last_modified     DateTime? @default(now()) @db.Timestamptz(6)
   server_created_at DateTime? @default(now()) @db.Timestamptz(6)
   deleted_at        DateTime? @db.Timestamptz(6)
-  is_deleted        Boolean?  @default(false)
 
   @@unique([store, uri], map: "unique_resource_ix")
   @@index([store], map: "store_type_ix")
@@ -228,8 +223,9 @@ model server_variables {
   @@index([value_type], map: "server_value_hash", type: Hash)
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model string_content {
-  id                String      @id @db.Uuid
+  id                String      @db.Uuid
   language          String?     @db.VarChar(5)
   content           String?
   updated_at        DateTime?   @db.Timestamptz(6)
@@ -239,7 +235,8 @@ model string_content {
   deleted_at        DateTime?   @db.Timestamptz(6)
   string_ids        string_ids? @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([id, language], map: "string_content_id_language_idx")
+  @@id([id])
+  @@unique([id, language], map: "string_content_id_language_unique_idx")
 }
 
 model string_ids {
@@ -251,12 +248,14 @@ model string_ids {
   string_content    string_content[]
 }
 
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
 model tokens {
-  user_id String   @id @db.Uuid
+  user_id String   @db.Uuid
   token   String
   expiry  DateTime @default(dbgenerated("(now() + '01:00:00'::interval)")) @db.Timestamptz(6)
   users   users?   @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([token, user_id])
   @@index([token])
 }
 
@@ -264,7 +263,7 @@ model users {
   id                                             String          @id @db.Uuid
   name                                           String
   role                                           String
-  email                                          String          @unique(map: "users_email_idx")
+  email                                          String          @unique(map: "users_email_unique_idx")
   hashed_password                                String
   instance_url                                   String?
   clinic_id                                      String?         @db.Uuid
@@ -276,6 +275,7 @@ model users {
   deleted_at                                     DateTime?       @db.Timestamptz(6)
   appointments_appointments_provider_idTousers   appointments[]  @relation("appointments_provider_idTousers")
   appointments_appointments_user_idTousers       appointments[]  @relation("appointments_user_idTousers")
+  prescriptions_prescriptions_filled_byTousers   prescriptions[] @relation("prescriptions_filled_byTousers")
   prescriptions_prescriptions_provider_idTousers prescriptions[] @relation("prescriptions_provider_idTousers")
   tokens                                         tokens[]
   clinics                                        clinics?        @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -283,28 +283,24 @@ model users {
 }
 
 model visits {
-  id                                                   String         @id @db.Uuid
-  patient_id                                           String?        @db.Uuid
-  clinic_id                                            String?        @db.Uuid
-  provider_id                                          String?        @db.Uuid
+  id                                                   String          @id @db.Uuid
+  patient_id                                           String?         @db.Uuid
+  clinic_id                                            String?         @db.Uuid
+  provider_id                                          String?         @db.Uuid
   provider_name                                        String?
-  check_in_timestamp                                   DateTime?      @db.Timestamptz(6)
-  is_deleted                                           Boolean?       @default(false)
-  metadata                                             Json           @default("{}")
-  created_at                                           DateTime?      @default(now()) @db.Timestamptz(6)
-  updated_at                                           DateTime?      @default(now()) @db.Timestamptz(6)
-  last_modified                                        DateTime?      @default(now()) @db.Timestamptz(6)
-  server_created_at                                    DateTime?      @default(now()) @db.Timestamptz(6)
-  deleted_at                                           DateTime?      @db.Timestamptz(6)
-  appointments_appointments_current_visit_idTovisits   appointments[] @relation("appointments_current_visit_idTovisits")
-  appointments_appointments_fulfilled_visit_idTovisits appointments[] @relation("appointments_fulfilled_visit_idTovisits")
+  check_in_timestamp                                   DateTime?       @db.Timestamptz(6)
+  is_deleted                                           Boolean?        @default(false)
+  metadata                                             Json            @default("{}")
+  created_at                                           DateTime?       @default(now()) @db.Timestamptz(6)
+  updated_at                                           DateTime?       @default(now()) @db.Timestamptz(6)
+  last_modified                                        DateTime?       @default(now()) @db.Timestamptz(6)
+  server_created_at                                    DateTime?       @default(now()) @db.Timestamptz(6)
+  deleted_at                                           DateTime?       @db.Timestamptz(6)
+  appointments_appointments_current_visit_idTovisits   appointments[]  @relation("appointments_current_visit_idTovisits")
+  appointments_appointments_fulfilled_visit_idTovisits appointments[]  @relation("appointments_fulfilled_visit_idTovisits")
   events                                               events[]
-  clinics                                              clinics?       @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  patients                                             patients?      @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users                                                users?         @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  prescriptions                                        prescriptions[]
+  clinics                                              clinics?        @relation(fields: [clinic_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  patients                                             patients?       @relation(fields: [patient_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                                                users?          @relation(fields: [provider_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
-
-/// NOTE: this is no longer required. residue from old db migration operations
-// model alembic_version {
-//   version_num String @id(map: "alembic_version_pkc") @db.VarChar(32)
-// }
