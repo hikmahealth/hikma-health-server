@@ -25,4 +25,4 @@ const alembicMigrationIds = [
   ["20250410_include_healthcare_provider_segmentation", "18edc29dd7fd"],
 ] as Array<[string, string]>;
 
-export default alembicMigrationIds;
+export { alembicMigrationIds };

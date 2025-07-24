@@ -11,10 +11,10 @@ export async function up(db: Kysely<any>): Promise<void> {
     .createTable("string_ids")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("is_deleted", "boolean", (col) => col.defaultTo(false))
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
@@ -24,16 +24,16 @@ export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
     .createTable("string_content")
     .addColumn("id", "uuid", (col) =>
-      col.references("string_ids.id").onDelete("cascade")
+      col.references("string_ids.id").onDelete("cascade"),
     )
     .addColumn("language", "varchar(5)")
     .addColumn("content", "text")
     .addColumn("updated_at", "timestamptz")
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("is_deleted", "boolean", (col) => col.defaultTo(false))
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
@@ -60,7 +60,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("sex", "varchar(8)")
     .addColumn("camp", "varchar(50)")
     .addColumn("additional_data", "jsonb", (col) =>
-      col.notNull().defaultTo("{}")
+      col.notNull().defaultTo("{}"),
     )
     .addColumn("image_timestamp", "timestamptz")
     .addColumn("metadata", "jsonb", (col) => col.notNull().defaultTo("{}"))
@@ -69,10 +69,10 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("created_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("updated_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
     .execute();
@@ -86,10 +86,10 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("created_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("updated_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
     .execute();
@@ -104,16 +104,16 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("hashed_password", "text", (col) => col.notNull())
     .addColumn("instance_url", "text")
     .addColumn("clinic_id", "uuid", (col) =>
-      col.references("clinics.id").onDelete("cascade")
+      col.references("clinics.id").onDelete("cascade"),
     )
     .addColumn("is_deleted", "boolean", (col) => col.defaultTo(false))
     .addColumn("created_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("updated_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
     .execute();
@@ -132,7 +132,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("user_id", "uuid", (col) => col.references("users.id"))
     .addColumn("token", "text", (col) => col.notNull())
     .addColumn("expiry", "timestamptz", (col) =>
-      col.notNull().defaultTo(sql`now() + INTERVAL '60 minutes'`)
+      col.notNull().defaultTo(sql`now() + INTERVAL '60 minutes'`),
     )
     .execute();
 
@@ -148,13 +148,13 @@ export async function up(db: Kysely<any>): Promise<void> {
     .createTable("visits")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("patient_id", "uuid", (col) =>
-      col.references("patients.id").onDelete("cascade")
+      col.references("patients.id").onDelete("cascade"),
     )
     .addColumn("clinic_id", "uuid", (col) =>
-      col.references("clinics.id").onDelete("cascade")
+      col.references("clinics.id").onDelete("cascade"),
     )
     .addColumn("provider_id", "uuid", (col) =>
-      col.references("users.id").onDelete("cascade")
+      col.references("users.id").onDelete("cascade"),
     )
     .addColumn("provider_name", "text")
     .addColumn("check_in_timestamp", "timestamptz")
@@ -163,10 +163,10 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("created_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("updated_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
     .execute();
@@ -186,10 +186,10 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("created_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("updated_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
     .execute();
@@ -199,13 +199,13 @@ export async function up(db: Kysely<any>): Promise<void> {
     .createTable("events")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("patient_id", "uuid", (col) =>
-      col.references("patients.id").onDelete("cascade")
+      col.references("patients.id").onDelete("cascade"),
     )
     .addColumn("visit_id", "uuid", (col) =>
-      col.references("visits.id").onDelete("cascade").defaultTo(null)
+      col.references("visits.id").onDelete("cascade").defaultTo(null),
     )
     .addColumn("form_id", "uuid", (col) =>
-      col.references("event_forms.id").onDelete("cascade").defaultTo(null)
+      col.references("event_forms.id").onDelete("cascade").defaultTo(null),
     )
     .addColumn("event_type", "text")
     .addColumn("form_data", "jsonb", (col) => col.notNull().defaultTo("{}"))
@@ -214,10 +214,10 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("created_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("updated_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
     .execute();
@@ -234,18 +234,18 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("created_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("updated_at", "timestamptz", (col) => col.defaultTo(sql`now()`))
     .addColumn("last_modified", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("server_created_at", "timestamptz", (col) =>
-      col.defaultTo(sql`now()`)
+      col.defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz", (col) => col.defaultTo(null))
     .execute();
 
   // Create get_string function
   await sql`
-    CREATE FUNCTION get_string(uuid, text) RETURNS text 
-    AS 'SELECT content FROM string_content WHERE id = $1 AND language = $2;' 
+    CREATE FUNCTION get_string(uuid, text) RETURNS text
+    AS 'SELECT content FROM string_content WHERE id = $1 AND language = $2;'
     LANGUAGE SQL IMMUTABLE RETURNS NULL ON NULL INPUT;
   `.execute(db);
 }

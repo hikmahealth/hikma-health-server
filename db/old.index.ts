@@ -1,3 +1,4 @@
+// FILE RETAIN AS HISTORY
 import { Kysely } from "kysely";
 import * as initialTables from "./20191125_initial_tables";
 import * as initialUser from "./20191126_initial_user";

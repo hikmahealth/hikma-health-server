@@ -1,11 +1,10 @@
-import type {
-  FileMigrationProviderProps,
-  Kysely,
-  Migration,
-  MigrationProvider,
-} from "kysely";
-import { FileMigrationProvider, sql } from "kysely";
-import type { Database } from ".";
+import type { Kysely, Migration, MigrationProvider } from "kysely";
+import { sql } from "kysely";
+import type { Database } from "../src/db";
+import {
+  TSFileMigrationProvider,
+  type TSFileMigrationProviderProps,
+} from "kysely-ctl";
 
 /**
  * Creates the `FileMigrationProvider` instance, that is able to
@@ -16,7 +15,7 @@ import type { Database } from ".";
 export async function createMigrationProviderFromAlembic(
   db: Kysely<Database>,
   kyselyAlembicPairs: Array<[string, string]>,
-  props: FileMigrationProviderProps & {
+  props: TSFileMigrationProviderProps & {
     /**
      * When this flag is set, we assume they want to check if the databasae is being
      * created from a pre-existing instance with alembic. This is for when you are sure
@@ -70,19 +69,25 @@ export async function createMigrationProviderFromAlembic(
   {
     #ignorelist: string[];
     #provider;
-    constructor(ignorelist: string[], props: FileMigrationProviderProps) {
+    constructor(ignorelist: string[], props: TSFileMigrationProviderProps) {
       this.#ignorelist = ignorelist;
-      this.#provider = new FileMigrationProvider(props);
+      this.#provider = new TSFileMigrationProvider(props);
     }
 
     async getMigrations(): Promise<Record<string, Migration>> {
-      return this.#provider.getMigrations().then((migrations) => {
-        return Object.fromEntries(
-          Object.entries(migrations).filter(
-            ([id]) => !this.#ignorelist.includes(id),
-          ),
-        );
-      });
+      const migrations = await this.#provider
+        .getMigrations()
+        .then((migrations) => {
+          return Object.fromEntries(
+            Object.entries(migrations).filter(
+              ([id]) => !this.#ignorelist.includes(id),
+            ),
+          );
+        });
+
+      // migrations to use
+      console.log({ migrations });
+      return migrations;
     }
   })(ignoreList, props);
 }

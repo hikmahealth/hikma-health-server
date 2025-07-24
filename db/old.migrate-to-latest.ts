@@ -1,3 +1,6 @@
+// FILE RETAINED AS HISTORY
+// this is replaces by `npx kysely migrate latest` operation that uses
+// configuration from `$ROOT/kysely.config.ts` and the `$ROOT/db/alembic-kysely-migrator`
 import * as path from "path";
 import { promises as fs } from "fs";
 import { Migrator, FileMigrationProvider, sql } from "kysely";
