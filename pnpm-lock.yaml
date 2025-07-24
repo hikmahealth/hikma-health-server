@@ -262,8 +262,8 @@ importers:
         specifier: ^26.0.0
         version: 26.1.0
       kysely-ctl:
-        specifier: ^0.13.1
-        version: 0.13.1(kysely@0.28.2)(magicast@0.3.5)
+        specifier: ^0.14.0
+        version: 0.14.0(kysely@0.28.2)(magicast@0.3.5)
       typescript:
         specifier: ^5.7.2
         version: 5.8.3
@@ -2696,6 +2696,14 @@ packages:
       magicast:
         optional: true
 
+  c12@3.1.0:
+    resolution: {integrity: sha512-uWoS8OU1MEIsOv8p/5a82c3H31LsWVR5qiyXVfBNOzfffjUWtPnhAb4BYI2uG2HfGmZmFjCtui5XNWaps+iFuw==}
+    peerDependencies:
+      magicast: ^0.3.5
+    peerDependenciesMeta:
+      magicast:
+        optional: true
+
   cac@6.7.14:
     resolution: {integrity: sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==}
     engines: {node: '>=8'}
@@ -3800,9 +3808,9 @@ packages:
   kuler@2.0.0:
     resolution: {integrity: sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==}
 
-  kysely-ctl@0.13.1:
-    resolution: {integrity: sha512-DhTgpt1ru3Y74rI8O3IRLJ5HV09vMSz4q2KEeqaUX0GYMB09zO1KsdwSsF+ZMa8bHeS4F4J3Vjfbc4ulJQ1r0A==}
-    engines: {node: '>=18'}
+  kysely-ctl@0.14.0:
+    resolution: {integrity: sha512-6sU/KcnOC0So/7zWvdQa47Aa9eaWurfr2WUGzjbwxWnAjmVMg40Rt67v6nslo8cuahJ1SGTrTtFDCX3tNusejw==}
+    engines: {node: '>=20'}
     hasBin: true
     peerDependencies:
       kysely: '>=0.18.1 <0.29.0'
@@ -4402,6 +4410,9 @@ packages:
 
   pkg-types@2.1.1:
     resolution: {integrity: sha512-eY0QFb6eSwc9+0d/5D2lFFUq+A3n3QNGSy/X2Nvp+6MfzGw2u6EbA7S80actgjY1lkvvI0pqB+a4hioMh443Ew==}
+
+  pkg-types@2.2.0:
+    resolution: {integrity: sha512-2SM/GZGAEkPp3KWORxQZns4M+WSeXbC2HEvmOIJe3Cmiv6ieAJvdVhDldtHqM5J1Y7MrR1XhkBT/rMlhh9FdqQ==}
 
   postcss-values-parser@6.0.2:
     resolution: {integrity: sha512-YLJpK0N1brcNJrs9WatuJFtHaV9q5aAOj+S4DI5S7jgHlRfm0PIbDCAFRYMQD5SHq7Fy6xsDhyutgS0QOAs0qw==}
@@ -8359,6 +8370,23 @@ snapshots:
     optionalDependencies:
       magicast: 0.3.5
 
+  c12@3.1.0(magicast@0.3.5):
+    dependencies:
+      chokidar: 4.0.3
+      confbox: 0.2.2
+      defu: 6.1.4
+      dotenv: 16.6.1
+      exsolve: 1.0.7
+      giget: 2.0.0
+      jiti: 2.4.2
+      ohash: 2.0.11
+      pathe: 2.0.3
+      perfect-debounce: 1.0.0
+      pkg-types: 2.2.0
+      rc9: 2.1.2
+    optionalDependencies:
+      magicast: 0.3.5
+
   cac@6.7.14: {}
 
   call-bind-apply-helpers@1.0.2:
@@ -9457,9 +9485,9 @@ snapshots:
 
   kuler@2.0.0: {}
 
-  kysely-ctl@0.13.1(kysely@0.28.2)(magicast@0.3.5):
+  kysely-ctl@0.14.0(kysely@0.28.2)(magicast@0.3.5):
     dependencies:
-      c12: 3.0.4(magicast@0.3.5)
+      c12: 3.1.0(magicast@0.3.5)
       citty: 0.1.6
       consola: 3.4.2
       jiti: 2.4.2
@@ -9467,7 +9495,7 @@ snapshots:
       nypm: 0.6.0
       ofetch: 1.4.1
       pathe: 2.0.3
-      pkg-types: 2.1.1
+      pkg-types: 2.2.0
       std-env: 3.9.0
     transitivePeerDependencies:
       - magicast
@@ -10078,6 +10106,12 @@ snapshots:
       pathe: 2.0.3
 
   pkg-types@2.1.1:
+    dependencies:
+      confbox: 0.2.2
+      exsolve: 1.0.7
+      pathe: 2.0.3
+
+  pkg-types@2.2.0:
     dependencies:
       confbox: 0.2.2
       exsolve: 1.0.7

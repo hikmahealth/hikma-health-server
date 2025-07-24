@@ -21,7 +21,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   await db.schema
     .createIndex("attributes_hash_ix")
     .on("clinics")
-    .expression(sql`(attributes) hash`)
+    .expression(sql`(attributes)`)
     .execute();
 }
 
