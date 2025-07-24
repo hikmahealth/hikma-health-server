@@ -25,9 +25,6 @@ async function migrateToLatest() {
   console.log("Latest migration id:", latestMigrationId);
   console.log("Migrations:", getMigrations(latestMigrationId));
 
-  // TODO: Remove this return, just for testing
-  return;
-
   const migrator = new Migrator({
     db,
     allowUnorderedMigrations: false,

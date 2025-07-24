@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "db:migrate": "",
     "start": "node src/db/migrate-to-latest.ts && node .output/server/index.mjs",
     "build": "vite build",
     "serve": "vite preview",

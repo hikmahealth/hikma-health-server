@@ -76,7 +76,7 @@ const getDatabaseConfig = (): Record<string, any> => {
 
     if (dbProto !== "postgresql:") {
       throw new Error(
-        "Using a non postgresql database. HH only supports PostgreSQL."
+        "Using a non postgresql database. HH only supports PostgreSQL.",
       );
     }
 
@@ -94,7 +94,7 @@ const getDatabaseConfig = (): Record<string, any> => {
       databaseUrlAzure.split(" ").map((pair) => {
         const [key, value] = pair.split("=");
         return [key, value];
-      })
+      }),
     );
 
     pgUser = connStrParams.user;
@@ -110,7 +110,7 @@ const getDatabaseConfig = (): Record<string, any> => {
 
     if (!pgHost || !pgDb || !pgUser || !pgPassword) {
       throw new Error(
-        "Missing database configuration. Please set DB_HOST, DB_NAME, DB_USER, and DB_PASSWORD environment variables."
+        "Missing database configuration. Please set DB_HOST, DB_NAME, DB_USER, and DB_PASSWORD environment variables.",
       );
     }
   }

@@ -7,7 +7,7 @@
  * This mapping is used exclusively for the one-time migration from alembic to kysely.
  * Any changes to this file could break the migration process and database integrity.
  */
-export const alembicMigrationIds = [
+const alembicMigrationIds = [
   ["20191125_initial_tables", "47dc360e825a"],
   ["20191126_initial_user", "657ba64ed784"],
   ["20240522_patient_external_ids_and_attributes", "602ce80e2a7b"],
@@ -23,4 +23,6 @@ export const alembicMigrationIds = [
   ["20250320_create_resources_table", "fbcd98789c00"],
   ["20250401_make_resources_syncable", "86ebf93a362c"],
   ["20250410_include_healthcare_provider_segmentation", "18edc29dd7fd"],
-];
+] as Array<[string, string]>;
+
+export default alembicMigrationIds;
