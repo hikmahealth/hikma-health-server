@@ -8,3 +8,5 @@ count.txt
 .output
 .vinxi
 count.txt
+
+.env.*
