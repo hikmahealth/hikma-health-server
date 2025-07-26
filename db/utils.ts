@@ -29,6 +29,7 @@ export async function createMigrationProviderFromAlembic(
   try {
     const result =
       await sql`SELECT version_num FROM alembic_version LIMIT 1`.execute(db);
+    // @ts-expect-error Property version_num does not exist on type {}
     alembicMigrationHead = result.rows[0]?.version_num;
   } catch (error) {
     if (props.importCheck) {
