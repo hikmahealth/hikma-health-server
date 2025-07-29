@@ -7,6 +7,9 @@ import type {
   Updateable,
   JSONColumnType,
 } from "kysely";
+import db from "@/db";
+import { serverOnly } from "@tanstack/react-start";
+import { sql } from "kysely";
 
 namespace PatientAdditionalAttribute {
   export type T = {
@@ -25,6 +28,25 @@ namespace PatientAdditionalAttribute {
     last_modified: Date;
     server_created_at: Date;
     deleted_at: Option.Option<Date>;
+  };
+
+  // Hacked together. Must be converted into a schema.
+  export type EncodedT = {
+    id: string;
+    patient_id: string;
+    attribute_id: string;
+    attribute: string;
+    number_value: number | null;
+    string_value: string | null;
+    date_value: Date | null;
+    boolean_value: boolean | null;
+    metadata: Record<string, unknown>;
+    is_deleted: boolean;
+    created_at: Date;
+    updated_at: Date;
+    last_modified: Date;
+    server_created_at: Date;
+    deleted_at: Date | null;
   };
 
   export namespace Table {
@@ -78,6 +100,81 @@ namespace PatientAdditionalAttribute {
     export type PatientAdditionalAttributes = Selectable<T>;
     export type NewPatientAdditionalAttributes = Insertable<T>;
     export type PatientAdditionalAttributesUpdate = Updateable<T>;
+  }
+
+  export namespace API {
+    /**
+     * Upsert a patient additional attribute
+     */
+    export const upsert = serverOnly(
+      async (attribute: PatientAdditionalAttribute.EncodedT) => {
+        return await db
+          .insertInto(PatientAdditionalAttribute.Table.name)
+          .values({
+            id: attribute.id,
+            patient_id: attribute.patient_id,
+            attribute_id: attribute.attribute_id,
+            attribute: attribute.attribute,
+            number_value: attribute.number_value || null,
+            string_value: attribute.string_value || null,
+            date_value: attribute.date_value
+              ? sql`${attribute.date_value}::timestamp with time zone`
+              : null,
+            boolean_value: attribute.boolean_value || null,
+            metadata: sql`${attribute.metadata}::jsonb`,
+            is_deleted: attribute.is_deleted,
+            created_at: sql`now()::timestamp with time zone`,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+            server_created_at: sql`now()::timestamp with time zone`,
+            deleted_at: null,
+          })
+          .onConflict((oc) =>
+            oc.doUpdateSet({
+              patient_id: (eb) => eb.ref("excluded.patient_id"),
+              attribute_id: (eb) => eb.ref("excluded.attribute_id"),
+              attribute: (eb) => eb.ref("excluded.attribute"),
+              number_value: (eb) => eb.ref("excluded.number_value"),
+              string_value: (eb) => eb.ref("excluded.string_value"),
+              date_value: (eb) => eb.ref("excluded.date_value"),
+              boolean_value: (eb) => eb.ref("excluded.boolean_value"),
+              metadata: (eb) => eb.ref("excluded.metadata"),
+              is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+          )
+          .executeTakeFirstOrThrow();
+      }
+    );
+
+    /**
+     * Soft Delete a patient additional attribute
+     * @param id - The id of the patient additional attribute to delete
+     */
+    export const softDelete = serverOnly(async (id: string) => {
+      await db
+        .updateTable(PatientAdditionalAttribute.Table.name)
+        .set({
+          is_deleted: true,
+          updated_at: sql`now()::timestamp with time zone`,
+          last_modified: sql`now()::timestamp with time zone`,
+        })
+        .where("id", "=", id)
+        .execute();
+    });
+  }
+
+  export namespace Sync {
+    export const upsertFromDelta = serverOnly(
+      async (delta: PatientAdditionalAttribute.EncodedT) => {
+        return API.upsert(delta);
+      }
+    );
+
+    export const deleteFromDelta = serverOnly(async (id: string) => {
+      return API.softDelete(id);
+    });
   }
 }
 

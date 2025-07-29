@@ -84,7 +84,7 @@ export const Route = createFileRoute("/app/prescriptions/edit/$")({
       currentUser: User.EncodedT | null;
     } = { prescription: null, users: [], clinics: [], currentUser: null };
 
-    if (prescriptionId) {
+    if (prescriptionId && prescriptionId !== "new") {
       result.prescription = (await getPrescriptionById({
         data: { id: prescriptionId },
       })) as Prescription.EncodedT | null;

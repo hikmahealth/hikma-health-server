@@ -12,12 +12,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TableCaption,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { LucideEdit, LucideTrash } from "lucide-react";
 import { toast } from "sonner";
 import { getAllClinics } from "@/lib/server-functions/clinics";
+import { Link } from "@tanstack/react-router";
 
 const deleteClinic = createServerFn({ method: "POST" })
   .validator((data: { id: string }) => data)
@@ -59,39 +59,49 @@ function RouteComponent() {
   };
 
   return (
-    <div>
-      <Table>
-        <TableCaption>A list of clinics.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            {/* <TableHead className="w-[100px]">ID</TableHead> */}
-            <TableHead>Name</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {clinics?.map((clinic) => (
-            <TableRow key={clinic.id} className="py-2">
-              {/* <TableCell className="font-medium">{clinic.id}</TableCell> */}
-              <TableCell>{clinic.name}</TableCell>
-              <TableCell className="flex gap-4">
-                <Button variant="outline" onClick={() => handleEdit(clinic.id)}>
-                  <LucideEdit className="mr-2" />
-                  Edit
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-red-500"
-                  onClick={() => handleDelete(clinic.id)}
-                >
-                  <LucideTrash className="mr-2" />
-                  Delete
-                </Button>
-              </TableCell>
+    <div className="container py-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Clinics</h1>
+        <Button asChild>
+          <Link to="/app/clinics/edit/$" params={{ _splat: "new" }}>
+            Add Clinic
+          </Link>
+        </Button>
+      </div>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {clinics?.map((clinic) => (
+              <TableRow key={clinic.id} className="py-2">
+                <TableCell>{clinic.name}</TableCell>
+                <TableCell className="flex gap-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleEdit(clinic.id)}
+                  >
+                    <LucideEdit className="mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="text-red-500"
+                    onClick={() => handleDelete(clinic.id)}
+                  >
+                    <LucideTrash className="mr-2" />
+                    Delete
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

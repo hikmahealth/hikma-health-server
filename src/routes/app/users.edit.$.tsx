@@ -98,8 +98,9 @@ type UserFormValues = typeof userFormSchema.Encoded;
 export const Route = createFileRoute("/app/users/edit/$")({
   component: RouteComponent,
   loader: async ({ params }) => {
+    const userId = params._splat === "new" ? null : params._splat;
     return {
-      user: await getUserById({ data: { id: params._splat } }),
+      user: await getUserById({ data: { id: userId } }),
       clinics: await getAllClinics(),
       currentUserId: await getCurrentUserId(),
     };
@@ -178,7 +179,7 @@ function RouteComponent() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">
           {isEditMode ? "Edit User" : "Create New User"}

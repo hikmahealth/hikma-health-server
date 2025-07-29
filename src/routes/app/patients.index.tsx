@@ -264,46 +264,48 @@ function RouteComponent() {
         </Button>
       </div>
 
-      <Table className="overflow-scroll mt-8">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="px-6" key={"id"}>
-              ID
-            </TableHead>
-            {headers.map((header) => (
-              <TableHead className="px-6" key={header}>
-                {header}
+      <div className="rounded-md border overflow-hidden  mt-8">
+        <Table className="overflow-scroll">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="px-6" key={"id"}>
+                ID
               </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {patientsList.map((patient) => (
-            <TableRow key={patient.id}>
-              <TableCell className="px-6" key={"id"}>
-                {patient.id}
-              </TableCell>
-              {fields.map((field) =>
-                field.baseField ? (
-                  <TableCell className="px-6" key={field.id}>
-                    {PatientRegistrationForm.renderFieldValue(
-                      field,
-                      patient[field.column as keyof typeof patient]
-                    )}
-                  </TableCell>
-                ) : (
-                  <TableCell className="px-6" key={field.id}>
-                    {PatientRegistrationForm.renderFieldValue(
-                      field,
-                      patient.additional_attributes[field.id]
-                    )}
-                  </TableCell>
-                )
-              )}
+              {headers.map((header) => (
+                <TableHead className="px-6" key={header}>
+                  {header}
+                </TableHead>
+              ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {patientsList.map((patient) => (
+              <TableRow key={patient.id}>
+                <TableCell className="px-6" key={"id"}>
+                  {patient.id}
+                </TableCell>
+                {fields.map((field) =>
+                  field.baseField ? (
+                    <TableCell className="px-6" key={field.id}>
+                      {PatientRegistrationForm.renderFieldValue(
+                        field,
+                        patient[field.column as keyof typeof patient]
+                      )}
+                    </TableCell>
+                  ) : (
+                    <TableCell className="px-6" key={field.id}>
+                      {PatientRegistrationForm.renderFieldValue(
+                        field,
+                        patient.additional_attributes[field.id]
+                      )}
+                    </TableCell>
+                  )
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <div className="py-8">
         <Pagination>

@@ -57,7 +57,7 @@ export const Route = createFileRoute("/app/clinics/edit/$")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const clinicId = params["_splat"];
-    if (!clinicId) {
+    if (!clinicId || clinicId === "new") {
       return { clinic: null };
     }
     return { clinic: await getClinicById({ data: { id: clinicId } }) };
@@ -69,7 +69,7 @@ function RouteComponent() {
   const { clinic } = Route.useLoaderData();
   const params = Route.useParams();
   const clinicId = params._splat;
-  const isEditing = !!clinicId;
+  const isEditing = !!clinicId && clinicId !== "new";
 
   // Initialize form
   const form = useForm<FormValues>({

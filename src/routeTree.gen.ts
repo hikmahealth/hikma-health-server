@@ -37,7 +37,9 @@ import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-f
 import { Route as AppClinicsEditSplatRouteImport } from './routes/app/clinics.edit.$'
 import { Route as AppAppointmentsEditSplatRouteImport } from './routes/app/appointments.edit.$'
 import { ServerRoute as ApiSyncServerRouteImport } from './routes/api/sync'
+import { ServerRoute as ApiLoginServerRouteImport } from './routes/api/login'
 import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
+import { ServerRoute as V1ApiSyncServerRouteImport } from './routes/v1.api.sync'
 import { ServerRoute as ApiTrpcSplatServerRouteImport } from './routes/api.trpc.$'
 import { ServerRoute as ApiAuthSignOutServerRouteImport } from './routes/api/auth.sign-out'
 import { ServerRoute as ApiAuthSignInServerRouteImport } from './routes/api/auth.sign-in'
@@ -179,9 +181,19 @@ const ApiSyncServerRoute = ApiSyncServerRouteImport.update({
   path: '/api/sync',
   getParentRoute: () => rootServerRouteImport,
 } as any)
+const ApiLoginServerRoute = ApiLoginServerRouteImport.update({
+  id: '/api/login',
+  path: '/api/login',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
 const ApiDemoNamesServerRoute = ApiDemoNamesServerRouteImport.update({
   id: '/api/demo-names',
   path: '/api/demo-names',
+  getParentRoute: () => rootServerRouteImport,
+} as any)
+const V1ApiSyncServerRoute = V1ApiSyncServerRouteImport.update({
+  id: '/v1/api/sync',
+  path: '/v1/api/sync',
   getParentRoute: () => rootServerRouteImport,
 } as any)
 const ApiTrpcSplatServerRoute = ApiTrpcSplatServerRouteImport.update({
@@ -384,63 +396,77 @@ export interface RootRouteChildren {
 }
 export interface FileServerRoutesByFullPath {
   '/api/demo-names': typeof ApiDemoNamesServerRoute
+  '/api/login': typeof ApiLoginServerRoute
   '/api/sync': typeof ApiSyncServerRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenServerRoute
   '/api/auth/sign-in': typeof ApiAuthSignInServerRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutServerRoute
   '/api/trpc/$': typeof ApiTrpcSplatServerRoute
+  '/v1/api/sync': typeof V1ApiSyncServerRoute
 }
 export interface FileServerRoutesByTo {
   '/api/demo-names': typeof ApiDemoNamesServerRoute
+  '/api/login': typeof ApiLoginServerRoute
   '/api/sync': typeof ApiSyncServerRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenServerRoute
   '/api/auth/sign-in': typeof ApiAuthSignInServerRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutServerRoute
   '/api/trpc/$': typeof ApiTrpcSplatServerRoute
+  '/v1/api/sync': typeof V1ApiSyncServerRoute
 }
 export interface FileServerRoutesById {
   __root__: typeof rootServerRouteImport
   '/api/demo-names': typeof ApiDemoNamesServerRoute
+  '/api/login': typeof ApiLoginServerRoute
   '/api/sync': typeof ApiSyncServerRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenServerRoute
   '/api/auth/sign-in': typeof ApiAuthSignInServerRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutServerRoute
   '/api/trpc/$': typeof ApiTrpcSplatServerRoute
+  '/v1/api/sync': typeof V1ApiSyncServerRoute
 }
 export interface FileServerRouteTypes {
   fileServerRoutesByFullPath: FileServerRoutesByFullPath
   fullPaths:
     | '/api/demo-names'
+    | '/api/login'
     | '/api/sync'
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
     | '/api/trpc/$'
+    | '/v1/api/sync'
   fileServerRoutesByTo: FileServerRoutesByTo
   to:
     | '/api/demo-names'
+    | '/api/login'
     | '/api/sync'
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
     | '/api/trpc/$'
+    | '/v1/api/sync'
   id:
     | '__root__'
     | '/api/demo-names'
+    | '/api/login'
     | '/api/sync'
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
     | '/api/trpc/$'
+    | '/v1/api/sync'
   fileServerRoutesById: FileServerRoutesById
 }
 export interface RootServerRouteChildren {
   ApiDemoNamesServerRoute: typeof ApiDemoNamesServerRoute
+  ApiLoginServerRoute: typeof ApiLoginServerRoute
   ApiSyncServerRoute: typeof ApiSyncServerRoute
   ApiAuthIsValidTokenServerRoute: typeof ApiAuthIsValidTokenServerRoute
   ApiAuthSignInServerRoute: typeof ApiAuthSignInServerRoute
   ApiAuthSignOutServerRoute: typeof ApiAuthSignOutServerRoute
   ApiTrpcSplatServerRoute: typeof ApiTrpcSplatServerRoute
+  V1ApiSyncServerRoute: typeof V1ApiSyncServerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -631,11 +657,25 @@ declare module '@tanstack/react-start/server' {
       preLoaderRoute: typeof ApiSyncServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
+    '/api/login': {
+      id: '/api/login'
+      path: '/api/login'
+      fullPath: '/api/login'
+      preLoaderRoute: typeof ApiLoginServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
     '/api/demo-names': {
       id: '/api/demo-names'
       path: '/api/demo-names'
       fullPath: '/api/demo-names'
       preLoaderRoute: typeof ApiDemoNamesServerRouteImport
+      parentRoute: typeof rootServerRouteImport
+    }
+    '/v1/api/sync': {
+      id: '/v1/api/sync'
+      path: '/v1/api/sync'
+      fullPath: '/v1/api/sync'
+      preLoaderRoute: typeof V1ApiSyncServerRouteImport
       parentRoute: typeof rootServerRouteImport
     }
     '/api/trpc/$': {
@@ -725,11 +765,13 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 const rootServerRouteChildren: RootServerRouteChildren = {
   ApiDemoNamesServerRoute: ApiDemoNamesServerRoute,
+  ApiLoginServerRoute: ApiLoginServerRoute,
   ApiSyncServerRoute: ApiSyncServerRoute,
   ApiAuthIsValidTokenServerRoute: ApiAuthIsValidTokenServerRoute,
   ApiAuthSignInServerRoute: ApiAuthSignInServerRoute,
   ApiAuthSignOutServerRoute: ApiAuthSignOutServerRoute,
   ApiTrpcSplatServerRoute: ApiTrpcSplatServerRoute,
+  V1ApiSyncServerRoute: V1ApiSyncServerRoute,
 }
 export const serverRouteTree = rootServerRouteImport
   ._addFileChildren(rootServerRouteChildren)

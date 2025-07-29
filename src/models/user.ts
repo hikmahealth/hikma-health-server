@@ -36,7 +36,7 @@ namespace User {
   export const RoleSchema = Schema.Union(
     Schema.Literal("provider"),
     Schema.Literal("admin"),
-    Schema.Literal("super_admin")
+    Schema.Literal("super_admin"),
   );
 
   export const UserSchema = Schema.Struct({
@@ -51,25 +51,25 @@ namespace User {
     created_at: Schema.Union(
       Schema.DateFromString,
       Schema.Date,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     updated_at: Schema.Union(
       Schema.Date,
       Schema.DateFromString,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     last_modified: Schema.Union(
       Schema.Date,
       Schema.DateFromString,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     server_created_at: Schema.Union(
       Schema.Date,
       Schema.DateFromString,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     deleted_at: Schema.OptionFromNullOr(
-      Schema.Union(Schema.Date, Schema.DateFromString)
+      Schema.Union(Schema.Date, Schema.DateFromString),
     ),
   });
 
@@ -100,7 +100,7 @@ namespace User {
     Schema.Literal("create_report"),
     Schema.Literal("read_report"),
     Schema.Literal("update_report"),
-    Schema.Literal("delete_report")
+    Schema.Literal("delete_report"),
   );
 
   export const CAPABILITIES: Record<string, typeof CapabilitySchema.Type> = {
@@ -218,7 +218,7 @@ namespace User {
   }
 
   export const fromDbEntry = (
-    dbUser: User.Table.Users
+    dbUser: User.Table.Users,
   ): Either.Either<User.T, Error> => {
     return Schema.decodeUnknownEither(UserSchema)(dbUser);
   };
@@ -280,7 +280,7 @@ namespace User {
     async (
       email: string,
       password: string,
-      validHours: number = 2
+      validHours: number = 2,
     ): Promise<Option.Option<{ user: User.T; token: string }>> => {
       const user = await db
         .selectFrom(Table.name)
@@ -296,14 +296,14 @@ namespace User {
           if (await bcrypt.compare(password, hashedPassword)) {
             const token = await Token.create(
               user.id,
-              new Date(Date.now() + validHours * 60 * 60 * 1000)
+              new Date(Date.now() + validHours * 60 * 60 * 1000),
             );
             return Option.some({ user: User.fromDbEntry(user), token });
           }
           return Option.none();
         },
       });
-    }
+    },
   );
 
   /**
@@ -351,7 +351,7 @@ namespace User {
           .execute();
 
         return userId;
-      }
+      },
     );
     /**
      * Get all users
@@ -392,7 +392,7 @@ namespace User {
         if (Either.isLeft(entry)) return null;
 
         return Schema.encodeSync(UserSchema)(entry.right);
-      }
+      },
     );
 
     /**
@@ -413,7 +413,7 @@ namespace User {
           .map(User.fromDbEntry)
           .filter(Either.isRight)
           .map((e) => Schema.encodeSync(UserSchema)(e.right));
-      }
+      },
     );
 
     export const update = serverOnly(
@@ -427,7 +427,7 @@ namespace User {
           | "last_modified"
           | "server_created_at"
           | "deleted_at"
-        >
+        >,
       ): Promise<User.EncodedT["id"] | null> => {
         await db
           .updateTable(Table.name)
@@ -445,7 +445,7 @@ namespace User {
           .execute();
 
         return id;
-      }
+      },
     );
 
     // Specific methods to update passwords
@@ -462,7 +462,7 @@ namespace User {
           .execute();
 
         return id;
-      }
+      },
     );
 
     export const softDelete = serverOnly(async (id: string): Promise<void> => {

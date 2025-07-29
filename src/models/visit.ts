@@ -1,12 +1,18 @@
+import db from "@/db";
+import { serverOnly } from "@tanstack/react-start";
 import { Option } from "effect";
-import type {
-  ColumnType,
-  Generated,
-  Selectable,
-  Insertable,
-  Updateable,
-  JSONColumnType,
+import {
+  type ColumnType,
+  type Generated,
+  type Selectable,
+  type Insertable,
+  type Updateable,
+  type JSONColumnType,
+  sql,
 } from "kysely";
+import Prescription from "./prescription";
+import Appointment from "./appointment";
+import Event from "./event";
 
 namespace Visit {
   export type T = {
@@ -23,6 +29,23 @@ namespace Visit {
     last_modified: Date;
     server_created_at: Date;
     deleted_at: Option.Option<Date>;
+  };
+
+  // Hacked together. Must be converted into a schema.
+  export type EncodedT = {
+    id: string;
+    patient_id: string;
+    clinic_id: string;
+    provider_id: string;
+    provider_name: string | null;
+    check_in_timestamp: Date | null;
+    metadata: Record<string, any>;
+    is_deleted: boolean;
+    created_at: Date;
+    updated_at: Date;
+    last_modified: Date;
+    server_created_at: Date;
+    deleted_at: Date | null;
   };
 
   export namespace Table {
@@ -72,6 +95,127 @@ namespace Visit {
     export type Visits = Selectable<T>;
     export type NewVisits = Insertable<T>;
     export type VisitsUpdate = Updateable<T>;
+  }
+
+  export namespace API {
+    export const findById = serverOnly(
+      async (
+        id: string
+      ): Promise<
+        | {
+            id: string;
+            provider_name: string | null;
+            is_deleted: boolean;
+          }
+        | undefined
+      > => {
+        return await db
+          .selectFrom(Visit.Table.name)
+          .where("id", "=", id)
+          .select(["id", "is_deleted", "provider_name"])
+          .executeTakeFirst();
+      }
+    );
+    /**
+     * Upsert a visit
+     *
+     * note: experimenting with visits coming in with their own ids.
+     */
+    export const upsert = serverOnly(async (visit: Visit.EncodedT) => {
+      return await db
+        .insertInto(Visit.Table.name)
+        .values({
+          id: visit.id,
+          patient_id: visit.patient_id,
+          clinic_id: visit.clinic_id,
+          provider_id: visit.provider_id,
+          provider_name: visit.provider_name,
+          check_in_timestamp: visit.check_in_timestamp
+            ? sql`${visit.check_in_timestamp}::timestamp with time zone`
+            : null,
+          metadata: sql`${visit.metadata}::jsonb`,
+          is_deleted: visit.is_deleted,
+          created_at: sql`now()::timestamp with time zone`,
+          updated_at: sql`now()::timestamp with time zone`,
+          last_modified: sql`now()::timestamp with time zone`,
+          server_created_at: sql`now()::timestamp with time zone`,
+          deleted_at: null,
+        })
+        .onConflict((oc) =>
+          oc.doUpdateSet({
+            patient_id: (eb) => eb.ref("excluded.patient_id"),
+            clinic_id: (eb) => eb.ref("excluded.clinic_id"),
+            provider_id: (eb) => eb.ref("excluded.provider_id"),
+            provider_name: (eb) => eb.ref("excluded.provider_name"),
+            check_in_timestamp: (eb) => eb.ref("excluded.check_in_timestamp"),
+            metadata: (eb) => eb.ref("excluded.metadata"),
+            is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+        )
+        .executeTakeFirstOrThrow();
+    });
+
+    /**
+     * Soft Delete a visit
+     * @param id - The id of the visit to delete
+     *
+     * Deletes on visits cascade down to any prescriptoins, events, appointments, etc that are related to the visit.
+     */
+    export const softDelete = serverOnly(async (id: string) => {
+      await db.transaction().execute(async (trx) => {
+        await trx
+          .updateTable(Visit.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable(Prescription.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("visit_id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable(Event.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("visit_id", "=", id)
+          .execute();
+
+        await trx
+          .updateTable(Appointment.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("appointments.current_visit_id", "=", id)
+          .execute();
+      });
+    });
+  }
+
+  export namespace Sync {
+    export const upsertFromDelta = serverOnly(async (delta: Visit.EncodedT) => {
+      return API.upsert(delta);
+    });
+
+    export const deleteFromDelta = serverOnly(async (id: string) => {
+      return API.softDelete(id);
+    });
   }
 }
 

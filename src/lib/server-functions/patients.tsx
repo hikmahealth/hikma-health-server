@@ -35,7 +35,7 @@ export const getAllPatients = createServerFn({
         error: { message: "Unauthorized: Insufficient permissions" },
       };
     }
-    const { patients, pagination } = await Patient.getAllWithAttributes({
+    const { patients, pagination } = await Patient.API.getAllWithAttributes({
       limit: 50,
       offset: 0,
       includeCount: true,
@@ -57,9 +57,9 @@ export const searchPatients = createServerFn({ method: "GET" })
       pagination: Pagination;
       error: { message: string } | null;
     }> => {
-      // Note: The Patient.search function needs to be updated to support pagination
+      // Note: The Patient.API.search function needs to be updated to support pagination
       // This is a comment for the user as requested
-      const result = await Patient.search(data);
+      const result = await Patient.API.search(data);
 
       // Apply pagination manually for now
       const offset = data.offset || 0;
