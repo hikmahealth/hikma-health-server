@@ -1,1 +1,0 @@
-import{r as t,j as n}from"./main-Cc0Z4-Ho.js";function r(){return fetch("/api/demo-names").then(e=>e.json())}const m=function(){const[s,o]=t.useState([]);return t.useEffect(()=>{r().then(o)},[]),n.jsx("div",{className:"p-4",children:n.jsx("div",{children:s.join(", ")})})};export{m as component};
