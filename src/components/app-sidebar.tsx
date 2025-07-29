@@ -174,10 +174,6 @@ export const navData = {
           title: "Explore Events",
           url: "/app/data/events",
         },
-        {
-          title: "Export Raw Data",
-          url: "/app/data/export",
-        },
       ],
     },
     {

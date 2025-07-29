@@ -12,7 +12,7 @@ import {
 } from "kysely";
 import Visit from "./visit";
 import { v1 as uuidV1 } from "uuid";
-import { isValidUUID } from "@/lib/utils";
+import { isValidUUID, safeStringify } from "@/lib/utils";
 import Patient from "./patient";
 import User from "./user";
 import Clinic from "./clinic";
@@ -256,6 +256,31 @@ namespace Appointment {
         });
       }
     );
+
+    export const softDelete = serverOnly(async (id: string) => {
+      return await db
+        .updateTable(Table.name)
+        .set({
+          is_deleted: true,
+          deleted_at: sql`now()::timestamp with time zone`,
+          updated_at: sql`now()::timestamp with time zone`,
+          last_modified: sql`now()::timestamp with time zone`,
+        })
+        .where("id", "=", id)
+        .execute();
+    });
+  }
+
+  export namespace Sync {
+    export const upsertFromDelta = serverOnly(
+      async (delta: Appointment.EncodedT) => {
+        return API.save(delta.id || uuidV1(), delta, "");
+      }
+    );
+
+    export const deleteFromDelta = serverOnly(async (id: string) => {
+      return API.softDelete(id);
+    });
   }
 }
 

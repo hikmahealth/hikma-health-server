@@ -191,6 +191,9 @@ namespace Prescription {
       return res.rows;
     });
 
+    /**
+     * Save a prescription - this is an upsert operation
+     */
     export const save = serverOnly(
       async (
         id: string | null,
@@ -225,7 +228,6 @@ namespace Prescription {
               .returningAll()
               .executeTakeFirstOrThrow();
 
-            console.log({ visit, oldVisitId: visitId });
             visitId = visit.id;
           }
 
@@ -247,7 +249,7 @@ namespace Prescription {
                 ? sql`${prescription.filled_at}::timestamp with time zone`
                 : null,
               status: prescription.status,
-              items: prescription.items || [],
+              items: sql`${prescription.items || []}::jsonb`,
               notes: prescription.notes || "",
               metadata: {} as any,
               is_deleted: false,
@@ -280,6 +282,33 @@ namespace Prescription {
         });
       }
     );
+
+    /**
+     * Soft delete a prescription. ITs an update operation -
+     */
+    export const softDelete = serverOnly(async (id: string) => {
+      await db
+        .updateTable(Prescription.Table.name)
+        .set({
+          is_deleted: true,
+          updated_at: sql`now()::timestamp with time zone`,
+          last_modified: sql`now()::timestamp with time zone`,
+        })
+        .where("id", "=", id)
+        .execute();
+    });
+  }
+
+  export namespace Sync {
+    export const upsertFromDelta = serverOnly(
+      async (delta: Prescription.EncodedT) => {
+        return API.save(delta.id || uuidV1(), delta, "", "");
+      }
+    );
+
+    export const deleteFromDelta = serverOnly(async (id: string) => {
+      return API.softDelete(id);
+    });
   }
 }
 

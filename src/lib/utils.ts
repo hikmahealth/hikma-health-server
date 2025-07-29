@@ -163,6 +163,37 @@ export function safeJSONParse<T>(input: unknown, defaultValue: T): T {
 }
 
 /**
+ * Safely stringifies an object or returns the input if it's already a string.
+ * If input is a string that appears to be JSON, it will be parsed and re-stringified.
+ *
+ * @param {unknown} input - The input to stringify or return
+ * @param {string} defaultValue - The default value to return if stringification fails
+ * @returns {string} The stringified object or the default value
+ */
+export function safeStringify(input: unknown, defaultValue: string): string {
+  if (input === undefined || input === null) {
+    return defaultValue;
+  }
+
+  if (typeof input === "string") {
+    try {
+      // Check if the string is valid JSON by attempting to parse it
+      const parsed = JSON.parse(input);
+      return JSON.stringify(parsed);
+    } catch (error) {
+      // If it's not valid JSON, return the original string
+      return input;
+    }
+  }
+
+  try {
+    return JSON.stringify(input);
+  } catch (error) {
+    return defaultValue;
+  }
+}
+
+/**
  * Attempts to parse a date from various input types.
  *
  * @param {unknown} input - The input to parse as a date. Can be a Date object, string, or number.
@@ -256,7 +287,7 @@ export function getFieldOptionsValues(
 }
 
 /**
- * Checks if a string is a valid UUID
+ * Checks if a string is a valid UUID. Checks for uuid v1 and v4
  * @param {string} str - The string to check
  * @returns {boolean} True if the string is a valid UUID, false otherwise
  */

@@ -12,6 +12,10 @@ import { sql } from "kysely";
 import { serverOnly } from "@tanstack/react-start";
 import { v1 as uuidv1 } from "uuid";
 import PatientAdditionalAttribute from "./patient-additional-attribute";
+import Appointment from "./appointment";
+import Prescription from "./prescription";
+import Visit from "./visit";
+import Event from "./event";
 
 namespace Patient {
   // export type T = {
@@ -407,24 +411,25 @@ namespace Patient {
     };
   };
 
-  /**
-   * Get all patients with their additional attributes
-   * @param {Object} options - Pagination and filter options
-   * @param {number} [options.limit] - Maximum number of records to return
-   * @param {number} [options.offset=0] - Number of records to skip
-   * @param {boolean} [options.includeCount=false] - Whether to include total count in response
-   * @returns Object containing patients array and pagination metadata
-   */
-  export const getAllWithAttributes = serverOnly(
-    async (options?: {
-      limit?: number;
-      offset?: number;
-      includeCount?: boolean;
-    }): Promise<PatientsQueryResult> => {
-      const { limit, offset = 0, includeCount = false } = options || {};
+  export namespace API {
+    /**
+     * Get all patients with their additional attributes
+     * @param {Object} options - Pagination and filter options
+     * @param {number} [options.limit] - Maximum number of records to return
+     * @param {number} [options.offset=0] - Number of records to skip
+     * @param {boolean} [options.includeCount=false] - Whether to include total count in response
+     * @returns Object containing patients array and pagination metadata
+     */
+    export const getAllWithAttributes = serverOnly(
+      async (options?: {
+        limit?: number;
+        offset?: number;
+        includeCount?: boolean;
+      }): Promise<PatientsQueryResult> => {
+        const { limit, offset = 0, includeCount = false } = options || {};
 
-      // Build the query using the base query and adding pagination
-      const query = sql`
+        // Build the query using the base query and adding pagination
+        const query = sql`
         ${buildPatientAttributesBaseQuery()}
         GROUP BY p.id
         ORDER BY p.updated_at DESC
@@ -432,64 +437,64 @@ namespace Patient {
         ${limit ? sql`LIMIT ${limit}` : sql``}
       `.compile(db);
 
-      // Execute the query and get formatted patients
-      const patients = await executePatientQuery(query);
+        // Execute the query and get formatted patients
+        const patients = await executePatientQuery(query);
 
-      // Get total count if requested
-      let totalCount = 0;
-      if (includeCount) {
-        const countQuery = sql`
+        // Get total count if requested
+        let totalCount = 0;
+        if (includeCount) {
+          const countQuery = sql`
           SELECT COUNT(*) as total
           FROM patients
           WHERE is_deleted = false
         `.compile(db);
 
-        const countResult = await db.executeQuery<{ total: number }>(
-          countQuery
-        );
-        totalCount = countResult.rows[0]?.total || 0;
+          const countResult = await db.executeQuery<{ total: number }>(
+            countQuery
+          );
+          totalCount = countResult.rows[0]?.total || 0;
+        }
+
+        // Return both the patients and pagination metadata
+        return {
+          // @ts-expect-error issue with dates being turned into iso strings
+          patients,
+          pagination: {
+            offset,
+            limit: limit ?? 0,
+            total: totalCount,
+            hasMore: limit ? patients.length === limit : false,
+          },
+        };
       }
+    );
 
-      // Return both the patients and pagination metadata
-      return {
-        // @ts-expect-error issue with dates being turned into iso strings
-        patients,
-        pagination: {
-          offset,
-          limit: limit ?? 0,
-          total: totalCount,
-          hasMore: limit ? patients.length === limit : false,
-        },
-      };
-    }
-  );
+    /**
+     * Search for patients by name and other fields
+     * @param options Search and pagination options
+     * @param {string} options.searchQuery The search string to look for in patient fields
+     * @param {number} [options.limit] - Maximum number of records to return
+     * @param {number} [options.offset=0] - Number of records to skip
+     * @param {boolean} [options.includeCount=false] - Whether to include total count in response
+     * @returns Object containing matching patients array and pagination metadata
+     */
+    export const search = serverOnly(
+      async ({
+        searchQuery,
+        offset = 0,
+        limit,
+        includeCount = false,
+      }: {
+        searchQuery: string;
+        offset?: number;
+        limit?: number;
+        includeCount?: boolean;
+      }): Promise<PatientsQueryResult> => {
+        const searchPattern = `%${searchQuery}%`;
 
-  /**
-   * Search for patients by name and other fields
-   * @param options Search and pagination options
-   * @param {string} options.searchQuery The search string to look for in patient fields
-   * @param {number} [options.limit] - Maximum number of records to return
-   * @param {number} [options.offset=0] - Number of records to skip
-   * @param {boolean} [options.includeCount=false] - Whether to include total count in response
-   * @returns Object containing matching patients array and pagination metadata
-   */
-  export const search = serverOnly(
-    async ({
-      searchQuery,
-      offset = 0,
-      limit,
-      includeCount = false,
-    }: {
-      searchQuery: string;
-      offset?: number;
-      limit?: number;
-      includeCount?: boolean;
-    }): Promise<PatientsQueryResult> => {
-      const searchPattern = `%${searchQuery}%`;
-
-      // Build the query using the base query and adding search condition with pagination
-      // Search across multiple patient fields and additional attributes
-      const query = sql`
+        // Build the query using the base query and adding search condition with pagination
+        // Search across multiple patient fields and additional attributes
+        const query = sql`
       ${buildPatientAttributesBaseQuery()}
       AND (
         LOWER(p.given_name) LIKE LOWER(${searchPattern}) 
@@ -520,13 +525,13 @@ namespace Patient {
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `.compile(db);
 
-      // Execute the query and get formatted patients
-      const patients = await executePatientQuery(query);
+        // Execute the query and get formatted patients
+        const patients = await executePatientQuery(query);
 
-      // Get total count if requested
-      let totalCount = 0;
-      if (includeCount) {
-        const countQuery = sql`
+        // Get total count if requested
+        let totalCount = 0;
+        if (includeCount) {
+          const countQuery = sql`
           SELECT COUNT(*) as total
           FROM patients p
           WHERE p.is_deleted = false
@@ -555,24 +560,153 @@ namespace Patient {
           )
         `.compile(db);
 
-        const countResult = await db.executeQuery<{ total: number }>(
-          countQuery
-        );
-        totalCount = countResult.rows[0]?.total || 0;
-      }
+          const countResult = await db.executeQuery<{ total: number }>(
+            countQuery
+          );
+          totalCount = countResult.rows[0]?.total || 0;
+        }
 
-      // Return both the patients and pagination metadata
-      return {
-        patients,
-        pagination: {
-          offset,
-          limit: limit ?? 0,
-          total: totalCount,
-          hasMore: limit ? patients.length === limit : false,
-        },
-      };
-    }
-  );
+        // Return both the patients and pagination metadata
+        return {
+          patients,
+          pagination: {
+            offset,
+            limit: limit ?? 0,
+            total: totalCount,
+            hasMore: limit ? patients.length === limit : false,
+          },
+        };
+      }
+    );
+
+    /**
+     * Upsert a patient record without the additional patient attributes
+     */
+    export const upsert = serverOnly(async (patient: Patient.EncodedT) => {
+      return await db
+        .insertInto(Patient.Table.name)
+        .values({
+          id: patient.id,
+          given_name: patient.given_name,
+          surname: patient.surname,
+          date_of_birth: patient.date_of_birth
+            ? sql`${patient.date_of_birth}::timestamp with time zone`
+            : null,
+          citizenship: patient.citizenship,
+          hometown: patient.hometown,
+          additional_data: sql`${patient.additional_data}::jsonb`,
+          government_id: patient.government_id,
+          external_patient_id: patient.external_patient_id,
+          phone: patient.phone,
+          sex: patient.sex,
+          camp: patient.camp,
+          metadata: sql`${patient.metadata}::jsonb`,
+          is_deleted: patient.is_deleted,
+          created_at: sql`now()::timestamp with time zone`,
+          updated_at: sql`now()::timestamp with time zone`,
+          last_modified: sql`now()::timestamp with time zone`,
+          server_created_at: sql`now()::timestamp with time zone`,
+          deleted_at: null,
+        })
+        .onConflict((oc) =>
+          oc.doUpdateSet({
+            given_name: (eb) => eb.ref("excluded.given_name"),
+            surname: (eb) => eb.ref("excluded.surname"),
+            date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
+            citizenship: (eb) => eb.ref("excluded.citizenship"),
+            hometown: (eb) => eb.ref("excluded.hometown"),
+            additional_data: (eb) => eb.ref("excluded.additional_data"),
+            government_id: (eb) => eb.ref("excluded.government_id"),
+            external_patient_id: (eb) => eb.ref("excluded.external_patient_id"),
+            phone: (eb) => eb.ref("excluded.phone"),
+            sex: (eb) => eb.ref("excluded.sex"),
+            camp: (eb) => eb.ref("excluded.camp"),
+            metadata: (eb) => eb.ref("excluded.metadata"),
+            is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+        )
+        .executeTakeFirstOrThrow();
+    });
+
+    /**
+     * Soft Delete a patient record without the additional patient attributes
+     */
+    export const softDelete = serverOnly(async (id: string) => {
+      // NOTE: Could easily call something like Appointment.API.softDelete(id, trx) - but we
+      // still dont know how the tanstackstart api calling convention for "server only" will
+      // evolve with respect to transactions.
+      await db.transaction().execute(async (trx) => {
+        // Soft delete the patient
+        await trx
+          .updateTable(Patient.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("id", "=", id)
+          .execute();
+
+        // Soft delete the patient additional attributes
+        await trx
+          .updateTable(PatientAdditionalAttribute.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("patient_id", "=", id)
+          .execute();
+
+        // Soft delete the appointments
+        await trx
+          .updateTable(Appointment.Table.name)
+          .set({
+            is_deleted: true,
+            deleted_at: sql`now()::timestamp with time zone`,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("patient_id", "=", id)
+          .execute();
+
+        // Soft delete the prescriptions
+        await trx
+          .updateTable(Prescription.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("patient_id", "=", id)
+          .execute();
+
+        // Soft delete the visits
+        await trx
+          .updateTable(Visit.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("id", "=", id)
+          .execute();
+
+        // Soft delete the events
+        await trx
+          .updateTable(Event.Table.name)
+          .set({
+            is_deleted: true,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
+          .where("id", "=", id)
+          .execute();
+      });
+    });
+  }
 
   // export const ignorePatientRowFields = [
   //   "metadata",
@@ -591,6 +725,17 @@ namespace Patient {
   //   "created_at",
   //   "updated_at",
   // ];
+
+  export namespace Sync {
+    export const upsertFromDelta = serverOnly(
+      async (delta: Patient.EncodedT) => {
+        await API.upsert(delta);
+      }
+    );
+    export const deleteFromDelta = serverOnly(async (id: string) => {
+      await API.softDelete(id);
+    });
+  }
 }
 
 export default Patient;

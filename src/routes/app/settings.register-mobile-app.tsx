@@ -9,6 +9,10 @@ function RouteComponent() {
   const code = window.location.origin;
   return (
     <div>
+      <h1 className="text-2xl font-bold mb-6">Register Mobile App</h1>
+      <p className="mb-6">
+        Scan the QR code with the mobile app to register it.
+      </p>
       <QRCodeSVG
         style={{ padding: 20 }}
         bgColor={"#fff"}

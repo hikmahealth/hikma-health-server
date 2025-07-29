@@ -18,6 +18,8 @@ import { SelectInput } from "@/components/select-input";
 import Prescription from "@/models/prescription";
 import upperFirst from "lodash/upperFirst";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/app/prescriptions/")({
   component: RouteComponent,
@@ -46,12 +48,18 @@ function RouteComponent() {
 
   return (
     <div className="container py-6">
-      <h1 className="text-2xl font-bold mb-6">Prescriptions</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Prescriptions</h1>
+        <Button asChild>
+          <Link to="/app/prescriptions/edit/$" params={{ _splat: "new" }}>
+            Add New Prescription
+          </Link>
+        </Button>
+      </div>
 
       <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
-            <TableCaption>A list of all prescriptions</TableCaption>
             <TableHeader>
               <TableRow>
                 <TableHead>Patient ID</TableHead>

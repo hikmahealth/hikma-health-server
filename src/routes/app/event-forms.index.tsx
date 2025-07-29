@@ -4,6 +4,15 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import EventForm from "@/models/event-form";
 import { toast } from "sonner";
 import { Link } from "@tanstack/react-router";
@@ -95,80 +104,83 @@ function RouteComponent() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Event Forms</h1>
-        <Link to="/app/event-forms/edit">
+        <Link to="/app/event-forms/edit/$" params={{ _splat: "new" }}>
           <Button>Create New Form</Button>
         </Link>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="p-3 border-b">Snapshot</th>
-              <th className="p-3 border-b">Editable</th>
-              <th className="p-3 border-b">Name</th>
-              <th className="p-3 border-b">Description</th>
-              <th className="p-3 border-b">Created</th>
-              <th className="p-3 border-b">Updated</th>
-              <th className="p-3 border-b">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {forms.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="p-3 text-center">
-                  No forms available
-                </td>
-              </tr>
-            ) : (
-              forms.map((form) => (
-                <tr key={form.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">
-                    <Checkbox
-                      checked={form.is_snapshot_form}
-                      onCheckedChange={() =>
-                        handleSnapshotToggle(form.id, !form.is_snapshot_form)
-                      }
-                    />
-                  </td>
-                  <td className="p-3">
-                    <Checkbox
-                      checked={form.is_editable}
-                      onCheckedChange={() =>
-                        handleEditableToggle(form.id, !form.is_editable)
-                      }
-                    />
-                  </td>
-                  <td className="p-3">{form.name || "—"}</td>
-                  <td className="p-3">{form.description || "—"}</td>
-                  <td className="p-3">
-                    {format(form.created_at, "yyyy-MM-dd")}
-                  </td>
-                  <td className="p-3">
-                    {format(form.updated_at, "yyyy-MM-dd")}
-                  </td>
-                  <td className="p-3 space-x-2">
-                    <Link to={`/app/event-forms/edit/${form.id}`}>
-                      <Button variant="outline" size="sm">
-                        Edit
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableCaption>Event Forms</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Snapshot</TableHead>
+                <TableHead>Editable</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {forms.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center">
+                    No forms available
+                  </TableCell>
+                </TableRow>
+              ) : (
+                forms.map((form) => (
+                  <TableRow key={form.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={form.is_snapshot_form}
+                        onCheckedChange={() =>
+                          handleSnapshotToggle(form.id, !form.is_snapshot_form)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={form.is_editable}
+                        onCheckedChange={() =>
+                          handleEditableToggle(form.id, !form.is_editable)
+                        }
+                      />
+                    </TableCell>
+                    <TableCell>{form.name || "—"}</TableCell>
+                    <TableCell>{form.description || "—"}</TableCell>
+                    <TableCell>
+                      {format(form.created_at, "yyyy-MM-dd")}
+                    </TableCell>
+                    <TableCell>
+                      {format(form.updated_at, "yyyy-MM-dd")}
+                    </TableCell>
+                    <TableCell className="space-x-2">
+                      <Link to={`/app/event-forms/edit/${form.id}`}>
+                        <Button variant="outline" size="sm">
+                          Edit
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(form.id)}
+                      >
+                        Delete
                       </Button>
-                    </Link>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(form.id)}
-                    >
-                      Delete
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

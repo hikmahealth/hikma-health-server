@@ -75,11 +75,13 @@ function RouteComponent() {
   };
 
   return (
-    <div className="container mx-auto py-6">
+    <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Users</h1>
         <Button asChild>
-          <Link to="/app/users/edit">Add New User</Link>
+          <Link to="/app/users/edit/$" params={{ _splat: "new" }}>
+            Add New User
+          </Link>
         </Button>
       </div>
 

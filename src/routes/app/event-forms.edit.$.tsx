@@ -62,7 +62,7 @@ export const Route = createFileRoute("/app/event-forms/edit/$")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const formId = params._splat;
-    if (!formId) {
+    if (!formId || formId === "new") {
       return { form: null };
     }
     return { form: await getFormById({ data: { id: formId } }) };
