@@ -1,5 +1,3 @@
-import { r } from "node_modules/@faker-js/faker/dist/airline-BUL6NtOJ";
-
 // Add SSL configuration based on environment
 export const getDatabaseSSLConfig = () => {
   // If we're using DATABASE_URL (production/staging), enable SSL
@@ -29,7 +27,7 @@ export const getDatabaseConfig = (): Record<string, any> => {
 
     if (dbProto !== "postgresql:") {
       throw new Error(
-        "Using a non postgresql database. HH only supports PostgreSQL.",
+        "Using a non postgresql database. HH only supports PostgreSQL."
       );
     }
 
@@ -47,7 +45,7 @@ export const getDatabaseConfig = (): Record<string, any> => {
       databaseUrlAzure.split(" ").map((pair) => {
         const [key, value] = pair.split("=");
         return [key, value];
-      }),
+      })
     );
 
     pgUser = connStrParams.user;
@@ -63,7 +61,7 @@ export const getDatabaseConfig = (): Record<string, any> => {
 
     if (!pgHost || !pgDb || !pgUser || !pgPassword) {
       throw new Error(
-        "Missing database configuration. Please set DB_HOST, DB_NAME, DB_USER, and DB_PASSWORD environment variables.",
+        "Missing database configuration. Please set DB_HOST, DB_NAME, DB_USER, and DB_PASSWORD environment variables."
       );
     }
   }
