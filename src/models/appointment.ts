@@ -12,7 +12,12 @@ import {
 } from "kysely";
 import Visit from "./visit";
 import { v1 as uuidV1 } from "uuid";
-import { isValidUUID, safeStringify } from "@/lib/utils";
+import {
+  isValidUUID,
+  safeJSONParse,
+  safeStringify,
+  toSafeDateString,
+} from "@/lib/utils";
 import Patient from "./patient";
 import User from "./user";
 import Clinic from "./clinic";
@@ -211,12 +216,18 @@ namespace Appointment {
               patient_id: appointment.patient_id,
               user_id: appointment.user_id,
               current_visit_id: visitId,
-              created_at: sql`now()::timestamp with time zone`,
-              updated_at: sql`now()::timestamp with time zone`,
+              created_at: sql`${toSafeDateString(
+                appointment.created_at
+              )}::timestamp with time zone`,
+              updated_at: sql`${toSafeDateString(
+                appointment.updated_at
+              )}::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
               server_created_at: sql`now()::timestamp with time zone`,
               deleted_at: null,
-              metadata: {} as any,
+              metadata: sql`${JSON.stringify(
+                safeJSONParse(appointment.metadata, {})
+              )}::jsonb`,
               duration: appointment.duration,
               reason: appointment.reason,
               notes: appointment.notes,
@@ -233,8 +244,12 @@ namespace Appointment {
                 patient_id: (eb) => eb.ref("excluded.patient_id"),
                 user_id: (eb) => eb.ref("excluded.user_id"),
                 current_visit_id: (eb) => eb.ref("excluded.current_visit_id"),
-                created_at: sql`now()::timestamp with time zone`,
-                updated_at: sql`now()::timestamp with time zone`,
+                created_at: sql`${toSafeDateString(
+                  appointment.created_at
+                )}::timestamp with time zone`,
+                updated_at: sql`${toSafeDateString(
+                  appointment.updated_at
+                )}::timestamp with time zone`,
                 last_modified: (eb) => sql`now()::timestamp with time zone`,
                 // server_created_at: (eb) => eb.ref("excluded.server_created_at"),
                 deleted_at: (eb) => eb.ref("excluded.deleted_at"),

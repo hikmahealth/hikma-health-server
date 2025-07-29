@@ -16,6 +16,7 @@ import Appointment from "./appointment";
 import Prescription from "./prescription";
 import Visit from "./visit";
 import Event from "./event";
+import { safeJSONParse, safeStringify, toSafeDateString } from "@/lib/utils";
 
 namespace Patient {
   // export type T = {
@@ -594,22 +595,30 @@ namespace Patient {
             : null,
           citizenship: patient.citizenship,
           hometown: patient.hometown,
-          additional_data: sql`${patient.additional_data}::jsonb`,
+          additional_data: sql`${JSON.stringify(
+            safeJSONParse(patient.additional_data, {})
+          )}::jsonb`,
           government_id: patient.government_id,
           external_patient_id: patient.external_patient_id,
           phone: patient.phone,
           sex: patient.sex,
           camp: patient.camp,
-          metadata: sql`${patient.metadata}::jsonb`,
+          metadata: sql`${JSON.stringify(
+            safeJSONParse(patient.metadata, {})
+          )}::jsonb`,
           is_deleted: patient.is_deleted,
-          created_at: sql`now()::timestamp with time zone`,
-          updated_at: sql`now()::timestamp with time zone`,
+          created_at: sql`${toSafeDateString(
+            patient.created_at
+          )}::timestamp with time zone`,
+          updated_at: sql`${toSafeDateString(
+            patient.updated_at
+          )}::timestamp with time zone`,
           last_modified: sql`now()::timestamp with time zone`,
           server_created_at: sql`now()::timestamp with time zone`,
           deleted_at: null,
         })
         .onConflict((oc) =>
-          oc.doUpdateSet({
+          oc.column("id").doUpdateSet({
             given_name: (eb) => eb.ref("excluded.given_name"),
             surname: (eb) => eb.ref("excluded.surname"),
             date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
@@ -623,7 +632,9 @@ namespace Patient {
             camp: (eb) => eb.ref("excluded.camp"),
             metadata: (eb) => eb.ref("excluded.metadata"),
             is_deleted: (eb) => eb.ref("excluded.is_deleted"),
-            updated_at: sql`now()::timestamp with time zone`,
+            updated_at: sql`${toSafeDateString(
+              patient.updated_at
+            )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
           })
         )

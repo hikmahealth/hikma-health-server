@@ -13,6 +13,7 @@ import {
 import Prescription from "./prescription";
 import Appointment from "./appointment";
 import Event from "./event";
+import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 
 namespace Visit {
   export type T = {
@@ -131,18 +132,24 @@ namespace Visit {
           provider_id: visit.provider_id,
           provider_name: visit.provider_name,
           check_in_timestamp: visit.check_in_timestamp
-            ? sql`${visit.check_in_timestamp}::timestamp with time zone`
+            ? sql`${toSafeDateString(
+                visit.check_in_timestamp
+              )}::timestamp with time zone`
             : null,
-          metadata: sql`${visit.metadata}::jsonb`,
+          metadata: sql`${safeJSONParse(visit.metadata, {})}::jsonb`,
           is_deleted: visit.is_deleted,
-          created_at: sql`now()::timestamp with time zone`,
-          updated_at: sql`now()::timestamp with time zone`,
+          created_at: sql`${toSafeDateString(
+            visit.created_at
+          )}::timestamp with time zone`,
+          updated_at: sql`${toSafeDateString(
+            visit.updated_at
+          )}::timestamp with time zone`,
           last_modified: sql`now()::timestamp with time zone`,
           server_created_at: sql`now()::timestamp with time zone`,
           deleted_at: null,
         })
         .onConflict((oc) =>
-          oc.doUpdateSet({
+          oc.column("id").doUpdateSet({
             patient_id: (eb) => eb.ref("excluded.patient_id"),
             clinic_id: (eb) => eb.ref("excluded.clinic_id"),
             provider_id: (eb) => eb.ref("excluded.provider_id"),

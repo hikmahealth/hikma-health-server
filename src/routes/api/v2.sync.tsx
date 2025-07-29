@@ -3,7 +3,7 @@ import User from "@/models/user";
 import Sync from "@/models/sync";
 import { serverOnly } from "@tanstack/react-start";
 
-export const ServerRoute = createServerFileRoute("/api/sync").methods({
+export const ServerRoute = createServerFileRoute("/api/v2/sync").methods({
   GET: async ({ request }) => {
     try {
       const user = await getAuthenticatedUserFromRequest(request);
@@ -22,6 +22,10 @@ export const ServerRoute = createServerFileRoute("/api/sync").methods({
       const migration = url.searchParams.get("migration");
 
       const dbChangeSet = await Sync.getDeltaRecords(last_synced_at);
+
+      console.log({
+        timestamp: Date.now(),
+      });
 
       return new Response(
         JSON.stringify({
@@ -50,6 +54,13 @@ export const ServerRoute = createServerFileRoute("/api/sync").methods({
           status: 401,
         });
       }
+
+      const url = new URL(request.url);
+      const last_synced_at = Number(
+        url.searchParams.get("last_pulled_at") || 0
+      );
+      const schemaVersion = url.searchParams.get("schemaVersion");
+      const migration = url.searchParams.get("migration");
 
       // expected body structure
       // { [s in 'events' | 'patients' | ....]: { "created": Array<dict[str, any]>, "updated": Array<dict[str, any]>, deleted: []str }}

@@ -221,6 +221,48 @@ export const tryParseDate = (input: unknown, defaultDate?: Date): Date => {
 };
 
 /**
+ * Safely converts various date formats to ISO string for database insertion
+ * @param {any} value - The date value to convert
+ * @returns {string} - ISO string or default value if invalid/empty
+ */
+export function toSafeDateString(
+  value: any,
+  defaultValue = new Date().toISOString()
+): string {
+  if (
+    value == null ||
+    value === "" ||
+    value === "null" ||
+    value === "undefined"
+  ) {
+    return defaultValue;
+  }
+
+  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
+    value = parseInt(value, 10);
+  }
+
+  try {
+    const date = new Date(value);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return defaultValue;
+    }
+
+    // Check if date is within reasonable range (1850 - 2120)
+    const year = date.getFullYear();
+    if (year < 1850 || year > 2120) {
+      return defaultValue;
+    }
+
+    return date.toISOString();
+  } catch (error) {
+    return defaultValue;
+  }
+}
+
+/**
  * Returns a truncated object containing the top N key-value pairs sorted by value,
  * with an "other" key summing the remaining values.
  *

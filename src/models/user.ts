@@ -274,14 +274,14 @@ namespace User {
    * @param {string} email - The user's email
    * @param {string} password - The user's password
    * @param {number} validHours - The number of hours the token is valid for
-   * @returns {Promise<Option.Option<{ user: User.T; token: string }>>} - The user if authentication is successful, null otherwise
+   * @returns {Promise<{ user: User.EncodedT; token: string }>} - The user if authentication is successful, null otherwise
    */
   export const signIn = serverOnly(
     async (
       email: string,
       password: string,
       validHours: number = 2,
-    ): Promise<Option.Option<{ user: User.T; token: string }>> => {
+    ): Promise<{ user: User.EncodedT; token: string }> => {
       const user = await db
         .selectFrom(Table.name)
         .where("email", "=", email)
@@ -289,20 +289,29 @@ namespace User {
         .selectAll()
         .executeTakeFirst();
 
-      return Option.match(Option.fromNullable(user), {
-        onNone: () => Option.none(),
-        onSome: async (user) => {
-          const hashedPassword = user.hashed_password;
-          if (await bcrypt.compare(password, hashedPassword)) {
-            const token = await Token.create(
-              user.id,
-              new Date(Date.now() + validHours * 60 * 60 * 1000),
-            );
-            return Option.some({ user: User.fromDbEntry(user), token });
-          }
-          return Option.none();
-        },
-      });
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const hashedPassword = user.hashed_password;
+      if (!(await bcrypt.compare(password, hashedPassword))) {
+        throw new Error("Invalid password");
+      }
+
+      const userEntry = User.fromDbEntry(user);
+      if (Either.isLeft(userEntry)) {
+        throw new Error("Failed to parse user data");
+      }
+
+      const token = await Token.create(
+        user.id,
+        new Date(Date.now() + validHours * 60 * 60 * 1000),
+      );
+
+      return {
+        user: Schema.encodeSync(UserSchema)(userEntry.right),
+        token,
+      };
     },
   );
 

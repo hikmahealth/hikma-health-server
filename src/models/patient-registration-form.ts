@@ -13,7 +13,7 @@ import { v1 as uuidv1 } from "uuid";
 import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
 import { format } from "date-fns";
-import { mapObjectValues } from "@/lib/utils";
+import { mapObjectValues, toSafeDateString } from "@/lib/utils";
 
 namespace PatientRegistrationForm {
   export type T = {
@@ -154,10 +154,14 @@ namespace PatientRegistrationForm {
           // metadata: form.metadata,
           metadata: sql`${JSON.stringify(form.metadata)}::jsonb`,
           is_deleted: false,
-          created_at: sql`now()`,
-          updated_at: sql`now()`,
-          last_modified: sql`now()`,
-          server_created_at: sql`now()`,
+          created_at: sql`${toSafeDateString(
+            form.created_at
+          )}::timestamp with time zone`,
+          updated_at: sql`${toSafeDateString(
+            form.updated_at
+          )}::timestamp with time zone`,
+          last_modified: sql`now()::timestamp with time zone`,
+          server_created_at: sql`now()::timestamp with time zone`,
           deleted_at: null,
         })
         .onConflict((oc) =>
@@ -167,9 +171,11 @@ namespace PatientRegistrationForm {
             fields: sql`${JSON.stringify(form.fields)}::jsonb`,
             metadata: sql`${JSON.stringify(form.metadata)}::jsonb`,
             is_deleted: false,
-            updated_at: sql`now()`,
-            last_modified: sql`now()`,
-            server_created_at: sql`now()`,
+            updated_at: sql`${toSafeDateString(
+              form.updated_at
+            )}::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+            server_created_at: sql`now()::timestamp with time zone`,
             deleted_at: null,
           })
         )

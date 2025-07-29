@@ -14,7 +14,7 @@ import { serverOnly } from "@tanstack/react-start";
 import type Clinic from "./clinic";
 import type Patient from "./patient";
 import type User from "./user";
-import { isValidUUID } from "@/lib/utils";
+import { isValidUUID, safeJSONParse, toSafeDateString } from "@/lib/utils";
 import { v1 as uuidV1 } from "uuid";
 import Visit from "./visit";
 
@@ -242,19 +242,31 @@ namespace Prescription {
               visit_id: prescription.visit_id || null,
               priority: prescription.priority,
               expiration_date: prescription.expiration_date
-                ? sql`${prescription.expiration_date}::timestamp with time zone`
+                ? sql`${toSafeDateString(
+                    prescription.expiration_date
+                  )}::timestamp with time zone`
                 : null,
-              prescribed_at: sql`now()::timestamp with time zone`,
+              prescribed_at: sql`${toSafeDateString(
+                prescription.prescribed_at
+              )}::timestamp with time zone`,
               filled_at: prescription.filled_at
-                ? sql`${prescription.filled_at}::timestamp with time zone`
+                ? sql`${toSafeDateString(
+                    prescription.filled_at
+                  )}::timestamp with time zone`
                 : null,
               status: prescription.status,
-              items: sql`${prescription.items || []}::jsonb`,
+              items: sql`${JSON.stringify(
+                safeJSONParse(prescription.items, [])
+              )}::jsonb`,
               notes: prescription.notes || "",
               metadata: {} as any,
               is_deleted: false,
-              created_at: sql`now()::timestamp with time zone`,
-              updated_at: sql`now()::timestamp with time zone`,
+              created_at: sql`${toSafeDateString(
+                prescription.created_at
+              )}::timestamp with time zone`,
+              updated_at: sql`${toSafeDateString(
+                prescription.updated_at
+              )}::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
               server_created_at: sql`now()::timestamp with time zone`,
               deleted_at: null,
@@ -272,7 +284,9 @@ namespace Prescription {
                 items: (eb) => eb.ref("excluded.items"),
                 notes: (eb) => eb.ref("excluded.notes"),
                 metadata: (eb) => eb.ref("excluded.metadata"),
-                updated_at: sql`now()::timestamp with time zone`,
+                updated_at: sql`${toSafeDateString(
+                  prescription.updated_at
+                )}::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
               });
             })

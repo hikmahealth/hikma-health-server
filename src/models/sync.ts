@@ -12,36 +12,36 @@ import EventForm from "./event-form";
 import PatientRegistrationForm from "./patient-registration-form";
 
 namespace Sync {
-  /**
-   * These entities are synced to mobile. They should not contain information that is not needed for mobile use.
-   * Do not sync users.
-   * When adding new entities that need to be synced to mobile, add them to ENTITIES_TO_PUSH_TO_MOBILE
-   */
-  const ENTITIES_TO_PUSH_TO_MOBILE = [
-    Patient,
-    PatientAdditionalAttribute,
-    Clinic,
-    Visit,
-    Event,
-    EventForm,
-    PatientRegistrationForm,
-    Appointment,
-    Prescription,
-    // Add more syncable entities here
-  ];
+    /**
+     * These entities are synced to mobile. They should not contain information that is not needed for mobile use.
+     * Do not sync users.
+     * When adding new entities that need to be synced to mobile, add them to ENTITIES_TO_PUSH_TO_MOBILE
+     */
+    const ENTITIES_TO_PUSH_TO_MOBILE = [
+        Patient,
+        PatientAdditionalAttribute,
+        Clinic,
+        Visit,
+        Event,
+        EventForm,
+        PatientRegistrationForm,
+        Appointment,
+        Prescription,
+        // Add more syncable entities here
+    ];
 
-  /**
-   * These entities are synced from mobile.
-   * When adding new entities that need to be synced from mobile, add them to ENTITIES_TO_PULL_FROM_MOBILE
-   */
-  const ENTITIES_TO_PULL_FROM_MOBILE = [
-    Patient,
-    PatientAdditionalAttribute,
-    Visit,
-    Event,
-    Appointment,
-    Prescription,
-  ];
+    /**
+     * These entities are synced from mobile.
+     * When adding new entities that need to be synced from mobile, add them to ENTITIES_TO_PULL_FROM_MOBILE
+     */
+    const ENTITIES_TO_PULL_FROM_MOBILE = [
+        Patient,
+        PatientAdditionalAttribute,
+        Visit,
+        Event,
+        Appointment,
+        Prescription,
+    ];
     
     
     const pushTableNameModelMap = ENTITIES_TO_PULL_FROM_MOBILE.reduce((acc, entity) => {
@@ -51,76 +51,71 @@ namespace Sync {
     
     export type PostTableName = typeof ENTITIES_TO_PULL_FROM_MOBILE[number]["Table"]["name"];
 
-  // Core types for WatermelonDB sync
-  type SyncableEntity = {
-    getDeltaRecords(lastSyncedAt: number): DeltaData;
-    applyDeltaChanges(deltaData: DeltaData, lastSyncedAt: number): void;
-  };
-
-  export type DeltaData = {
-    created: Record<string, any>[];
-    updated: Record<string, any>[];
-    deleted: string[];
-    // toDict(): { created: any[]; updated: any[]; deleted: string[] };
-  };
-
-  /**
-   * Method to init a new DeltaData instance
-   * @param {Record<string, any>[]} created - Array of created records
-   * @param {Record<string, any>[]} updated - Array of updated records
-   * @param {string[]} deleted - Array of deleted record IDs
-   * @returns {DeltaData}
-   */
-  function createDeltaData(
-    created: Record<string, any>[],
-    updated: Record<string, any>[],
-    deleted: string[]
-  ): DeltaData {
-    return {
-      created,
-      updated,
-      deleted,
+    // Core types for WatermelonDB sync
+    type SyncableEntity = {
+        getDeltaRecords(lastSyncedAt: number): DeltaData;
+        applyDeltaChanges(deltaData: DeltaData, lastSyncedAt: number): void;
     };
-  }
 
-  // Pull endpoint types
-  type PullRequest = {
-    last_pulled_at: number;
-    schemaVersion?: number;
-    migration?: any;
-  };
-
-  type PullResponse = {
-    changes: {
-      [tableKey: string]: {
+    export type DeltaData = {
         created: Record<string, any>[];
         updated: Record<string, any>[];
         deleted: string[];
-      };
+        // toDict(): { created: any[]; updated: any[]; deleted: string[] };
     };
-    timestamp: number;
-  };
 
-  // Push endpoint types
-  export type PushRequest = {
-    last_pulled_at: number;
-    schemaVersion?: number;
-    migration?: any;
-    body: {
-      [tableKey in PostTableName]: {
-        created: Record<string, any>[];
-        updated: Record<string, any>[];
-        deleted: string[];
-      };
+    /**
+     * Method to init a new DeltaData instance
+     * @param {Record<string, any>[]} created - Array of created records
+     * @param {Record<string, any>[]} updated - Array of updated records
+     * @param {string[]} deleted - Array of deleted record IDs
+     * @returns {DeltaData}
+     */
+    function createDeltaData(
+        created: Record<string, any>[],
+        updated: Record<string, any>[],
+        deleted: string[]
+    ): DeltaData {
+        return {
+            created,
+            updated,
+            deleted,
+        };
+    }
+
+    // Pull endpoint types
+    type PullRequest = {
+        last_pulled_at: number;
+        schemaVersion?: number;
+        migration?: any;
     };
-  };
 
-  type PushResponse = {
-    ok: boolean;
-    timestamp: string;
-  };
+    type PullResponse = {
+        changes: {
+            [tableKey: string]: {
+                created: Record<string, any>[];
+                updated: Record<string, any>[];
+                deleted: string[];
+            };
+        };
+        timestamp: number;
+    };
 
-  type DBChangeSet = PullResponse["changes"];
+    // Push endpoint types
+    export type PushRequest = {
+        [tableKey in PostTableName]: {
+            created: Record<string, any>[];
+            updated: Record<string, any>[];
+            deleted: string[];
+        };
+    };
+
+    type PushResponse = {
+        ok: boolean;
+        timestamp: string;
+    };
+
+    type DBChangeSet = PullResponse["changes"];
 
     
     /**
@@ -128,53 +123,53 @@ namespace Sync {
      * @param lastSyncedAt 
      * @returns 
      */
-  export const getDeltaRecords = async (
-    lastSyncedAt: number
-  ): Promise<DBChangeSet> => {
-    const result: DBChangeSet = {};
+    export const getDeltaRecords = async (
+        lastSyncedAt: number
+    ): Promise<DBChangeSet> => {
+        const result: DBChangeSet = {};
 
-    for (const entity of ENTITIES_TO_PUSH_TO_MOBILE) {
-      const table_name = entity.Table.name;
+        for (const entity of ENTITIES_TO_PUSH_TO_MOBILE) {
+            const table_name = entity.Table.name;
 
-      // Query for new records created after last sync
-      const newRecords = await db
-        .selectFrom(table_name)
-        .where("server_created_at", ">", new Date(lastSyncedAt))
-        .where("deleted_at", "is", null)
-        .where("is_deleted", "=", false)
-        .selectAll()
-        .execute();
+            // Query for new records created after last sync
+            const newRecords = await db
+                .selectFrom(table_name)
+                .where("server_created_at", ">", new Date(lastSyncedAt))
+                .where("deleted_at", "is", null)
+                .where("is_deleted", "=", false)
+                .selectAll()
+                .execute();
 
-      // Query for records updated since last sync (but created before)
-      const updatedRecords = await db
-        .selectFrom(table_name)
-        .where("last_modified", ">", new Date(lastSyncedAt))
-        .where("server_created_at", "<", new Date(lastSyncedAt))
-        .where("deleted_at", "is", null)
-        .where("is_deleted", "=", false)
-        .selectAll()
-        .execute();
+            // Query for records updated since last sync (but created before)
+            const updatedRecords = await db
+                .selectFrom(table_name)
+                .where("last_modified", ">", new Date(lastSyncedAt))
+                .where("server_created_at", "<", new Date(lastSyncedAt))
+                .where("deleted_at", "is", null)
+                .where("is_deleted", "=", false)
+                .selectAll()
+                .execute();
 
-      // Query for records deleted since last sync
-      const deletedRecords = await db
-        .selectFrom(table_name)
-        .where("deleted_at", ">", new Date(lastSyncedAt))
-        .where("is_deleted", "=", true)
-        .select("id")
-        .execute();
+            // Query for records deleted since last sync
+            const deletedRecords = await db
+                .selectFrom(table_name)
+                .where("deleted_at", ">", new Date(lastSyncedAt))
+                .where("is_deleted", "=", true)
+                .select("id")
+                .execute();
 
-      const deltaData = createDeltaData(
-        newRecords,
-        updatedRecords,
-        deletedRecords.map((record) => record.id)
-      );
+            const deltaData = createDeltaData(
+                newRecords,
+                updatedRecords,
+                deletedRecords.map((record) => record.id)
+            );
 
-      // Add records to result
-      result[table_name] = deltaData;
-    }
+            // Add records to result
+            result[table_name] = deltaData;
+        }
 
-    return result;
-  };
+        return result;
+    };
     
     
     /**
@@ -183,25 +178,30 @@ namespace Sync {
      * @param deltaData 
      */
     export const persistClientChanges = async (data: PushRequest): Promise<void> => {
+        console.log("Starting to persist client changes", data);
         // Process the delta data from the client
-      for (const [tableName, newDeltaJson] of Object.entries(data.body) as [PostTableName, Sync.DeltaData][]) {
-        // Get the entity delta values with defaults
-        const deltaData = {
-          created: newDeltaJson?.created || [],
-          updated: newDeltaJson?.updated || [],
-          deleted: newDeltaJson?.deleted || [],
-        };
-          
-          for (const record of deltaData.created.concat(deltaData.updated)) {
-            pushTableNameModelMap[tableName].Sync.upsertFromDelta(record as typeof pushTableNameModelMap[typeof tableName].EncodedT);
-          }
+        for (const [tableName, newDeltaJson] of Object.entries(data) as [PostTableName, Sync.DeltaData][]) {
+            console.log(`Processing table: ${tableName}`);
+            // Get the entity delta values with defaults
+            const deltaData = {
+                created: newDeltaJson?.created || [],
+                updated: newDeltaJson?.updated || [],
+                deleted: newDeltaJson?.deleted || [],
+            };
+    
+            console.log(`${tableName} - Records to create: ${deltaData.created.length}, update: ${deltaData.updated.length}, delete: ${deltaData.deleted.length}`);
+    
+            for (const record of deltaData.created.concat(deltaData.updated)) {
+                console.log(`Upserting ${tableName} record:`, record.id);
+                await pushTableNameModelMap[tableName].Sync.upsertFromDelta(record as typeof pushTableNameModelMap[typeof tableName].EncodedT);
+            }
 
-          for (const id of deltaData.deleted) {
-            pushTableNameModelMap[tableName].Sync.deleteFromDelta(id);
-          }
-
-        
-      }
+            for (const id of deltaData.deleted) {
+                console.log(`Deleting ${tableName} record:`, id);
+                await pushTableNameModelMap[tableName].Sync.deleteFromDelta(id);
+            }
+        }
+        console.log("Finished persisting client changes");
     };
 }
 

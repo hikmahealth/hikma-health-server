@@ -10,6 +10,7 @@ import type {
 import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
 import { sql } from "kysely";
+import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 
 namespace PatientAdditionalAttribute {
   export type T = {
@@ -118,19 +119,27 @@ namespace PatientAdditionalAttribute {
             number_value: attribute.number_value || null,
             string_value: attribute.string_value || null,
             date_value: attribute.date_value
-              ? sql`${attribute.date_value}::timestamp with time zone`
+              ? sql`${toSafeDateString(
+                  attribute.date_value
+                )}::timestamp with time zone`
               : null,
             boolean_value: attribute.boolean_value || null,
-            metadata: sql`${attribute.metadata}::jsonb`,
+            metadata: sql`${JSON.stringify(
+              safeJSONParse(attribute.metadata, {})
+            )}::jsonb`,
             is_deleted: attribute.is_deleted,
-            created_at: sql`now()::timestamp with time zone`,
-            updated_at: sql`now()::timestamp with time zone`,
+            created_at: sql`${toSafeDateString(
+              attribute.created_at
+            )}::timestamp with time zone`,
+            updated_at: sql`${toSafeDateString(
+              attribute.updated_at
+            )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
             server_created_at: sql`now()::timestamp with time zone`,
             deleted_at: null,
           })
           .onConflict((oc) =>
-            oc.doUpdateSet({
+            oc.column("id").doUpdateSet({
               patient_id: (eb) => eb.ref("excluded.patient_id"),
               attribute_id: (eb) => eb.ref("excluded.attribute_id"),
               attribute: (eb) => eb.ref("excluded.attribute"),
