@@ -1,5 +1,10 @@
 import db from "@/db";
-import { isValidUUID, safeStringify } from "@/lib/utils";
+import {
+  isValidUUID,
+  safeJSONParse,
+  safeStringify,
+  toSafeDateString,
+} from "@/lib/utils";
 import { serverOnly } from "@tanstack/react-start";
 import { Option } from "effect";
 import {
@@ -156,11 +161,19 @@ namespace Event {
           .values({
             id: id || event.id || uuidV1(),
             patient_id: event.patient_id,
-            form_data: sql`${event.form_data}::jsonb`,
-            metadata: sql`${event.metadata}::jsonb`,
+            form_data: sql`${JSON.stringify(
+              safeJSONParse(event.form_data, [])
+            )}::jsonb`,
+            metadata: sql`${JSON.stringify(
+              safeJSONParse(event.metadata, {})
+            )}::jsonb`,
             is_deleted: false,
-            created_at: sql`now()::timestamp with time zone`,
-            updated_at: sql`now()::timestamp with time zone`,
+            created_at: sql`${toSafeDateString(
+              event.created_at
+            )}::timestamp with time zone`,
+            updated_at: sql`${toSafeDateString(
+              event.updated_at
+            )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
             server_created_at: sql`now()::timestamp with time zone`,
             deleted_at: null,

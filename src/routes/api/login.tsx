@@ -15,9 +15,9 @@ export const ServerRoute = createServerFileRoute("/api/login").methods({
     const apiSignInUrl = new URL("/api/auth/sign-in", request.url);
     const forwardedRequest = new Request(apiSignInUrl, request);
     const response = await fetch(forwardedRequest);
-    const data = await response.json();
+    const { user, token } = await response.json();
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ ...user, token }), {
       headers: { "Content-Type": "application/json" },
       status: response.status,
     });
