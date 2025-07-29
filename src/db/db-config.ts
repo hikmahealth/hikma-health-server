@@ -1,3 +1,18 @@
+import { r } from "node_modules/@faker-js/faker/dist/airline-BUL6NtOJ";
+
+// Add SSL configuration based on environment
+export const getDatabaseSSLConfig = () => {
+  // If we're using DATABASE_URL (production/staging), enable SSL
+  // if (process.env.DATABASE_URL) {
+  //   return true;
+  // }
+
+  // For local development, check if SSL is explicitly enabled
+  const sslEnabled =
+    process.env.DB_SSL === "true" || process.env.DB_SSL === "1";
+  return sslEnabled;
+};
+
 // Extract database configuration from environment variables
 export const getDatabaseConfig = (): Record<string, any> => {
   const databaseUrl = process.env.DATABASE_URL;
@@ -59,5 +74,10 @@ export const getDatabaseConfig = (): Record<string, any> => {
     database: pgDb,
     user: pgUser,
     password: pgPassword,
+    ssl: !getDatabaseSSLConfig()
+      ? {
+          rejectUnauthorized: false,
+        }
+      : undefined,
   };
 };
