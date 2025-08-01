@@ -7,6 +7,8 @@ import Select from "react-select";
 import { Label } from "../ui/label";
 import { cn } from "@/lib/utils";
 import AsyncSelect from "react-select/async";
+import { stringSimilarity } from "@/lib/utils";
+import MiniSearch from "minisearch";
 
 type Props = {
   name: string;
@@ -16,6 +18,22 @@ type Props = {
   multi?: boolean;
 };
 
+let miniSearch = new MiniSearch({
+  fields: ["desc", "code"], // fields to index for full-text search
+  storeFields: ["desc", "code"], // fields to return with search results
+  idField: "code",
+  searchOptions: {
+    // prefix: true,
+    fuzzy: 1,
+    boost: {
+      desc: 5,
+      code: 1,
+    },
+  },
+});
+
+miniSearch.addAll(icd11);
+
 export function DiagnosisSelect({
   name,
   description,
@@ -23,23 +41,26 @@ export function DiagnosisSelect({
   required,
   multi,
 }: Props) {
-  const [data, setData] = useState(
-    icd11.map((item) => ({
-      value: `${item.desc} (${item.code})`,
-      label: `${item.desc} (${item.code})`,
-    }))
-  );
+  // const [data, setData] = useState(
+  //   icd11.map((item) => ({
+  //     value: `${item.desc} (${item.code})`,
+  //     label: `${item.desc} (${item.code})`,
+  //   }))
+  // );
 
   const loadOptions = (
     inputValue: string,
     callback: (options: { value: string; label: string }[]) => void
   ) => {
     callback(
-      data
-        .filter((item) =>
-          item.label.toLowerCase().includes(inputValue.toLowerCase())
-        )
-        .slice(0, 10)
+      miniSearch
+        .search(inputValue)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 25)
+        .map((item) => ({
+          value: `${item.desc} (${item.code})`,
+          label: `${item.desc} (${item.code})`,
+        }))
     );
   };
 
@@ -62,6 +83,7 @@ export function DiagnosisSelect({
           isMulti={multi}
           loadOptions={loadOptions}
           defaultOptions
+          placeholder="Search for a diagnosis..."
         />
       </div>
     </>
