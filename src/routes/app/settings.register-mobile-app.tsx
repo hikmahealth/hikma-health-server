@@ -6,7 +6,9 @@ export const Route = createFileRoute("/app/settings/register-mobile-app")({
 
 function RouteComponent() {
   // the code is the current URL base URL
-  const code = window.location.origin;
+  const { hostname, protocol, origin } = window.location;
+  // const code = `${protocol}//${hostname}`;
+  const code = origin;
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Register Mobile App</h1>

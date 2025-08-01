@@ -31,6 +31,7 @@ import { Route as DemoFormAddressRouteImport } from './routes/demo.form.address'
 import { Route as AppSettingsRegisterMobileAppRouteImport } from './routes/app/settings.register-mobile-app'
 import { Route as AppPatientsRegisterRouteImport } from './routes/app/patients.register'
 import { Route as AppPatientsCustomizeRegistrationFormRouteImport } from './routes/app/patients.customize-registration-form'
+import { Route as AppDataEventsRouteImport } from './routes/app/data.events'
 import { Route as AppUsersEditSplatRouteImport } from './routes/app/users.edit.$'
 import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/prescriptions.edit.$'
 import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-forms.edit.$'
@@ -148,6 +149,11 @@ const AppPatientsCustomizeRegistrationFormRoute =
     path: '/patients/customize-registration-form',
     getParentRoute: () => AppRoute,
   } as any)
+const AppDataEventsRoute = AppDataEventsRouteImport.update({
+  id: '/data/events',
+  path: '/data/events',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppUsersEditSplatRoute = AppUsersEditSplatRouteImport.update({
   id: '/users/edit/$',
   path: '/users/edit/$',
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/app/': typeof AppIndexRoute
+  '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/app': typeof AppIndexRoute
+  '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/app/': typeof AppIndexRoute
+  '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
@@ -302,6 +311,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/app/'
+    | '/app/data/events'
     | '/app/patients/customize-registration-form'
     | '/app/patients/register'
     | '/app/settings/register-mobile-app'
@@ -328,6 +338,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/app'
+    | '/app/data/events'
     | '/app/patients/customize-registration-form'
     | '/app/patients/register'
     | '/app/settings/register-mobile-app'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/demo/table'
     | '/demo/tanstack-query'
     | '/app/'
+    | '/app/data/events'
     | '/app/patients/customize-registration-form'
     | '/app/patients/register'
     | '/app/settings/register-mobile-app'
@@ -598,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPatientsCustomizeRegistrationFormRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/data/events': {
+      id: '/app/data/events'
+      path: '/data/events'
+      fullPath: '/app/data/events'
+      preLoaderRoute: typeof AppDataEventsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/users/edit/$': {
       id: '/app/users/edit/$'
       path: '/users/edit/$'
@@ -691,6 +710,7 @@ declare module '@tanstack/react-start/server' {
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
+  AppDataEventsRoute: typeof AppDataEventsRoute
   AppPatientsCustomizeRegistrationFormRoute: typeof AppPatientsCustomizeRegistrationFormRoute
   AppPatientsRegisterRoute: typeof AppPatientsRegisterRoute
   AppSettingsRegisterMobileAppRoute: typeof AppSettingsRegisterMobileAppRoute
@@ -709,6 +729,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
+  AppDataEventsRoute: AppDataEventsRoute,
   AppPatientsCustomizeRegistrationFormRoute:
     AppPatientsCustomizeRegistrationFormRoute,
   AppPatientsRegisterRoute: AppPatientsRegisterRoute,
