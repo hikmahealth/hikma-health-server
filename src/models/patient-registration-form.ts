@@ -146,7 +146,7 @@ namespace PatientRegistrationForm {
    * @param form The form to upsert
    */
   export const upsertPatientRegistrationForm = serverOnly(
-    async (form: PatientRegistrationForm.T) => {
+    async (form: PatientRegistrationForm.EncodedT) => {
       // NOTE: it is possible for the form to not have an id (if it is a new form)
       const id = Option.match(Option.fromNullable(form.id), {
         onNone: () => uuidv1(),
@@ -157,12 +157,13 @@ namespace PatientRegistrationForm {
           return id;
         },
       });
+      console.log(form);
       return db
         .insertInto(Table.name)
         .values({
           id,
-          clinic_id: Option.getOrElse(form.clinic_id, () => null),
-          name: Option.getOrElse(form.name, () => ""),
+          clinic_id: form.clinic_id,
+          name: form.name,
           // fields: form.fields,
           fields: sql`${JSON.stringify(form.fields)}::jsonb`,
           // metadata: form.metadata,
@@ -180,8 +181,8 @@ namespace PatientRegistrationForm {
         })
         .onConflict((oc) =>
           oc.column("id").doUpdateSet({
-            clinic_id: Option.getOrElse(form.clinic_id, () => null),
-            name: Option.getOrElse(form.name, () => ""),
+            clinic_id: form.clinic_id,
+            name: form.name,
             fields: sql`${JSON.stringify(form.fields)}::jsonb`,
             metadata: sql`${JSON.stringify(form.metadata)}::jsonb`,
             is_deleted: false,
