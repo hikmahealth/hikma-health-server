@@ -594,6 +594,8 @@ namespace Patient {
             ? sql`${patient.date_of_birth}::timestamp with time zone`
             : null,
           citizenship: patient.citizenship,
+          photo_url: patient.photo_url || null,
+          image_timestamp: patient.image_timestamp || null,
           hometown: patient.hometown,
           additional_data: sql`${JSON.stringify(
             safeJSONParse(patient.additional_data, {})
@@ -623,6 +625,8 @@ namespace Patient {
             surname: (eb) => eb.ref("excluded.surname"),
             date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
             citizenship: (eb) => eb.ref("excluded.citizenship"),
+            photo_url: (eb) => eb.ref("excluded.photo_url"),
+            image_timestamp: (eb) => eb.ref("excluded.image_timestamp"),
             hometown: (eb) => eb.ref("excluded.hometown"),
             additional_data: (eb) => eb.ref("excluded.additional_data"),
             government_id: (eb) => eb.ref("excluded.government_id"),

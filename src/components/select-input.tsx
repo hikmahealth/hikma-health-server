@@ -163,7 +163,7 @@ const SelectInput = React.forwardRef<
     const handleClear = (e: React.MouseEvent) => {
       e.stopPropagation();
       const finalValue = null;
-      if (value === undefined) setInternalValue(undefined);
+      if (value === undefined) setInternalValue("");
       onChange?.(finalValue, undefined);
     };
 
@@ -188,7 +188,7 @@ const SelectInput = React.forwardRef<
             leftSection &&
               (size === "sm" ? "pl-8" : size === "lg" ? "pl-10" : "pl-9"),
             (rightSection || showClearButton) &&
-              (size === "sm" ? "pr-8" : size === "lg" ? "pr-10" : "pr-9"),
+              (size === "sm" ? "pr-12" : size === "lg" ? "pr-14" : "pr-13"),
             className
           )}
           aria-label={ariaLabel}
@@ -205,7 +205,7 @@ const SelectInput = React.forwardRef<
           {leftSection && (
             <div
               className={cn(
-                "absolute left-0 z-10 flex items-center justify-center text-muted-foreground",
+                "absolute left-0 z-20 flex items-center justify-center text-muted-foreground",
                 size === "sm"
                   ? "w-8 h-8"
                   : size === "lg"
@@ -225,7 +225,7 @@ const SelectInput = React.forwardRef<
               type="button"
               onClick={handleClear}
               className={cn(
-                "absolute right-8 z-10 flex items-center justify-center text-muted-foreground hover:text-foreground",
+                "absolute right-2 z-20 flex items-center justify-center text-muted-foreground hover:text-foreground",
                 size === "sm" ? "w-4 h-4" : "w-5 h-5"
               )}
               style={{ pointerEvents: rightSectionPointerEvents }}
@@ -237,7 +237,7 @@ const SelectInput = React.forwardRef<
           {rightSection && !showClearButton && (
             <div
               className={cn(
-                "absolute right-8 z-10 flex items-center justify-center text-muted-foreground",
+                "absolute right-2 z-90 flex items-center justify-center text-muted-foreground",
                 size === "sm"
                   ? "w-8 h-8"
                   : size === "lg"

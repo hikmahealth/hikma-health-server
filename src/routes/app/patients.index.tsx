@@ -51,15 +51,20 @@ import {
 import { getCurrentUser } from "@/lib/server-functions/auth";
 
 import ExcelJS from "exceljs";
+import Event from "@/models/event";
+import EventForm from "@/models/event-form";
+import { format } from "date-fns";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
   async () => {
     // Use getAllWithAttributes with no limit to get all patients
-    const { patients } = await Patient.getAllWithAttributes({
+    const { patients } = await Patient.API.getAllWithAttributes({
       includeCount: false,
     });
-    return { patients };
+    const eventForms = await EventForm.API.getAll();
+    const exportEvents = await Event.API.getAllForExport();
+    return { patients, exportEvents, eventForms };
   }
 );
 
@@ -173,7 +178,49 @@ function RouteComponent() {
     workbook.lastPrinted = new Date();
 
     // Get all patients for export (not paginated)
-    const { patients: allPatients } = await getAllPatientsForExport({});
+    const {
+      patients: allPatients,
+      exportEvents,
+      eventForms,
+    } = await getAllPatientsForExport({});
+
+    // for each event form type, add a new worksheet
+    eventForms.forEach((eventForm) => {
+      const worksheet = workbook.addWorksheet(eventForm.name);
+      const extraColumns = {
+        patient_id: "Patient ID",
+        // patient_name: "Patient Name",
+        visit_id: "Visit ID",
+        created_at: "Created At",
+        // provider_id: "Provider ID",
+      };
+      const eventFormFields = eventForm.form_fields;
+      const headerRow = [
+        "ID",
+        ...eventFormFields.map((f) => f.name),
+        ...Object.values(extraColumns),
+      ];
+      worksheet.addRow(headerRow);
+      worksheet.getRow(1).font = { bold: true };
+
+      exportEvents
+        .filter((ev) => ev.form_id === eventForm.id)
+        .forEach((event) => {
+          const rowData = [event.id];
+          eventFormFields?.forEach((field) => {
+            const fieldData = event.form_data.find(
+              (f) => f.fieldId === field.id
+            );
+            rowData.push(JSON.stringify(fieldData?.value));
+          });
+
+          rowData.push(event.patient_id);
+          rowData.push(event.visit_id || "");
+          rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
+          // rowData.push(event.provider_id || "");
+          worksheet.addRow(rowData);
+        });
+    });
 
     const headerRow = ["ID", ...headers];
     worksheet.addRow(headerRow);
