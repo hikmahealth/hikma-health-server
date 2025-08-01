@@ -6,6 +6,7 @@ import {
   Table,
   TableBody,
   TableCaption,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
@@ -22,6 +23,8 @@ import {
 import Event from "@/models/event";
 import { getEventsByFormId } from "@/lib/server-functions/events";
 import { Option } from "effect";
+import type EventForm from "@/models/event-form";
+import { format } from "date-fns";
 
 export const Route = createFileRoute("/app/data/events")({
   component: RouteComponent,
@@ -125,23 +128,29 @@ function RouteComponent() {
 
   console.log({ eventsList, paginationResults });
 
+  // Table column names are present in the event form
+  const tableColumns = forms.find(
+    (form) => form.id === selectedForm
+  )?.form_fields;
+
   return (
     <div className="container py-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Events Explorer</h1>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <SelectInput
-          label="Select an event form"
-          className="w-full"
-          clearable
-          defaultValue={selectedForm}
-          onChange={(value) => setSelectedForm(value)}
-          data={forms.map((form) => ({
-            label: form.name,
-            value: form.id,
-          }))}
-        />
+        <div>
+          <SelectInput
+            label="Select an event form"
+            className="w-full"
+            defaultValue={selectedForm}
+            onChange={(value) => setSelectedForm(value)}
+            data={forms.map((form) => ({
+              label: form.name,
+              value: form.id,
+            }))}
+          />
+        </div>
       </div>
 
       <div className="rounded-md border overflow-hidden">
@@ -150,16 +159,48 @@ function RouteComponent() {
             <TableCaption>Event Forms</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead>Snapshot</TableHead>
-                <TableHead>Editable</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Updated</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Date</TableHead>
+                {tableColumns?.map((column) => (
+                  <TableHead key={column.id}>{column.name}</TableHead>
+                ))}
               </TableRow>
             </TableHeader>
-            <TableBody></TableBody>
+            <TableBody>
+              {eventsList.map((event) => (
+                <TableRow key={event.id}>
+                  <TableCell>
+                    {format(event.created_at, "yyyy-MM-dd HH:mm:ss")}
+                  </TableCell>
+                  {tableColumns?.map((column) => {
+                    const field = event.form_data.find(
+                      (c) => c.fieldId === column.id
+                    );
+                    console.log({
+                      field,
+                      column,
+                      event_form_data: event.form_data,
+                    });
+                    if (column.fieldType === "diagnosis") {
+                      return (
+                        <TableCell key={column.id}>
+                          <RenderDiagnosisField field={field as any} />
+                        </TableCell>
+                      );
+                    }
+                    if (column.fieldType === "medicine") {
+                      return (
+                        <TableCell key={column.id}>
+                          <RenderMedicineField field={field as any} />
+                        </TableCell>
+                      );
+                    }
+                    return (
+                      <TableCell key={column.id}>{field?.value}</TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableBody>
           </Table>
         </div>
       </div>
@@ -216,6 +257,62 @@ function RouteComponent() {
           </PaginationContent>
         </Pagination>
       </div>
+    </div>
+  );
+}
+
+// TODO: improve the types of form_data to be specific to diagnosis
+function RenderDiagnosisField({
+  field,
+}: {
+  field: { value: Array<{ code: string; desc: string }> };
+}) {
+  console.log(field.value.map((diagnosis) => diagnosis.desc).join(", "));
+  console.log(field.value);
+  return (
+    <div>
+      {field.value
+        .map((diagnosis) => `(${diagnosis.code}) ${diagnosis.desc}`)
+        .join(", ")}
+    </div>
+  );
+}
+
+// TODO: improve the types of form_data to be specific to diagnosis
+function RenderMedicineField({
+  field,
+}: {
+  field: {
+    value: Array<{
+      dose: number;
+      doseUnits: string;
+      duration: number;
+      durationUnits: string;
+      form: string;
+      frequency: string;
+      intervals: string;
+      name: string;
+      route: string;
+    }>;
+  };
+}) {
+  console.log(field.value.map((medicine) => medicine.name).join(", "));
+  console.log(field.value);
+  return (
+    <div>
+      {field.value.map((medicine) => (
+        <>
+          <div className="medicine-entry">
+            <p className="medicine-name">
+              {medicine.name} ({medicine.dose} {medicine.doseUnits})
+            </p>
+            <p className="medicine-details">
+              {medicine.form} - {medicine.route}
+            </p>
+            <p className="medicine-schedule">Frequency {medicine.frequency}</p>
+          </div>
+        </>
+      ))}
     </div>
   );
 }

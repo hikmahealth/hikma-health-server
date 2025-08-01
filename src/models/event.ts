@@ -228,11 +228,24 @@ namespace Event {
         const res = await db
           .selectFrom(Table.name)
           .selectAll()
-          // .where("form_id", "=", form_id)
+          .where("form_id", "=", form_id)
+          .where("is_deleted", "=", false)
+          .orderBy("created_at", "desc")
           .limit(limit)
           .offset(offset)
           .execute();
-        console.log({ res });
+        return res as unknown as Event.EncodedT[];
+      }
+    );
+
+    export const getAllForExport = serverOnly(
+      async (): Promise<Event.EncodedT[]> => {
+        const res = await db
+          .selectFrom(Table.name)
+          .selectAll()
+          .where("is_deleted", "=", false)
+          .orderBy("created_at", "desc")
+          .execute();
         return res as unknown as Event.EncodedT[];
       }
     );

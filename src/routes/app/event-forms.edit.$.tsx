@@ -80,6 +80,18 @@ function RouteComponent() {
   const formState = useSelector(eventFormStore, (state) => state.context);
 
   useEffect(() => {
+    // Scroll to top and prevent scrolling.
+    // This screen has two panels that need to scroll independelty
+    window.scrollTo(0, 0);
+    document.body.style.overflow = "hidden";
+    return () => {
+      // Reset scroll and allow scrolling.
+      window.scrollTo(0, 0);
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
+  useEffect(() => {
     if (isEditing) {
       eventFormStore.send({ type: "set-form-state", payload: initialForm });
     }
@@ -149,7 +161,10 @@ function RouteComponent() {
     <div className="h-[calc(100vh-100px)] overflow-hidden">
       <div className="grid grid-cols-2 gap-4 h-full">
         {/* Left side - Form configuration */}
-        <div className=" overflow-y-auto p-4 h-full">
+        <div
+          className=" overflow-y-auto p-4"
+          style={{ height: "100%", overflowY: "auto", flex: 1 }}
+        >
           <form onSubmit={handleSaveForm} className="h-full space-y-4">
             <Input
               label="Form Title"
@@ -329,6 +344,12 @@ function RouteComponent() {
           })}
         </div>
       </div>
+
+      <style>{`
+          body {
+            overflow-y: hidden;
+          }
+        `}</style>
     </div>
   );
 }
@@ -358,22 +379,23 @@ function createComponent(
 }
 
 const ComponentRegistry = [
-  createComponent(
-    () =>
-      new EventForm.BinaryField2({
-        inputType: "checkbox",
-        options: [],
-        id: nanoid(),
-        name: "",
-        description: "",
-        required: false,
-      }),
-    {
-      label: "Checkbox",
-      icon: <LucideBox />,
-      //   render: FreeTextInput,
-    }
-  ),
+  // FIXME: Mobile app is not set up to render checkbox fields, update app to support checkbox fields
+  // createComponent(
+  //   () =>
+  //     new EventForm.BinaryField2({
+  //       inputType: "checkbox",
+  //       options: [],
+  //       id: nanoid(),
+  //       name: "",
+  //       description: "",
+  //       required: false,
+  //     }),
+  //   {
+  //     label: "Checkbox",
+  //     icon: <LucideBox />,
+  //     //   render: FreeTextInput,
+  //   }
+  // ),
   createComponent(
     () =>
       new EventForm.TextField2({
