@@ -130,10 +130,14 @@ namespace Event {
             console.error("User not found");
             return;
           }
-          await db
+          const insertVisitId =
+            typeof visitId === "string" && isValidUUID(visitId)
+              ? visitId
+              : uuidV1();
+          let res = await db
             .insertInto(Visit.Table.name)
             .values({
-              id: uuidV1(),
+              id: insertVisitId,
               patient_id: event.patient_id,
               clinic_id: user.clinic_id || "",
               provider_id: user.id,
@@ -154,6 +158,8 @@ namespace Event {
               deleted_at: null,
             })
             .executeTakeFirst();
+
+          visitId = insertVisitId;
         }
 
         return await db
@@ -161,6 +167,9 @@ namespace Event {
           .values({
             id: id || event.id || uuidV1(),
             patient_id: event.patient_id,
+            form_id: event.form_id,
+            event_type: event.event_type,
+            visit_id: visitId,
             form_data: sql`${JSON.stringify(
               safeJSONParse(event.form_data, [])
             )}::jsonb`,
@@ -206,6 +215,27 @@ namespace Event {
         .where("id", "=", id)
         .execute();
     });
+
+    export const getAllByFormId = serverOnly(
+      async (
+        form_id: string,
+        {
+          limit = 50,
+          offset = 0,
+          includeCount = false,
+        }: { limit?: number; offset?: number; includeCount?: boolean }
+      ): Promise<Event.EncodedT[]> => {
+        const res = await db
+          .selectFrom(Table.name)
+          .selectAll()
+          // .where("form_id", "=", form_id)
+          .limit(limit)
+          .offset(offset)
+          .execute();
+        console.log({ res });
+        return res as unknown as Event.EncodedT[];
+      }
+    );
   }
 
   export namespace Sync {

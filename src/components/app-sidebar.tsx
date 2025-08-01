@@ -139,7 +139,7 @@ export const navData = {
           url: "/app/appointments",
         },
         {
-          title: "New Appointment (?)",
+          title: "New Appointment",
           url: "/app/appointments/edit",
         },
       ],

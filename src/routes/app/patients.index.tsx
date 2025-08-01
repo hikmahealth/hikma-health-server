@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import Patient from "@/models/patient";
 import * as React from "react";
 import { type ColumnDef, useReactTable } from "@tanstack/react-table";
@@ -96,9 +96,9 @@ function RouteComponent() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
-  const fields = patientRegistrationForm.fields.filter((f) => !f.deleted);
-  const headers = fields.map((f) => f.label.en);
-  const additionalDataFields = fields.filter((f) => !f.baseField);
+  const fields = patientRegistrationForm?.fields.filter((f) => !f.deleted);
+  const headers = fields?.map((f) => f.label.en);
+  const additionalDataFields = fields?.filter((f) => !f.baseField);
 
   // Calculate pagination values using functional approach
   const pageSize = Option.getOrElse(
@@ -182,7 +182,7 @@ function RouteComponent() {
       const rowData = [patient.id];
 
       // Add data for each field in the registration form
-      fields.forEach((field) => {
+      fields?.forEach((field) => {
         if (field.baseField) {
           rowData.push(
             PatientRegistrationForm.renderFieldValue(
@@ -236,6 +236,24 @@ function RouteComponent() {
   };
 
   const pageNumbers = getPageNumbers();
+
+  if (!patientRegistrationForm) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-semibold text-gray-800">
+            No Registration Form Available
+          </h2>
+          <p className="text-gray-600">
+            Please create a patient registration form first.
+          </p>
+          <Link to="/app/patients/customize-registration-form" className="mt-4">
+            <Button className="primary">Create Registration Form</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

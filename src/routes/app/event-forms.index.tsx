@@ -19,13 +19,7 @@ import { Link } from "@tanstack/react-router";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
-
-const getForms = createServerFn({
-  method: "GET",
-}).handler(async () => {
-  const forms = await EventForm.API.getAll();
-  return forms || [];
-});
+import { getEventForms } from "@/lib/server-functions/event-forms";
 
 const deleteForm = createServerFn({ method: "POST" })
   .validator((d: { id: string }) => d)
@@ -58,7 +52,7 @@ export const Route = createFileRoute("/app/event-forms/")({
   component: RouteComponent,
   loader: async () => {
     return {
-      forms: await getForms(),
+      forms: await getEventForms(),
     };
   },
 });

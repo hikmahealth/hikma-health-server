@@ -56,6 +56,20 @@ namespace PatientRegistrationForm {
     isSearchField: boolean; // Whether or not this field can be sea
   };
 
+  export type EncodedT = {
+    id: string;
+    clinic_id: string | null;
+    name: string;
+    fields: Field[];
+    metadata: Record<string, any>;
+    is_deleted: boolean;
+    created_at: Date;
+    updated_at: Date;
+    last_modified: Date;
+    server_created_at: Date;
+    deleted_at: Date | null;
+  };
+
   /**
    * Convert a database entry into a T entry
    * @param entry The database entry
@@ -189,9 +203,9 @@ namespace PatientRegistrationForm {
    * @returns {Promise<PatientRegistrationForm.T[]>} Array of patient registration forms
    */
   export const getAll = serverOnly(
-    async (): Promise<PatientRegistrationForm.T[]> => {
+    async (): Promise<PatientRegistrationForm.EncodedT[]> => {
       const result = await db.selectFrom(Table.name).selectAll().execute();
-      return result.map(PatientRegistrationForm.fromDbEntry);
+      return result;
     }
   );
 
