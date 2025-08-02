@@ -162,6 +162,8 @@ namespace Patient {
 
   export namespace Table {
     export const name = "patients";
+    /** The name of the table in the mobile database */
+    export const mobileName = "patients";
     export const columns = {
       id: "id",
       given_name: "given_name",

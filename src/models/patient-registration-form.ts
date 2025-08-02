@@ -101,8 +101,12 @@ namespace PatientRegistrationForm {
   };
 
   export namespace Table {
+    /** The name of the table in the server database */
     export const name = "patient_registration_forms";
-    const columns = {
+    /** The name of the table in the mobile database */
+    export const mobileName = "registration_forms";
+
+    export const columns = {
       id: "id",
       clinic_id: "clinic_id",
       name: "name",

@@ -129,11 +129,14 @@ namespace Sync {
         const result: DBChangeSet = {};
 
         for (const entity of ENTITIES_TO_PUSH_TO_MOBILE) {
-            const table_name = entity.Table.name;
+            // It can happen that the server table name is different from the mobile table name
+            // This just ensures we do the correct mapping. Often the name is the same.
+            const server_table_name = entity.Table.name;
+            const mobile_table_name = entity.Table.mobileName;
 
             // Query for new records created after last sync
             const newRecords = await db
-                .selectFrom(table_name)
+                .selectFrom(server_table_name)
                 .where("server_created_at", ">", new Date(lastSyncedAt))
                 .where("deleted_at", "is", null)
                 .where("is_deleted", "=", false)
@@ -142,7 +145,7 @@ namespace Sync {
 
             // Query for records updated since last sync (but created before)
             const updatedRecords = await db
-                .selectFrom(table_name)
+                .selectFrom(server_table_name)
                 .where("last_modified", ">", new Date(lastSyncedAt))
                 .where("server_created_at", "<", new Date(lastSyncedAt))
                 .where("deleted_at", "is", null)
@@ -152,7 +155,7 @@ namespace Sync {
 
             // Query for records deleted since last sync
             const deletedRecords = await db
-                .selectFrom(table_name)
+                .selectFrom(server_table_name)
                 .where("deleted_at", ">", new Date(lastSyncedAt))
                 .where("is_deleted", "=", true)
                 .select("id")
@@ -165,7 +168,7 @@ namespace Sync {
             );
 
             // Add records to result
-            result[table_name] = deltaData;
+            result[mobile_table_name] = deltaData;
         }
 
         return result;
@@ -189,19 +192,19 @@ namespace Sync {
                 deleted: newDeltaJson?.deleted || [],
             };
     
-            console.log(`${tableName} - Records to create: ${deltaData.created.length}, update: ${deltaData.updated.length}, delete: ${deltaData.deleted.length}`);
+            // console.log(`${tableName} - Records to create: ${deltaData.created.length}, update: ${deltaData.updated.length}, delete: ${deltaData.deleted.length}`);
     
             for (const record of deltaData.created.concat(deltaData.updated)) {
-                console.log(`Upserting ${tableName} record:`, record.id);
+                // console.log(`Upserting ${tableName} record:`, record.id);
                 await pushTableNameModelMap[tableName].Sync.upsertFromDelta(record as typeof pushTableNameModelMap[typeof tableName].EncodedT);
             }
 
             for (const id of deltaData.deleted) {
-                console.log(`Deleting ${tableName} record:`, id);
+                // console.log(`Deleting ${tableName} record:`, id);
                 await pushTableNameModelMap[tableName].Sync.deleteFromDelta(id);
             }
         }
-        console.log("Finished persisting client changes");
+        // console.log("Finished persisting client changes");
     };
 }
 

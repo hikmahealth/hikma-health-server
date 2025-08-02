@@ -39,6 +39,7 @@ namespace EventForm {
 
   export namespace Table {
     export const name = "event_forms";
+    export const mobileName = "event_forms";
     export const columns = {
       id: "id",
       name: "name",

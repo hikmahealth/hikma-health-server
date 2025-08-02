@@ -56,6 +56,8 @@ namespace Event {
   export namespace Table {
     export const name = "events";
 
+    export const mobileName = "events";
+
     export const columns = {
       id: "id",
       patient_id: "patient_id",
