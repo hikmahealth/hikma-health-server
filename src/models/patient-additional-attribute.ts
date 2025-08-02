@@ -140,7 +140,7 @@ namespace PatientAdditionalAttribute {
             deleted_at: null,
           })
           .onConflict((oc) =>
-            oc.column("id").doUpdateSet({
+            oc.columns(["patient_id", "attribute_id"]).doUpdateSet({
               patient_id: (eb) => eb.ref("excluded.patient_id"),
               attribute_id: (eb) => eb.ref("excluded.attribute_id"),
               attribute: (eb) => eb.ref("excluded.attribute"),
