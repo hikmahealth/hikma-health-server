@@ -52,6 +52,7 @@ namespace PatientAdditionalAttribute {
 
   export namespace Table {
     export const name = "patient_additional_attributes";
+    export const mobileName = "patient_additional_attributes";
     export const columns = {
       id: "id",
       patient_id: "patient_id",
