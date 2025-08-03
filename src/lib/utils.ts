@@ -238,26 +238,27 @@ export function toSafeDateString(
     return defaultValue;
   }
 
-  if (typeof value === "string" && /^\d+$/.test(value.trim())) {
-    value = parseInt(value, 10);
-  }
-
   try {
-    const date = new Date(value);
+    let date: Date;
 
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      return defaultValue;
+    // Handle numeric values (assume milliseconds if > 1e12, seconds otherwise)
+    if (
+      typeof value === "number" ||
+      (typeof value === "string" && /^\d+$/.test(value.trim()))
+    ) {
+      const num = typeof value === "number" ? value : parseInt(value, 10);
+      date = new Date(num > 1e12 ? num : num * 1000);
+    } else {
+      date = new Date(value);
     }
 
-    // Check if date is within reasonable range (1850 - 2120)
+    if (isNaN(date.getTime())) return defaultValue;
+
     const year = date.getFullYear();
-    if (year < 1850 || year > 2120) {
-      return defaultValue;
-    }
+    if (year < 1850 || year > 2120) return defaultValue;
 
     return date.toISOString();
-  } catch (error) {
+  } catch {
     return defaultValue;
   }
 }
@@ -329,7 +330,7 @@ export function getFieldOptionsValues(
 }
 
 /**
- * Checks if a string is a valid UUID. Checks for uuid v1 and v4
+ * Checks if a string is a valid UUID. Checks for uuid v1 and v5
  * @param {string} str - The string to check
  * @returns {boolean} True if the string is a valid UUID, false otherwise
  */
