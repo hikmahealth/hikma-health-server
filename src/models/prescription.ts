@@ -13,7 +13,7 @@ import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
 import type Clinic from "./clinic";
 import type Patient from "./patient";
-import type User from "./user";
+import User from "./user";
 import { isValidUUID, safeJSONParse, toSafeDateString } from "@/lib/utils";
 import { v1 as uuidV1 } from "uuid";
 import Visit from "./visit";
@@ -236,13 +236,29 @@ namespace Prescription {
               visitId = newVisitId;
             }
 
+            // If there is no pickup_clinic_id, set it to the current clinic_id or the clinic_id that the provider works for
+            let pickupClinicId = prescription.pickup_clinic_id;
+            if (!pickupClinicId || !isValidUUID(pickupClinicId)) {
+              const provider = await trx
+                .selectFrom(User.Table.name)
+                .select("clinic_id")
+                .where("id", "=", prescription.provider_id)
+                .executeTakeFirstOrThrow();
+              if (!provider.clinic_id) {
+                throw new Error(
+                  "Provider has no clinic_id, and appointment has no pickup_clinic_id"
+                );
+              }
+              pickupClinicId = provider.clinic_id;
+            }
+
             const res = await trx
               .insertInto(Prescription.Table.name)
               .values({
                 id: id || prescription.id || uuidV1(),
                 patient_id: prescription.patient_id,
                 provider_id: prescription.provider_id,
-                pickup_clinic_id: prescription.pickup_clinic_id,
+                pickup_clinic_id: pickupClinicId,
                 filled_by: prescription.filled_by || null,
                 visit_id: visitId,
                 priority: prescription.priority,
