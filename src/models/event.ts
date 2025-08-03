@@ -107,102 +107,120 @@ namespace Event {
       async (id: string | null, event: Event.EncodedT) => {
         // if the id is null, we are creating a new event. If the ID is present, then we are updating an existing event.
         // Eitherway we always do an upsert
+        try {
+          let visitId = event.visit_id;
+          let visitExists = false;
 
-        let visitId = event.visit_id;
-        let visitExists = false;
-
-        if (typeof event.visit_id === "string" && isValidUUID(event.visit_id)) {
-          const visit = await Visit.API.findById(event.visit_id);
-          if (visit) {
-            visitExists = true;
-          } else {
-            visitExists = false;
-            console.error("Visit not found");
+          if (
+            typeof event.visit_id === "string" &&
+            isValidUUID(event.visit_id)
+          ) {
+            const visit = await Visit.API.findById(event.visit_id);
+            if (visit) {
+              visitExists = true;
+            } else {
+              visitExists = false;
+              console.error("Visit not found");
+            }
           }
-        }
 
-        if (!visitExists) {
-          // we need to get a clinic, its user and create a visit. we do this by getting user and extracting that information from there
-          const user = await db
-            .selectFrom("users")
-            .select(["clinic_id", "id", "name"])
-            .limit(1)
-            .executeTakeFirst();
-          if (!user) {
-            console.error("User not found");
-            return;
+          if (!visitExists) {
+            // we need to get a clinic, its user and create a visit. we do this by getting user and extracting that information from there
+            const user = await db
+              .selectFrom("users")
+              .select(["clinic_id", "id", "name"])
+              .limit(1)
+              .executeTakeFirst();
+            if (!user) {
+              console.error("User not found");
+              return;
+            }
+            const insertVisitId =
+              typeof visitId === "string" && isValidUUID(visitId)
+                ? visitId
+                : uuidV1();
+            let res = await db
+              .insertInto(Visit.Table.name)
+              .values({
+                id: insertVisitId,
+                patient_id: event.patient_id,
+                clinic_id: user.clinic_id || "",
+                provider_id: user.id,
+                provider_name: user.name,
+                check_in_timestamp: event.created_at
+                  ? sql`${event.created_at}::timestamp with time zone`
+                  : null,
+                metadata: sql`${{
+                  artificially_created: true,
+                  created_from: "server_event_creation",
+                  original_event_id: event.id,
+                }}::jsonb`,
+                is_deleted: false,
+                created_at: sql`now()::timestamp with time zone`,
+                updated_at: sql`now()::timestamp with time zone`,
+                last_modified: sql`now()::timestamp with time zone`,
+                server_created_at: sql`now()::timestamp with time zone`,
+                deleted_at: null,
+              })
+              .executeTakeFirst();
+
+            visitId = insertVisitId;
           }
-          const insertVisitId =
-            typeof visitId === "string" && isValidUUID(visitId)
-              ? visitId
-              : uuidV1();
-          let res = await db
-            .insertInto(Visit.Table.name)
+
+          return await db
+            .insertInto(Event.Table.name)
             .values({
-              id: insertVisitId,
+              id: id || event.id || uuidV1(),
               patient_id: event.patient_id,
-              clinic_id: user.clinic_id || "",
-              provider_id: user.id,
-              provider_name: user.name,
-              check_in_timestamp: event.created_at
-                ? sql`${event.created_at}::timestamp with time zone`
-                : null,
-              metadata: sql`${{
-                artificially_created: true,
-                created_from: "server_event_creation",
-                original_event_id: event.id,
-              }}::jsonb`,
+              form_id: event.form_id,
+              event_type: event.event_type,
+              visit_id: visitId,
+              form_data: sql`${JSON.stringify(
+                safeJSONParse(event.form_data, [])
+              )}::jsonb`,
+              metadata: sql`${JSON.stringify(
+                safeJSONParse(event.metadata, {})
+              )}::jsonb`,
               is_deleted: false,
-              created_at: sql`now()::timestamp with time zone`,
-              updated_at: sql`now()::timestamp with time zone`,
+              created_at: sql`${toSafeDateString(
+                event.created_at
+              )}::timestamp with time zone`,
+              updated_at: sql`${toSafeDateString(
+                event.updated_at
+              )}::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
               server_created_at: sql`now()::timestamp with time zone`,
               deleted_at: null,
             })
+            .onConflict((oc) => {
+              return oc.column("id").doUpdateSet({
+                patient_id: (eb) => eb.ref("excluded.patient_id"),
+                visit_id: (eb) => eb.ref("excluded.visit_id"),
+                form_id: (eb) => eb.ref("excluded.form_id"),
+                event_type: (eb) => eb.ref("excluded.event_type"),
+                form_data: (eb) => eb.ref("excluded.form_data"),
+                metadata: (eb) => eb.ref("excluded.metadata"),
+                is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+                updated_at: sql`now()::timestamp with time zone`,
+                last_modified: sql`now()::timestamp with time zone`,
+              });
+            })
             .executeTakeFirst();
-
-          visitId = insertVisitId;
+        } catch (error) {
+          console.error("Event upsert operation failed:", {
+            operation: "event_upsert",
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+              name: error instanceof Error ? error.constructor.name : "Unknown",
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            context: {
+              eventId: event.id,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          throw error;
         }
-
-        return await db
-          .insertInto(Event.Table.name)
-          .values({
-            id: id || event.id || uuidV1(),
-            patient_id: event.patient_id,
-            form_id: event.form_id,
-            event_type: event.event_type,
-            visit_id: visitId,
-            form_data: sql`${JSON.stringify(
-              safeJSONParse(event.form_data, [])
-            )}::jsonb`,
-            metadata: sql`${JSON.stringify(
-              safeJSONParse(event.metadata, {})
-            )}::jsonb`,
-            is_deleted: false,
-            created_at: sql`${toSafeDateString(
-              event.created_at
-            )}::timestamp with time zone`,
-            updated_at: sql`${toSafeDateString(
-              event.updated_at
-            )}::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-            server_created_at: sql`now()::timestamp with time zone`,
-            deleted_at: null,
-          })
-          .onConflict((oc) => {
-            return oc.column("id").doUpdateSet({
-              patient_id: (eb) => eb.ref("excluded.patient_id"),
-              visit_id: (eb) => eb.ref("excluded.visit_id"),
-              form_id: (eb) => eb.ref("excluded.form_id"),
-              event_type: (eb) => eb.ref("excluded.event_type"),
-              form_data: (eb) => eb.ref("excluded.form_data"),
-              metadata: (eb) => eb.ref("excluded.metadata"),
-              is_deleted: (eb) => eb.ref("excluded.is_deleted"),
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            });
-          })
-          .executeTakeFirst();
       }
     );
 
