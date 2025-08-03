@@ -204,99 +204,122 @@ namespace Prescription {
         currentUserName: string,
         currentClinicId: string
       ) => {
-        return await db.transaction().execute(async (trx) => {
-          let visitId =
-            prescription.visit_id && isValidUUID(prescription.visit_id)
-              ? prescription.visit_id
-              : uuidV1();
+        try {
+          return await db.transaction().execute(async (trx) => {
+            let visitId =
+              prescription.visit_id && isValidUUID(prescription.visit_id)
+                ? prescription.visit_id
+                : null;
 
-          // If there is no visit Id, create a new visit
-          if (!isValidUUID(prescription.visit_id || "")) {
-            const visit = await trx
-              .insertInto(Visit.Table.name)
+            // If there is no visit Id, create a new visit
+            if (!visitId) {
+              let newVisitId = uuidV1();
+              const visit = await trx
+                .insertInto(Visit.Table.name)
+                .values({
+                  id: newVisitId,
+                  patient_id: prescription.patient_id,
+                  clinic_id: currentClinicId,
+                  provider_id: prescription.provider_id, // the user_id is that of the current user, to a visit that is the provider
+                  is_deleted: false,
+                  created_at: sql`now()::timestamp with time zone`,
+                  updated_at: sql`now()::timestamp with time zone`,
+                  last_modified: sql`now()::timestamp with time zone`,
+                  server_created_at: sql`now()::timestamp with time zone`,
+                  deleted_at: null,
+                  metadata: {} as any,
+                  provider_name: currentUserName,
+                })
+                .returningAll()
+                .executeTakeFirstOrThrow();
+
+              visitId = newVisitId;
+            }
+
+            const res = await trx
+              .insertInto(Prescription.Table.name)
               .values({
-                id: visitId,
+                id: id || prescription.id || uuidV1(),
                 patient_id: prescription.patient_id,
-                clinic_id: currentClinicId,
-                provider_id: prescription.provider_id, // the user_id is that of the current user, to a visit that is the provider
-                is_deleted: false,
-                created_at: sql`now()::timestamp with time zone`,
-                updated_at: sql`now()::timestamp with time zone`,
-                last_modified: sql`now()::timestamp with time zone`,
-                server_created_at: sql`now()::timestamp with time zone`,
-                deleted_at: null,
+                provider_id: prescription.provider_id,
+                pickup_clinic_id: prescription.pickup_clinic_id,
+                filled_by: prescription.filled_by || null,
+                visit_id: visitId,
+                priority: prescription.priority,
+                expiration_date: prescription.expiration_date
+                  ? sql`${toSafeDateString(
+                      prescription.expiration_date
+                    )}::timestamp with time zone`
+                  : null,
+                prescribed_at: sql`${toSafeDateString(
+                  prescription.prescribed_at
+                )}::timestamp with time zone`,
+                filled_at: prescription.filled_at
+                  ? sql`${toSafeDateString(
+                      prescription.filled_at
+                    )}::timestamp with time zone`
+                  : null,
+                status: prescription.status,
+                items: sql`${JSON.stringify(
+                  safeJSONParse(prescription.items, [])
+                )}::jsonb`,
+                notes: prescription.notes || "",
                 metadata: {} as any,
-                provider_name: currentUserName,
-              })
-              .returningAll()
-              .executeTakeFirstOrThrow();
-
-            visitId = visit.id;
-          }
-
-          const res = await trx
-            .insertInto(Prescription.Table.name)
-            .values({
-              id: id || prescription.id || uuidV1(),
-              patient_id: prescription.patient_id,
-              provider_id: prescription.provider_id,
-              pickup_clinic_id: prescription.pickup_clinic_id,
-              filled_by: prescription.filled_by || null,
-              visit_id: prescription.visit_id || null,
-              priority: prescription.priority,
-              expiration_date: prescription.expiration_date
-                ? sql`${toSafeDateString(
-                    prescription.expiration_date
-                  )}::timestamp with time zone`
-                : null,
-              prescribed_at: sql`${toSafeDateString(
-                prescription.prescribed_at
-              )}::timestamp with time zone`,
-              filled_at: prescription.filled_at
-                ? sql`${toSafeDateString(
-                    prescription.filled_at
-                  )}::timestamp with time zone`
-                : null,
-              status: prescription.status,
-              items: sql`${JSON.stringify(
-                safeJSONParse(prescription.items, [])
-              )}::jsonb`,
-              notes: prescription.notes || "",
-              metadata: {} as any,
-              is_deleted: false,
-              created_at: sql`${toSafeDateString(
-                prescription.created_at
-              )}::timestamp with time zone`,
-              updated_at: sql`${toSafeDateString(
-                prescription.updated_at
-              )}::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-              server_created_at: sql`now()::timestamp with time zone`,
-              deleted_at: null,
-            })
-            .onConflict((oc) => {
-              return oc.column("id").doUpdateSet({
-                patient_id: (eb) => eb.ref("excluded.patient_id"),
-                provider_id: (eb) => eb.ref("excluded.provider_id"),
-                pickup_clinic_id: (eb) => eb.ref("excluded.pickup_clinic_id"),
-                filled_by: (eb) => eb.ref("excluded.filled_by"),
-                visit_id: (eb) => eb.ref("excluded.visit_id"),
-                priority: (eb) => eb.ref("excluded.priority"),
-                expiration_date: (eb) => eb.ref("excluded.expiration_date"),
-                status: (eb) => eb.ref("excluded.status"),
-                items: (eb) => eb.ref("excluded.items"),
-                notes: (eb) => eb.ref("excluded.notes"),
-                metadata: (eb) => eb.ref("excluded.metadata"),
+                is_deleted: false,
+                created_at: sql`${toSafeDateString(
+                  prescription.created_at
+                )}::timestamp with time zone`,
                 updated_at: sql`${toSafeDateString(
                   prescription.updated_at
                 )}::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
-              });
-            })
-            .executeTakeFirstOrThrow();
+                server_created_at: sql`now()::timestamp with time zone`,
+                deleted_at: null,
+              })
+              .onConflict((oc) => {
+                return oc.column("id").doUpdateSet({
+                  patient_id: (eb) => eb.ref("excluded.patient_id"),
+                  provider_id: (eb) => eb.ref("excluded.provider_id"),
+                  pickup_clinic_id: (eb) => eb.ref("excluded.pickup_clinic_id"),
+                  filled_by: (eb) => eb.ref("excluded.filled_by"),
+                  visit_id: (eb) => eb.ref("excluded.visit_id"),
+                  priority: (eb) => eb.ref("excluded.priority"),
+                  expiration_date: (eb) => eb.ref("excluded.expiration_date"),
+                  status: (eb) => eb.ref("excluded.status"),
+                  items: (eb) => eb.ref("excluded.items"),
+                  notes: (eb) => eb.ref("excluded.notes"),
+                  metadata: (eb) => eb.ref("excluded.metadata"),
+                  updated_at: sql`${toSafeDateString(
+                    prescription.updated_at
+                  )}::timestamp with time zone`,
+                  last_modified: sql`now()::timestamp with time zone`,
+                });
+              })
+              .executeTakeFirstOrThrow();
 
-          return res;
-        });
+            return res;
+          });
+        } catch (error) {
+          console.error("Prescription save operation failed:", {
+            operation: "prescription_save",
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+              name: error instanceof Error ? error.constructor.name : "Unknown",
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            context: {
+              prescriptionId: id || prescription.id,
+              patientId: prescription.patient_id,
+              providerId: prescription.provider_id,
+              clinicId: currentClinicId,
+              hasValidVisitId: !!(
+                prescription.visit_id && isValidUUID(prescription.visit_id)
+              ),
+            },
+            timestamp: new Date().toISOString(),
+          });
+          throw error;
+        }
       }
     );
 

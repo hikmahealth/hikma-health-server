@@ -181,75 +181,46 @@ namespace Appointment {
         appointment: Appointment.EncodedT,
         currentUserName: string
       ) => {
-        return await db.transaction().execute(async (trx) => {
-          let visitId =
-            appointment.current_visit_id &&
-            isValidUUID(appointment.current_visit_id)
-              ? appointment.current_visit_id
-              : uuidV1();
-          // If there is no visit Id, create a new visit
-          if (!isValidUUID(appointment.current_visit_id)) {
-            const visit = await trx
-              .insertInto(Visit.Table.name)
+        try {
+          return await db.transaction().execute(async (trx) => {
+            let visitId =
+              appointment.current_visit_id &&
+              isValidUUID(appointment.current_visit_id)
+                ? appointment.current_visit_id
+                : uuidV1();
+            // If there is no visit Id, create a new visit
+            if (!isValidUUID(appointment.current_visit_id)) {
+              const visit = await trx
+                .insertInto(Visit.Table.name)
+                .values({
+                  id: visitId,
+                  patient_id: appointment.patient_id,
+                  clinic_id: appointment.clinic_id,
+                  provider_id: appointment.user_id, // the user_id is that of the current user, to a visit that is the provider
+                  is_deleted: false,
+                  created_at: sql`now()::timestamp with time zone`,
+                  updated_at: sql`now()::timestamp with time zone`,
+                  last_modified: sql`now()::timestamp with time zone`,
+                  server_created_at: sql`now()::timestamp with time zone`,
+                  deleted_at: null,
+                  metadata: {} as any,
+                  provider_name: currentUserName,
+                })
+                .returningAll()
+                .executeTakeFirstOrThrow();
+
+              console.log({ visit, oldVisitId: visitId });
+              visitId = visit.id;
+            }
+
+            const res = await trx
+              .insertInto(Appointment.Table.name)
               .values({
-                id: visitId,
+                id: id || appointment.id || uuidV1(),
+                clinic_id: appointment.clinic_id,
                 patient_id: appointment.patient_id,
-                clinic_id: appointment.clinic_id,
-                provider_id: appointment.user_id, // the user_id is that of the current user, to a visit that is the provider
-                is_deleted: false,
-                created_at: sql`now()::timestamp with time zone`,
-                updated_at: sql`now()::timestamp with time zone`,
-                last_modified: sql`now()::timestamp with time zone`,
-                server_created_at: sql`now()::timestamp with time zone`,
-                deleted_at: null,
-                metadata: {} as any,
-                provider_name: currentUserName,
-              })
-              .returningAll()
-              .executeTakeFirstOrThrow();
-
-            console.log({ visit, oldVisitId: visitId });
-            visitId = visit.id;
-          }
-
-          const res = await trx
-            .insertInto(Appointment.Table.name)
-            .values({
-              id: id || appointment.id || uuidV1(),
-              clinic_id: appointment.clinic_id,
-              patient_id: appointment.patient_id,
-              user_id: appointment.user_id,
-              current_visit_id: visitId,
-              created_at: sql`${toSafeDateString(
-                appointment.created_at
-              )}::timestamp with time zone`,
-              updated_at: sql`${toSafeDateString(
-                appointment.updated_at
-              )}::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-              server_created_at: sql`now()::timestamp with time zone`,
-              deleted_at: null,
-              metadata: sql`${JSON.stringify(
-                safeJSONParse(appointment.metadata, {})
-              )}::jsonb`,
-              duration: appointment.duration,
-              reason: appointment.reason,
-              notes: appointment.notes,
-              status: appointment.status,
-              fulfilled_visit_id: appointment.fulfilled_visit_id,
-              timestamp: sql`${toSafeDateString(
-                appointment.timestamp
-              )}::timestamp with time zone`,
-              is_deleted: false,
-              provider_id: appointment.provider_id,
-            })
-            .onConflict((oc) => {
-              return oc.column("id").doUpdateSet({
-                id: (eb) => eb.ref("excluded.id"),
-                clinic_id: appointment.clinic_id,
-                patient_id: (eb) => eb.ref("excluded.patient_id"),
-                user_id: (eb) => eb.ref("excluded.user_id"),
-                current_visit_id: (eb) => eb.ref("excluded.current_visit_id"),
+                user_id: appointment.user_id,
+                current_visit_id: visitId,
                 created_at: sql`${toSafeDateString(
                   appointment.created_at
                 )}::timestamp with time zone`,
@@ -257,25 +228,70 @@ namespace Appointment {
                   appointment.updated_at
                 )}::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
-                deleted_at: (eb) => eb.ref("excluded.deleted_at"),
-                metadata: (eb) => eb.ref("excluded.metadata"),
+                server_created_at: sql`now()::timestamp with time zone`,
+                deleted_at: null,
+                metadata: sql`${JSON.stringify(
+                  safeJSONParse(appointment.metadata, {})
+                )}::jsonb`,
                 duration: appointment.duration,
                 reason: appointment.reason,
                 notes: appointment.notes,
                 status: appointment.status,
-                //
                 fulfilled_visit_id: appointment.fulfilled_visit_id,
                 timestamp: sql`${toSafeDateString(
                   appointment.timestamp
                 )}::timestamp with time zone`,
                 is_deleted: false,
                 provider_id: appointment.provider_id,
-              });
-            })
-            .executeTakeFirstOrThrow();
+              })
+              .onConflict((oc) => {
+                return oc.column("id").doUpdateSet({
+                  id: (eb) => eb.ref("excluded.id"),
+                  clinic_id: appointment.clinic_id,
+                  patient_id: (eb) => eb.ref("excluded.patient_id"),
+                  user_id: (eb) => eb.ref("excluded.user_id"),
+                  current_visit_id: (eb) => eb.ref("excluded.current_visit_id"),
+                  created_at: sql`${toSafeDateString(
+                    appointment.created_at
+                  )}::timestamp with time zone`,
+                  updated_at: sql`${toSafeDateString(
+                    appointment.updated_at
+                  )}::timestamp with time zone`,
+                  last_modified: sql`now()::timestamp with time zone`,
+                  deleted_at: (eb) => eb.ref("excluded.deleted_at"),
+                  metadata: (eb) => eb.ref("excluded.metadata"),
+                  duration: appointment.duration,
+                  reason: appointment.reason,
+                  notes: appointment.notes,
+                  status: appointment.status,
+                  //
+                  fulfilled_visit_id: appointment.fulfilled_visit_id,
+                  timestamp: sql`${toSafeDateString(
+                    appointment.timestamp
+                  )}::timestamp with time zone`,
+                  is_deleted: false,
+                  provider_id: appointment.provider_id,
+                });
+              })
+              .executeTakeFirstOrThrow();
 
-          return res;
-        });
+            return res;
+          });
+        } catch (error) {
+          console.error("Appointment upsert operation failed:", {
+            operation: "appointment_upsert",
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+              name: error instanceof Error ? error.constructor.name : "Unknown",
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            context: {
+              appointmentId: appointment.id,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          throw error;
+        }
       }
     );
 

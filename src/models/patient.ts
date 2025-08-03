@@ -586,65 +586,82 @@ namespace Patient {
      * Upsert a patient record without the additional patient attributes
      */
     export const upsert = serverOnly(async (patient: Patient.EncodedT) => {
-      return await db
-        .insertInto(Patient.Table.name)
-        .values({
-          id: patient.id,
-          given_name: patient.given_name,
-          surname: patient.surname,
-          date_of_birth: patient.date_of_birth
-            ? sql`${patient.date_of_birth}::timestamp with time zone`
-            : null,
-          citizenship: patient.citizenship,
-          photo_url: patient.photo_url || null,
-          image_timestamp: patient.image_timestamp || null,
-          hometown: patient.hometown,
-          additional_data: sql`${JSON.stringify(
-            safeJSONParse(patient.additional_data, {})
-          )}::jsonb`,
-          government_id: patient.government_id,
-          external_patient_id: patient.external_patient_id,
-          phone: patient.phone,
-          sex: patient.sex,
-          camp: patient.camp,
-          metadata: sql`${JSON.stringify(
-            safeJSONParse(patient.metadata, {})
-          )}::jsonb`,
-          is_deleted: patient.is_deleted,
-          created_at: sql`${toSafeDateString(
-            patient.created_at
-          )}::timestamp with time zone`,
-          updated_at: sql`${toSafeDateString(
-            patient.updated_at
-          )}::timestamp with time zone`,
-          last_modified: sql`now()::timestamp with time zone`,
-          server_created_at: sql`now()::timestamp with time zone`,
-          deleted_at: null,
-        })
-        .onConflict((oc) =>
-          oc.column("id").doUpdateSet({
-            given_name: (eb) => eb.ref("excluded.given_name"),
-            surname: (eb) => eb.ref("excluded.surname"),
-            date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
-            citizenship: (eb) => eb.ref("excluded.citizenship"),
-            photo_url: (eb) => eb.ref("excluded.photo_url"),
-            image_timestamp: (eb) => eb.ref("excluded.image_timestamp"),
-            hometown: (eb) => eb.ref("excluded.hometown"),
-            additional_data: (eb) => eb.ref("excluded.additional_data"),
-            government_id: (eb) => eb.ref("excluded.government_id"),
-            external_patient_id: (eb) => eb.ref("excluded.external_patient_id"),
-            phone: (eb) => eb.ref("excluded.phone"),
-            sex: (eb) => eb.ref("excluded.sex"),
-            camp: (eb) => eb.ref("excluded.camp"),
-            metadata: (eb) => eb.ref("excluded.metadata"),
-            is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+      try {
+        return await db
+          .insertInto(Patient.Table.name)
+          .values({
+            id: patient.id,
+            given_name: patient.given_name,
+            surname: patient.surname,
+            date_of_birth: patient.date_of_birth
+              ? sql`${patient.date_of_birth}::timestamp with time zone`
+              : null,
+            citizenship: patient.citizenship,
+            photo_url: patient.photo_url || null,
+            image_timestamp: patient.image_timestamp || null,
+            hometown: patient.hometown,
+            additional_data: sql`${JSON.stringify(
+              safeJSONParse(patient.additional_data, {})
+            )}::jsonb`,
+            government_id: patient.government_id,
+            external_patient_id: patient.external_patient_id,
+            phone: patient.phone,
+            sex: patient.sex,
+            camp: patient.camp,
+            metadata: sql`${JSON.stringify(
+              safeJSONParse(patient.metadata, {})
+            )}::jsonb`,
+            is_deleted: patient.is_deleted,
+            created_at: sql`${toSafeDateString(
+              patient.created_at
+            )}::timestamp with time zone`,
             updated_at: sql`${toSafeDateString(
               patient.updated_at
             )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
+            server_created_at: sql`now()::timestamp with time zone`,
+            deleted_at: null,
           })
-        )
-        .executeTakeFirstOrThrow();
+          .onConflict((oc) =>
+            oc.column("id").doUpdateSet({
+              given_name: (eb) => eb.ref("excluded.given_name"),
+              surname: (eb) => eb.ref("excluded.surname"),
+              date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
+              citizenship: (eb) => eb.ref("excluded.citizenship"),
+              photo_url: (eb) => eb.ref("excluded.photo_url"),
+              image_timestamp: (eb) => eb.ref("excluded.image_timestamp"),
+              hometown: (eb) => eb.ref("excluded.hometown"),
+              additional_data: (eb) => eb.ref("excluded.additional_data"),
+              government_id: (eb) => eb.ref("excluded.government_id"),
+              external_patient_id: (eb) =>
+                eb.ref("excluded.external_patient_id"),
+              phone: (eb) => eb.ref("excluded.phone"),
+              sex: (eb) => eb.ref("excluded.sex"),
+              camp: (eb) => eb.ref("excluded.camp"),
+              metadata: (eb) => eb.ref("excluded.metadata"),
+              is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+              updated_at: sql`${toSafeDateString(
+                patient.updated_at
+              )}::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+          )
+          .executeTakeFirstOrThrow();
+      } catch (error) {
+        console.error("Patient upsert operation failed:", {
+          operation: "patient_upsert",
+          error: {
+            message: error instanceof Error ? error.message : String(error),
+            name: error instanceof Error ? error.constructor.name : "Unknown",
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          context: {
+            patientId: patient.id,
+          },
+          timestamp: new Date().toISOString(),
+        });
+        throw error;
+      }
     });
 
     /**
@@ -654,74 +671,90 @@ namespace Patient {
       // NOTE: Could easily call something like Appointment.API.softDelete(id, trx) - but we
       // still dont know how the tanstackstart api calling convention for "server only" will
       // evolve with respect to transactions.
-      await db.transaction().execute(async (trx) => {
-        // Soft delete the patient
-        await trx
-          .updateTable(Patient.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("id", "=", id)
-          .execute();
+      try {
+        await db.transaction().execute(async (trx) => {
+          // Soft delete the patient
+          await trx
+            .updateTable(Patient.Table.name)
+            .set({
+              is_deleted: true,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            .where("id", "=", id)
+            .execute();
 
-        // Soft delete the patient additional attributes
-        await trx
-          .updateTable(PatientAdditionalAttribute.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("patient_id", "=", id)
-          .execute();
+          // Soft delete the patient additional attributes
+          await trx
+            .updateTable(PatientAdditionalAttribute.Table.name)
+            .set({
+              is_deleted: true,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            .where("patient_id", "=", id)
+            .execute();
 
-        // Soft delete the appointments
-        await trx
-          .updateTable(Appointment.Table.name)
-          .set({
-            is_deleted: true,
-            deleted_at: sql`now()::timestamp with time zone`,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("patient_id", "=", id)
-          .execute();
+          // Soft delete the appointments
+          await trx
+            .updateTable(Appointment.Table.name)
+            .set({
+              is_deleted: true,
+              deleted_at: sql`now()::timestamp with time zone`,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            .where("patient_id", "=", id)
+            .execute();
 
-        // Soft delete the prescriptions
-        await trx
-          .updateTable(Prescription.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("patient_id", "=", id)
-          .execute();
+          // Soft delete the prescriptions
+          await trx
+            .updateTable(Prescription.Table.name)
+            .set({
+              is_deleted: true,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            .where("patient_id", "=", id)
+            .execute();
 
-        // Soft delete the visits
-        await trx
-          .updateTable(Visit.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("id", "=", id)
-          .execute();
+          // Soft delete the visits
+          await trx
+            .updateTable(Visit.Table.name)
+            .set({
+              is_deleted: true,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            .where("id", "=", id)
+            .execute();
 
-        // Soft delete the events
-        await trx
-          .updateTable(Event.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("id", "=", id)
-          .execute();
-      });
+          // Soft delete the events
+          await trx
+            .updateTable(Event.Table.name)
+            .set({
+              is_deleted: true,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            .where("id", "=", id)
+            .execute();
+        });
+      } catch (error) {
+        console.error("Patient soft delete operation failed:", {
+          operation: "patient_soft_delete",
+          error: {
+            message: error instanceof Error ? error.message : String(error),
+            name: error instanceof Error ? error.constructor.name : "Unknown",
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+          context: {
+            patientId: id,
+          },
+          timestamp: new Date().toISOString(),
+        });
+        throw error;
+      }
     });
   }
 
