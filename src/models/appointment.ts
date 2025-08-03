@@ -237,12 +237,21 @@ namespace Appointment {
                 reason: appointment.reason,
                 notes: appointment.notes,
                 status: appointment.status,
-                fulfilled_visit_id: appointment.fulfilled_visit_id,
+                fulfilled_visit_id:
+                  appointment.fulfilled_visit_id &&
+                  isValidUUID(appointment.fulfilled_visit_id)
+                    ? appointment.fulfilled_visit_id
+                    : null,
                 timestamp: sql`${toSafeDateString(
                   appointment.timestamp
                 )}::timestamp with time zone`,
                 is_deleted: false,
-                provider_id: appointment.provider_id,
+                // the provider is the user who attends the appointment, this might be known ahead of time or not.
+                provider_id:
+                  appointment.provider_id &&
+                  isValidUUID(appointment.provider_id)
+                    ? appointment.provider_id
+                    : null,
               })
               .onConflict((oc) => {
                 return oc.column("id").doUpdateSet({
@@ -265,12 +274,20 @@ namespace Appointment {
                   notes: appointment.notes,
                   status: appointment.status,
                   //
-                  fulfilled_visit_id: appointment.fulfilled_visit_id,
+                  fulfilled_visit_id:
+                    appointment.fulfilled_visit_id &&
+                    isValidUUID(appointment.fulfilled_visit_id)
+                      ? appointment.fulfilled_visit_id
+                      : null,
                   timestamp: sql`${toSafeDateString(
                     appointment.timestamp
                   )}::timestamp with time zone`,
                   is_deleted: false,
-                  provider_id: appointment.provider_id,
+                  provider_id:
+                    appointment.provider_id &&
+                    isValidUUID(appointment.provider_id)
+                      ? appointment.provider_id
+                      : null,
                 });
               })
               .executeTakeFirstOrThrow();
