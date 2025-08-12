@@ -1,5 +1,6 @@
 import { createServerFileRoute, setCookie } from "@tanstack/react-start/server";
 import User from "@/models/user";
+import Clinic from "@/models/clinic";
 
 export const ServerRoute = createServerFileRoute("/api/auth/sign-in").methods({
   POST: async ({ request }) => {
@@ -7,6 +8,10 @@ export const ServerRoute = createServerFileRoute("/api/auth/sign-in").methods({
 
     try {
       const { user, token } = await User.signIn(email, password);
+
+      const clinic = user.clinic_id
+        ? await Clinic.getById(user.clinic_id)
+        : null;
 
       setCookie("token", token, {
         httpOnly: true,
@@ -18,7 +23,11 @@ export const ServerRoute = createServerFileRoute("/api/auth/sign-in").methods({
 
       return new Response(
         JSON.stringify({
-          user: { ...user, hashed_password: "************" },
+          user: {
+            ...user,
+            hashed_password: "************",
+            clinic_name: clinic?.name,
+          },
           token,
         }),
         {

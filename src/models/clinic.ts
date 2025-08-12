@@ -160,6 +160,21 @@ namespace Clinic {
       }
     }
   );
+
+  /**
+   * Get by id
+   * @param {string} id - The id of the clinic to get
+   * @returns {Promise<Clinic.T>} - The clinic
+   */
+  export const getById = serverOnly(async (id: string): Promise<Clinic.T> => {
+    const result = await db
+      .selectFrom(Clinic.Table.name)
+      .where("id", "=", id)
+      .where("is_deleted", "=", false)
+      .selectAll()
+      .executeTakeFirstOrThrow();
+    return result;
+  });
 }
 
 export default Clinic;
