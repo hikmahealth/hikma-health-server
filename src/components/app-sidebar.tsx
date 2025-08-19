@@ -25,6 +25,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import type User from "@/models/user";
+import type Clinic from "@/models/clinic";
 
 // This is sample data.
 export const navData = {
@@ -210,11 +211,21 @@ export const navData = {
 };
 
 type AppSidebarProps = {
+  clinics: Clinic.EncodedT[];
   currentUser: User.EncodedT | null;
   handleSignOut: () => void;
 } & React.ComponentProps<typeof Sidebar>;
 
+const organizationLevelClinic = {
+  id: "organization",
+  name: "Hikma Health",
+  // logo: GalleryVerticalEnd,
+  logo: () => <img src="/logo187.png" alt="Hikma Health" />,
+  plan: "Entire Organization", // Replace with "Top level" or something like that
+};
+
 export function AppSidebar({
+  clinics,
   currentUser,
   handleSignOut,
   ...props
@@ -222,7 +233,25 @@ export function AppSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={navData.teams} />
+        <TeamSwitcher
+          teams={[
+            organizationLevelClinic,
+            ...clinics.map((clinic) => ({
+              id: clinic.id,
+              name: clinic.name || "",
+              logo: () => <img src="/logo187.png" alt="Hikma Health" />,
+              // url: `/app/clinics/${clinic.id}`,
+              plan: "",
+            })),
+          ]}
+          onChangeActiveTeam={(id) => {
+            if (id === organizationLevelClinic.id) {
+              // Handle organization-level actions
+            } else {
+              // Handle clinic-level actions
+            }
+          }}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navData.navMain} handleSignOut={handleSignOut} />

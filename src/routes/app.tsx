@@ -25,6 +25,7 @@ import {
 import React from "react";
 // import { createServerFileRoute } from '@tanstack/react-start/server'
 import { getCurrentUser } from "@/lib/server-functions/auth";
+import { getAllClinics } from "@/lib/server-functions/clinics";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async ({ location }) => {
@@ -44,12 +45,12 @@ export const Route = createFileRoute("/app")({
   component: RouteComponent,
   loader: async () => {
     const user = await getCurrentUser();
-    return { currentUser: user };
+    return { currentUser: user, clinics: await getAllClinics() };
   },
 });
 
 function RouteComponent() {
-  const { currentUser } = Route.useLoaderData();
+  const { currentUser, clinics } = Route.useLoaderData();
   const handleSignOut = () => {
     if (window.confirm("Are you sure you want to sign out?")) {
       fetch(`/api/auth/sign-out`, {
@@ -72,13 +73,17 @@ function RouteComponent() {
 
   const breadcrumbs = getBreadcrumbs(
     route.latestLocation.pathname,
-    navData.navMain
+    navData.navMain,
   );
 
   return (
     <SidebarProvider>
       {currentUser && (
-        <AppSidebar currentUser={currentUser} handleSignOut={handleSignOut} />
+        <AppSidebar
+          currentUser={currentUser}
+          clinics={clinics}
+          handleSignOut={handleSignOut}
+        />
       )}
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -151,7 +156,7 @@ function getBreadcrumbs(path: string, items: typeof navData.navMain) {
     if (
       item.items &&
       item.items.some((subItem) =>
-        subItem.url.startsWith(`/app/${mainSection}`)
+        subItem.url.startsWith(`/app/${mainSection}`),
       )
     ) {
       return true;

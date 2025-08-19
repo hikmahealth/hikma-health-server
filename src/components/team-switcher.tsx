@@ -16,18 +16,26 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useEffect } from "react";
 
 export function TeamSwitcher({
   teams,
+  onChangeActiveTeam,
 }: {
   teams: {
+    id: string;
     name: string;
     logo: React.ElementType;
     plan: string;
   }[];
+  onChangeActiveTeam: (teamId: string) => void;
 }) {
   const { isMobile } = useSidebar();
   const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+
+  useEffect(() => {
+    onChangeActiveTeam(activeTeam.id);
+  }, [activeTeam]);
 
   if (!activeTeam) {
     return null;

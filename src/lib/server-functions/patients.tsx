@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import Patient from "@/models/patient";
-import { capabilitiesMiddleware } from "@/middleware/auth";
 import { userRoleTokenHasCapability } from "../auth/request";
 import User from "@/models/user";
 
@@ -41,13 +40,13 @@ export const getAllPatients = createServerFn({
       includeCount: true,
     });
     return { patients: patients, pagination, error: null };
-  }
+  },
 );
 
 // Update the searchPatients function to accept pagination parameters
 export const searchPatients = createServerFn({ method: "GET" })
   .validator(
-    (data: { searchQuery: string; offset?: number; limit?: number }) => data
+    (data: { searchQuery: string; offset?: number; limit?: number }) => data,
   )
   .handler(
     async ({
@@ -76,5 +75,5 @@ export const searchPatients = createServerFn({ method: "GET" })
         },
         error: null,
       };
-    }
+    },
   );

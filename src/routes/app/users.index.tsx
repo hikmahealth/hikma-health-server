@@ -18,6 +18,7 @@ import { Link } from "@tanstack/react-router";
 import If from "@/components/if";
 import { getCurrentUserId } from "@/lib/server-functions/auth";
 import { toast } from "sonner";
+import { currentUserHasRole } from "@/lib/server-functions/users";
 
 // const getCurrentUserId = createServerFn({ method: "GET" }).handler(async () => {
 //   const tokenCookie = getCookieToken();
@@ -48,12 +49,13 @@ export const Route = createFileRoute("/app/users/")({
     return {
       users: await getAllUsers(),
       currentUserId: await getCurrentUserId(),
+      isSuperAdmin: await currentUserHasRole({ data: { role: "super_admin" } }),
     };
   },
 });
 
 function RouteComponent() {
-  const { users, currentUserId } = Route.useLoaderData();
+  const { users, currentUserId, isSuperAdmin } = Route.useLoaderData();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
@@ -111,6 +113,16 @@ function RouteComponent() {
                       Edit
                     </Link>
                   </Button>
+                  {isSuperAdmin && currentUserId !== user.id && (
+                    <Button variant="outline" size="sm" asChild>
+                      <Link
+                        to="/app/users/manage-permissions/$"
+                        params={{ _splat: user.id }}
+                      >
+                        Permissions
+                      </Link>
+                    </Button>
+                  )}
                   <If show={currentUserId !== user.id}>
                     <Button
                       variant="destructive"
