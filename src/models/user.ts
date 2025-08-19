@@ -13,6 +13,7 @@ import bcrypt from "bcrypt";
 import { serverOnly } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import cloneDeep from "lodash/cloneDeep";
+import UserClinicPermissions from "./user-clinic-permissions";
 
 namespace User {
   // export type T = {
@@ -31,13 +32,28 @@ namespace User {
   //   deleted_at: Option.Option<Date>;
   // };
 
-  export const roles = ["provider", "admin", "super_admin"] as const;
+  export const ROLES = {
+    REGISTRAR: "registrar",
+    PROVIDER: "provider",
+    ADMIN: "admin",
+    SUPER_ADMIN: "super_admin",
+  };
+
+  export const roles = [
+    ROLES.REGISTRAR,
+    ROLES.PROVIDER,
+    ROLES.ADMIN,
+    ROLES.SUPER_ADMIN,
+  ] as const;
 
   export const RoleSchema = Schema.Union(
-    Schema.Literal("provider"),
-    Schema.Literal("admin"),
-    Schema.Literal("super_admin")
+    Schema.Literal(ROLES.REGISTRAR),
+    Schema.Literal(ROLES.PROVIDER),
+    Schema.Literal(ROLES.ADMIN),
+    Schema.Literal(ROLES.SUPER_ADMIN),
   );
+
+  export type RoleT = typeof RoleSchema.Encoded;
 
   export const UserSchema = Schema.Struct({
     id: Schema.String,
@@ -51,25 +67,25 @@ namespace User {
     created_at: Schema.Union(
       Schema.DateFromString,
       Schema.Date,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     updated_at: Schema.Union(
       Schema.Date,
       Schema.DateFromString,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     last_modified: Schema.Union(
       Schema.Date,
       Schema.DateFromString,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     server_created_at: Schema.Union(
       Schema.Date,
       Schema.DateFromString,
-      Schema.DateFromSelf
+      Schema.DateFromSelf,
     ),
     deleted_at: Schema.OptionFromNullOr(
-      Schema.Union(Schema.Date, Schema.DateFromString)
+      Schema.Union(Schema.Date, Schema.DateFromString),
     ),
   });
 
@@ -111,7 +127,7 @@ namespace User {
     Schema.Literal("create_report"),
     Schema.Literal("read_report"),
     Schema.Literal("update_report"),
-    Schema.Literal("delete_report")
+    Schema.Literal("delete_report"),
   );
 
   export const CAPABILITIES: Record<string, typeof CapabilitySchema.Type> = {
@@ -229,7 +245,7 @@ namespace User {
   }
 
   export const fromDbEntry = (
-    dbUser: User.Table.Users
+    dbUser: User.Table.Users,
   ): Either.Either<User.T, Error> => {
     return Schema.decodeUnknownEither(UserSchema)(dbUser);
   };
@@ -293,7 +309,7 @@ namespace User {
     async (
       email: string,
       password: string,
-      validHours: number = 2
+      validHours: number = 2,
     ): Promise<{ user: User.EncodedT; token: string }> => {
       const user = await db
         .selectFrom(Table.name)
@@ -318,14 +334,14 @@ namespace User {
 
       const token = await Token.create(
         user.id,
-        new Date(Date.now() + validHours * 60 * 60 * 1000)
+        new Date(Date.now() + validHours * 60 * 60 * 1000),
       );
 
       return {
         user: Schema.encodeSync(UserSchema)(userEntry.right),
         token,
       };
-    }
+    },
   );
 
   /**
@@ -344,7 +360,10 @@ namespace User {
      * @returns {Promise<User.EncodedT["id"] | null>} - The created user
      */
     export const create = serverOnly(
-      async (user: User.EncodedT): Promise<User.EncodedT["id"] | null> => {
+      async (
+        user: User.EncodedT,
+        creatorId: string,
+      ): Promise<User.EncodedT["id"] | null> => {
         const entry = User.fromDbEntry(user);
         if (Either.isLeft(entry)) return null;
 
@@ -353,27 +372,50 @@ namespace User {
         const hash = bcrypt.hashSync(user.hashed_password, salt);
 
         const userId = uuidV1();
-        await db
-          .insertInto(Table.name)
-          .values({
-            id: userId,
-            name: user.name,
-            role: user.role,
-            email: user.email,
-            hashed_password: hash,
-            instance_url: user.instance_url,
-            clinic_id: user.clinic_id,
-            is_deleted: user.is_deleted,
-            updated_at: sql`now()`,
-            last_modified: sql`now()`,
-            server_created_at: sql`now()`,
-            deleted_at: null,
-            created_at: sql`now()`,
-          })
-          .execute();
+
+        await db.transaction().execute(async (trx) => {
+          await trx
+            .insertInto(Table.name)
+            .values({
+              id: userId,
+              name: user.name,
+              role: user.role,
+              email: user.email,
+              hashed_password: hash,
+              instance_url: user.instance_url,
+              clinic_id: user.clinic_id,
+              is_deleted: user.is_deleted,
+              updated_at: sql`now()`,
+              last_modified: sql`now()`,
+              server_created_at: sql`now()`,
+              deleted_at: null,
+              created_at: sql`now()`,
+            })
+            .execute();
+
+          const userPermissions = UserClinicPermissions.getRolePermissions(
+            user.role,
+          );
+          await trx
+            .insertInto(UserClinicPermissions.Table.name)
+            .values({
+              user_id: userId,
+              clinic_id: user.clinic_id || "",
+              can_delete_records: userPermissions.can_delete_records,
+              can_view_history: userPermissions.can_view_history,
+              can_edit_records: userPermissions.can_edit_records,
+              can_register_patients: userPermissions.can_register_patients,
+              is_clinic_admin: userPermissions.is_clinic_admin,
+              created_by: creatorId,
+              created_at: sql`now()`,
+              updated_at: sql`now()`,
+              last_modified_by: creatorId,
+            })
+            .execute();
+        });
 
         return userId;
-      }
+      },
     );
     /**
      * Get all users
@@ -414,7 +456,7 @@ namespace User {
         if (Either.isLeft(entry)) return null;
 
         return Schema.encodeSync(UserSchema)(entry.right);
-      }
+      },
     );
 
     /**
@@ -435,7 +477,7 @@ namespace User {
           .map(User.fromDbEntry)
           .filter(Either.isRight)
           .map((e) => Schema.encodeSync(UserSchema)(e.right));
-      }
+      },
     );
 
     export const update = serverOnly(
@@ -449,7 +491,7 @@ namespace User {
           | "last_modified"
           | "server_created_at"
           | "deleted_at"
-        >
+        >,
       ): Promise<User.EncodedT["id"] | null> => {
         await db
           .updateTable(Table.name)
@@ -467,7 +509,7 @@ namespace User {
           .execute();
 
         return id;
-      }
+      },
     );
 
     // Specific methods to update passwords
@@ -484,7 +526,7 @@ namespace User {
           .execute();
 
         return id;
-      }
+      },
     );
 
     export const softDelete = serverOnly(async (id: string): Promise<void> => {

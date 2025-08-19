@@ -1,0 +1,352 @@
+import { Either, Schema } from "effect";
+import {
+  type ColumnType,
+  type Generated,
+  type Selectable,
+  type Insertable,
+  type Updateable,
+  sql,
+} from "kysely";
+import db from "@/db";
+import { serverOnly } from "@tanstack/react-start";
+import type User from "./user";
+
+namespace UserClinicPermissions {
+  export const UserClinicPermissionsSchema = Schema.Struct({
+    user_id: Schema.String,
+    clinic_id: Schema.String,
+    can_register_patients: Schema.Boolean,
+    can_view_history: Schema.Boolean,
+    can_edit_records: Schema.Boolean,
+    can_delete_records: Schema.Boolean,
+    is_clinic_admin: Schema.Boolean,
+    created_by: Schema.NullOr(Schema.String),
+    last_modified_by: Schema.NullOr(Schema.String),
+    created_at: Schema.DateFromSelf,
+    updated_at: Schema.DateFromSelf,
+  });
+
+  // User Attribute permissions
+  export const UserPermissions = Schema.Struct({
+    CAN_REGISTER_PATIENTS: Schema.Literal("can_register_patients"),
+    CAN_VIEW_HISTORY: Schema.Literal("can_view_history"),
+    CAN_EDIT_RECORDS: Schema.Literal("can_edit_records"),
+    CAN_DELETE_RECORDS: Schema.Literal("can_delete_records"),
+    IS_CLINIC_ADMIN: Schema.Literal("is_clinic_admin"),
+  });
+
+  export const userPermissions = {
+    CAN_REGISTER_PATIENTS: "can_register_patients" as const,
+    CAN_VIEW_HISTORY: "can_view_history" as const,
+    CAN_EDIT_RECORDS: "can_edit_records" as const,
+    CAN_DELETE_RECORDS: "can_delete_records" as const,
+    IS_CLINIC_ADMIN: "is_clinic_admin" as const,
+  } satisfies Record<
+    string,
+    Schema.Schema.Type<typeof UserPermissions>[keyof Schema.Schema.Type<
+      typeof UserPermissions
+    >]
+  >;
+
+  // Role permissions
+  const rolePermissions = {
+    super_admin: {
+      [userPermissions.CAN_REGISTER_PATIENTS]: true,
+      [userPermissions.CAN_VIEW_HISTORY]: true,
+      [userPermissions.CAN_EDIT_RECORDS]: true,
+      [userPermissions.CAN_DELETE_RECORDS]: true,
+      [userPermissions.IS_CLINIC_ADMIN]: true,
+    },
+    admin: {
+      [userPermissions.CAN_REGISTER_PATIENTS]: true,
+      [userPermissions.CAN_VIEW_HISTORY]: true,
+      [userPermissions.CAN_EDIT_RECORDS]: true,
+      [userPermissions.CAN_DELETE_RECORDS]: true,
+      [userPermissions.IS_CLINIC_ADMIN]: true,
+    },
+    provider: {
+      [userPermissions.CAN_REGISTER_PATIENTS]: true,
+      [userPermissions.CAN_VIEW_HISTORY]: true,
+      [userPermissions.CAN_EDIT_RECORDS]: true,
+      [userPermissions.CAN_DELETE_RECORDS]: false,
+      [userPermissions.IS_CLINIC_ADMIN]: false,
+    },
+    registrar: {
+      [userPermissions.CAN_REGISTER_PATIENTS]: true,
+      [userPermissions.CAN_VIEW_HISTORY]: false,
+      [userPermissions.CAN_EDIT_RECORDS]: false,
+      [userPermissions.CAN_DELETE_RECORDS]: false,
+      [userPermissions.IS_CLINIC_ADMIN]: false,
+    },
+  };
+
+  export type T = typeof UserClinicPermissionsSchema.Type;
+  export type EncodedT = typeof UserClinicPermissionsSchema.Encoded;
+
+  export const fromDbEntry = (
+    entry: UserClinicPermissions.Table.UserClinicPermissions,
+  ): Either.Either<UserClinicPermissions.T, Error> => {
+    return Schema.decodeUnknownEither(UserClinicPermissionsSchema)(entry);
+  };
+
+  /**
+   * Given a role, returns the permissions for that role.
+   * @param role
+   */
+  export const getRolePermissions = (
+    role: User.RoleT,
+  ): Pick<
+    UserClinicPermissions.T,
+    | "can_register_patients"
+    | "can_view_history"
+    | "can_edit_records"
+    | "can_delete_records"
+    | "is_clinic_admin"
+  > => {
+    return rolePermissions[role];
+  };
+
+  export namespace Table {
+    export const name = "user_clinic_permissions";
+    /** The name of the table in the mobile database */
+    export const mobileName = "user_clinic_permissions";
+
+    export const columns = {
+      user_id: "user_id",
+      clinic_id: "clinic_id",
+      can_register_patients: "can_register_patients",
+      can_view_history: "can_view_history",
+      can_edit_records: "can_edit_records",
+      can_delete_records: "can_delete_records",
+      is_clinic_admin: "is_clinic_admin",
+      created_by: "created_by",
+      last_modified_by: "last_modified_by",
+      created_at: "created_at",
+      updated_at: "updated_at",
+    };
+
+    export interface T {
+      user_id: string;
+      clinic_id: string;
+      can_register_patients: Generated<boolean>;
+      can_view_history: Generated<boolean>;
+      can_edit_records: Generated<boolean>;
+      can_delete_records: Generated<boolean>;
+      is_clinic_admin: Generated<boolean>;
+      created_by: string | null;
+      last_modified_by: string | null;
+      created_at: Generated<ColumnType<Date, string | undefined, never>>;
+      updated_at: Generated<
+        ColumnType<Date, string | undefined, string | undefined>
+      >;
+    }
+
+    export type UserClinicPermissions = Selectable<T>;
+    export type NewUserClinicPermissions = Insertable<T>;
+    export type UserClinicPermissionsUpdate = Updateable<T>;
+  }
+
+  export namespace API {
+    /**
+     * Get user permissions for a specific clinic
+     * @param {string} userId - The user ID
+     * @param {string} clinicId - The clinic ID
+     * @returns {Promise<UserClinicPermissions.EncodedT | null>} - The user's permissions for the clinic
+     */
+    export const getByUserAndClinic = serverOnly(
+      async (
+        userId: string,
+        clinicId: string,
+      ): Promise<UserClinicPermissions.EncodedT | null> => {
+        const result = await db
+          .selectFrom(UserClinicPermissions.Table.name)
+          .where("user_id", "=", userId)
+          .where("clinic_id", "=", clinicId)
+          .selectAll()
+          .executeTakeFirst();
+
+        return result || null;
+      },
+    );
+
+    /**
+     * Get all clinic permissions for a user
+     * @param {string} userId - The user ID
+     * @returns {Promise<UserClinicPermissions.EncodedT[]>} - All clinic permissions for the user
+     */
+    export const getByUser = serverOnly(
+      async (userId: string): Promise<UserClinicPermissions.EncodedT[]> => {
+        const result = await db
+          .selectFrom(UserClinicPermissions.Table.name)
+          .where("user_id", "=", userId)
+          .selectAll()
+          .execute();
+
+        return result;
+      },
+    );
+
+    /**
+     * Get all user permissions for a clinic
+     * @param {string} clinicId - The clinic ID
+     * @returns {Promise<UserClinicPermissions.EncodedT[]>} - All user permissions for the clinic
+     */
+    export const getByClinic = serverOnly(
+      async (clinicId: string): Promise<UserClinicPermissions.EncodedT[]> => {
+        const result = await db
+          .selectFrom(UserClinicPermissions.Table.name)
+          .where("clinic_id", "=", clinicId)
+          .selectAll()
+          .execute();
+
+        return result;
+      },
+    );
+
+    /**
+     * Create or update user clinic permissions
+     * @param {Omit<UserClinicPermissions.EncodedT, 'created_by' | 'last_modified_by' | 'created_at' | 'updated_at'>} permissions - The permissions to upsert
+     * @param {string} currentUserId - The ID of the user performing the operation
+     * @returns {Promise<UserClinicPermissions.EncodedT>} - The created/updated permissions
+     */
+    export const upsert = serverOnly(
+      async (
+        permissions: Omit<
+          UserClinicPermissions.EncodedT,
+          "created_by" | "last_modified_by" | "created_at" | "updated_at"
+        >,
+        currentUserId: string,
+      ): Promise<UserClinicPermissions.EncodedT> => {
+        const result = await db
+          .insertInto(UserClinicPermissions.Table.name)
+          .values({
+            user_id: permissions.user_id,
+            clinic_id: permissions.clinic_id,
+            can_register_patients: permissions.can_register_patients,
+            can_view_history: permissions.can_view_history,
+            can_edit_records: permissions.can_edit_records,
+            can_delete_records: permissions.can_delete_records,
+            is_clinic_admin: permissions.is_clinic_admin,
+            created_by: currentUserId,
+            last_modified_by: currentUserId,
+            created_at: sql`now()::timestamp with time zone`,
+            updated_at: sql`now()::timestamp with time zone`,
+          })
+          .onConflict((oc) =>
+            oc.columns(["user_id", "clinic_id"]).doUpdateSet({
+              can_register_patients: (eb) =>
+                eb.ref("excluded.can_register_patients"),
+              can_view_history: (eb) => eb.ref("excluded.can_view_history"),
+              can_edit_records: (eb) => eb.ref("excluded.can_edit_records"),
+              can_delete_records: (eb) => eb.ref("excluded.can_delete_records"),
+              is_clinic_admin: (eb) => eb.ref("excluded.is_clinic_admin"),
+              last_modified_by: currentUserId,
+              updated_at: sql`now()::timestamp with time zone`,
+            }),
+          )
+          .returningAll()
+          .executeTakeFirstOrThrow();
+
+        return result;
+      },
+    );
+
+    /**
+     * Delete user clinic permissions
+     * @param {string} userId - The user ID
+     * @param {string} clinicId - The clinic ID
+     * @returns {Promise<void>} - Resolves when permissions are deleted
+     */
+    export const remove = serverOnly(
+      async (userId: string, clinicId: string): Promise<void> => {
+        await db
+          .deleteFrom(UserClinicPermissions.Table.name)
+          .where("user_id", "=", userId)
+          .where("clinic_id", "=", clinicId)
+          .execute();
+      },
+    );
+
+    /**
+     * Check if a user has a specific permission for a clinic
+     * @param {string} userId - The user ID
+     * @param {string} clinicId - The clinic ID
+     * @param {keyof Pick<UserClinicPermissions.T, 'can_register_patients' | 'can_view_history' | 'can_edit_records' | 'can_delete_records' | 'is_clinic_admin'>} permission - The permission to check
+     * @returns {Promise<boolean>} - Whether the user has the permission
+     */
+    export const hasPermission = serverOnly(
+      async (
+        userId: string,
+        clinicId: string,
+        permission: keyof Pick<
+          UserClinicPermissions.T,
+          | "can_register_patients"
+          | "can_view_history"
+          | "can_edit_records"
+          | "can_delete_records"
+          | "is_clinic_admin"
+        >,
+      ): Promise<boolean> => {
+        const result = await db
+          .selectFrom(UserClinicPermissions.Table.name)
+          .where("user_id", "=", userId)
+          .where("clinic_id", "=", clinicId)
+          .select([permission])
+          .executeTakeFirst();
+
+        return result?.[permission] || false;
+      },
+    );
+
+    /**
+     * Set a permission flag for a given user and a given clinic
+     * @param {string} userId - The user ID
+     * @param {string} clinicId - The clinic ID
+     * @param {keyof Pick<UserClinicPermissions.T, 'can_register_patients' | 'can_view_history' | 'can_edit_records' | 'can_delete_records' | 'is_clinic_admin'>} permission - The permission to check
+     * @param {boolean} value - The value to set the permission to
+     * @returns {Promise<void>}
+     */
+    export const setPermission = serverOnly(
+      async (
+        userId: string,
+        clinicId: string,
+        permission: keyof Pick<
+          UserClinicPermissions.T,
+          | "can_register_patients"
+          | "can_view_history"
+          | "can_edit_records"
+          | "can_delete_records"
+          | "is_clinic_admin"
+        >,
+        value: boolean,
+      ): Promise<void> => {
+        await db
+          .updateTable(UserClinicPermissions.Table.name)
+          .where("user_id", "=", userId)
+          .where("clinic_id", "=", clinicId)
+          .set({ [permission]: value })
+          .execute();
+      },
+    );
+
+    /**
+     * Get all clinic admins for a clinic
+     * @param {string} clinicId - The clinic ID
+     * @returns {Promise<UserClinicPermissions.EncodedT[]>} - All clinic admins
+     */
+    export const getClinicAdmins = serverOnly(
+      async (clinicId: string): Promise<UserClinicPermissions.EncodedT[]> => {
+        const result = await db
+          .selectFrom(UserClinicPermissions.Table.name)
+          .where("clinic_id", "=", clinicId)
+          .where("is_clinic_admin", "=", true)
+          .selectAll()
+          .execute();
+
+        return result;
+      },
+    );
+  }
+}
+
+export default UserClinicPermissions;

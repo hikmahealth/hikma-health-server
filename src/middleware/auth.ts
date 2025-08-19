@@ -3,10 +3,13 @@ import { getCookieToken } from "@/lib/auth/request";
 import Token from "@/models/token";
 import { Option } from "effect";
 import User from "@/models/user";
+import UserClinicPermissions from "@/models/user-clinic-permissions";
+import * as Sentry from "@sentry/tanstackstart-react";
+import type Clinic from "@/models/clinic";
 
 export const authMiddleware = createMiddleware({ type: "function" })
   .validator(
-    (data: { capabilities?: (typeof User.CapabilitySchema.Type)[] }) => data
+    (data: { capabilities?: (typeof User.CapabilitySchema.Type)[] }) => data,
   )
   .server(async ({ next, data, context }) => {
     console.log("context around authMiddleware", { context, data });
@@ -34,7 +37,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
         if (
           capabilities &&
           !capabilities.every((capability) =>
-            roleCapabilities.includes(capability)
+            roleCapabilities.includes(capability),
           )
         ) {
           return false;
@@ -50,6 +53,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
     });
   });
 
+// FIXME: Update capabilities to use the user-clinic-permissions in addition to the user roles
 export const capabilitiesMiddleware = createMiddleware({
   type: "function",
 }).server(async ({ next }) => {
@@ -71,4 +75,53 @@ export const capabilitiesMiddleware = createMiddleware({
       capabilities: capabilities as (typeof User.CapabilitySchema.Type)[],
     },
   });
+});
+
+export const permissionsMiddleware = createMiddleware({
+  type: "function",
+}).server(async ({ next }) => {
+  return Sentry.startSpan(
+    { name: "Getting user clinic permissions" },
+    async () => {
+      const token = getCookieToken();
+
+      if (!token) {
+        return next({
+          context: {
+            permissions: {} as Record<
+              Clinic.EncodedT["id"],
+              UserClinicPermissions.EncodedT
+            >,
+            role: null as typeof User.RoleSchema.Type | null,
+          },
+        });
+      }
+
+      const caller = await Token.getUser(token);
+      const permissionsArray = await Option.match(caller, {
+        onNone: async () => [] as UserClinicPermissions.EncodedT[],
+        onSome: async (caller) => {
+          return await UserClinicPermissions.API.getByUser(caller.id);
+        },
+      });
+
+      // Transform array to object keyed by clinic_id
+      const permissions = permissionsArray.reduce(
+        (acc, permission) => {
+          acc[permission.clinic_id] = permission;
+          return acc;
+        },
+        {} as Record<Clinic.EncodedT["id"], UserClinicPermissions.EncodedT>,
+      );
+
+      return next({
+        context: {
+          permissions,
+          role:
+            Option.getOrNull(caller)?.role ||
+            (null as typeof User.RoleSchema.Type | null),
+        },
+      });
+    },
+  );
 });

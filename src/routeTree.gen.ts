@@ -32,6 +32,7 @@ import { Route as AppSettingsRegisterMobileAppRouteImport } from './routes/app/s
 import { Route as AppPatientsRegisterRouteImport } from './routes/app/patients.register'
 import { Route as AppPatientsCustomizeRegistrationFormRouteImport } from './routes/app/patients.customize-registration-form'
 import { Route as AppDataEventsRouteImport } from './routes/app/data.events'
+import { Route as AppUsersManagePermissionsSplatRouteImport } from './routes/app/users.manage-permissions.$'
 import { Route as AppUsersEditSplatRouteImport } from './routes/app/users.edit.$'
 import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/prescriptions.edit.$'
 import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-forms.edit.$'
@@ -154,6 +155,12 @@ const AppDataEventsRoute = AppDataEventsRouteImport.update({
   path: '/data/events',
   getParentRoute: () => AppRoute,
 } as any)
+const AppUsersManagePermissionsSplatRoute =
+  AppUsersManagePermissionsSplatRouteImport.update({
+    id: '/users/manage-permissions/$',
+    path: '/users/manage-permissions/$',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppUsersEditSplatRoute = AppUsersEditSplatRouteImport.update({
   id: '/users/edit/$',
   path: '/users/edit/$',
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
+  '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -272,6 +280,7 @@ export interface FileRoutesByTo {
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
+  '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -301,6 +310,7 @@ export interface FileRoutesById {
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
+  '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
     | '/app/users/edit/$'
+    | '/app/users/manage-permissions/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -358,6 +369,7 @@ export interface FileRouteTypes {
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
     | '/app/users/edit/$'
+    | '/app/users/manage-permissions/$'
   id:
     | '__root__'
     | '/'
@@ -386,6 +398,7 @@ export interface FileRouteTypes {
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
     | '/app/users/edit/$'
+    | '/app/users/manage-permissions/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -617,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDataEventsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/users/manage-permissions/$': {
+      id: '/app/users/manage-permissions/$'
+      path: '/users/manage-permissions/$'
+      fullPath: '/app/users/manage-permissions/$'
+      preLoaderRoute: typeof AppUsersManagePermissionsSplatRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/users/edit/$': {
       id: '/app/users/edit/$'
       path: '/users/edit/$'
@@ -725,6 +745,7 @@ interface AppRouteChildren {
   AppEventFormsEditSplatRoute: typeof AppEventFormsEditSplatRoute
   AppPrescriptionsEditSplatRoute: typeof AppPrescriptionsEditSplatRoute
   AppUsersEditSplatRoute: typeof AppUsersEditSplatRoute
+  AppUsersManagePermissionsSplatRoute: typeof AppUsersManagePermissionsSplatRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -745,6 +766,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppEventFormsEditSplatRoute: AppEventFormsEditSplatRoute,
   AppPrescriptionsEditSplatRoute: AppPrescriptionsEditSplatRoute,
   AppUsersEditSplatRoute: AppUsersEditSplatRoute,
+  AppUsersManagePermissionsSplatRoute: AppUsersManagePermissionsSplatRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

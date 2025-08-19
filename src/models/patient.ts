@@ -91,13 +91,13 @@ namespace Patient {
   export const AttributeValueSchema = Schema.Struct({
     attribute: Schema.String,
     boolean_value: Schema.OptionFromNullOr(
-      Schema.Union(Schema.Boolean, Schema.String)
+      Schema.Union(Schema.Boolean, Schema.String),
     ),
     date_value: Schema.OptionFromNullOr(
-      Schema.Union(Schema.Date, Schema.String)
+      Schema.Union(Schema.Date, Schema.String),
     ),
     number_value: Schema.OptionFromNullOr(
-      Schema.Union(Schema.Number, Schema.String)
+      Schema.Union(Schema.Number, Schema.String),
     ),
     string_value: Schema.OptionFromNullOr(Schema.String),
   });
@@ -110,7 +110,7 @@ namespace Patient {
         key: Schema.String,
         value: AttributeValueSchema,
       }),
-    })
+    }),
   );
 
   export type T = typeof PatientWithAttributesSchema.Type;
@@ -126,10 +126,10 @@ namespace Patient {
    * @returns {Either.Either<Patient.T, Error>} entry
    */
   export const fromDbEntry = (
-    entry: Table.Patients & { additional_attributes: Record<string, any> }
+    entry: Table.Patients & { additional_attributes: Record<string, any> },
   ): Either.Either<Patient.T, Error> => {
     const additional_attributes = Object.entries(
-      entry.additional_attributes
+      entry.additional_attributes,
     ).reduce((acc, [key, value]) => {
       acc[key as keyof Patient.Attributes] =
         Schema.decodeUnknownEither(AttributeValueSchema)(value);
@@ -153,8 +153,8 @@ namespace Patient {
             ...patient,
 
             additional_attributes,
-          } as unknown as Patient.T)
-      )
+          }) as unknown as Patient.T,
+      ),
     );
 
     return patient;
@@ -254,9 +254,9 @@ namespace Patient {
         date_of_birth: Option.getOrElse(
           Option.map(
             baseFields.date_of_birth,
-            (date) => sql`${date.toISOString()}::date`
+            (date) => sql`${date.toISOString()}::date`,
           ),
-          () => null
+          () => null,
         ),
         citizenship: Option.getOrElse(baseFields.citizenship, () => null),
         hometown: Option.getOrElse(baseFields.hometown, () => null),
@@ -264,21 +264,21 @@ namespace Patient {
         sex: Option.getOrElse(baseFields.sex, () => null),
         camp: Option.getOrElse(baseFields.camp, () => null),
         additional_data: sql`${JSON.stringify(
-          baseFields.additional_data
+          baseFields.additional_data,
         )}::jsonb`,
         image_timestamp: Option.getOrElse(
           Option.map(
             baseFields.image_timestamp,
-            (date) => sql`${date.toISOString()}::timestamp with time zone`
+            (date) => sql`${date.toISOString()}::timestamp with time zone`,
           ),
-          () => null
+          () => null,
         ),
         metadata: sql`${JSON.stringify(baseFields.metadata)}::jsonb`,
         photo_url: Option.getOrElse(baseFields.photo_url, () => null),
         government_id: Option.getOrElse(baseFields.government_id, () => null),
         external_patient_id: Option.getOrElse(
           baseFields.external_patient_id,
-          () => null
+          () => null,
         ),
         is_deleted: baseFields.is_deleted,
         created_at: sql`now()::timestamp with time zone`,
@@ -288,9 +288,9 @@ namespace Patient {
         deleted_at: Option.getOrElse(
           Option.map(
             baseFields.deleted_at,
-            (date) => sql`${date.toISOString()}::timestamp with time zone`
+            (date) => sql`${date.toISOString()}::timestamp with time zone`,
           ),
-          () => null
+          () => null,
         ),
       };
 
@@ -303,7 +303,7 @@ namespace Patient {
         string_value: Option.getOrElse(attr.string_value, () => null),
         date_value: Option.getOrElse(
           Option.map(attr.date_value, (date) => new Date(date)),
-          () => null
+          () => null,
         ),
         boolean_value: Option.getOrElse(attr.boolean_value, () => null),
         metadata: attr.metadata,
@@ -315,9 +315,9 @@ namespace Patient {
         deleted_at: Option.getOrElse(
           Option.map(
             baseFields.deleted_at,
-            (date) => sql`${date.toISOString()}::timestamp with time zone`
+            (date) => sql`${date.toISOString()}::timestamp with time zone`,
           ),
-          () => null
+          () => null,
         ),
       }));
 
@@ -333,7 +333,7 @@ namespace Patient {
           .values(patientAttributes)
           .executeTakeFirst();
       });
-    }
+    },
   );
 
   /**
@@ -342,7 +342,7 @@ namespace Patient {
    * @returns Patient record with dates formatted as ISO strings
    */
   const formatPatientDates = <T extends Partial<Table.Patients>>(
-    patient: T
+    patient: T,
   ) => ({
     ...patient,
     created_at:
@@ -395,7 +395,7 @@ namespace Patient {
    * @returns Formatted patient records
    */
   const executePatientQuery = async <T extends { rows: any[] }>(
-    query: SqlQueryWithValues
+    query: SqlQueryWithValues,
   ) => {
     const result = await db.executeQuery<
       Table.Patients & { additional_attributes: Record<string, any> }
@@ -453,7 +453,7 @@ namespace Patient {
         `.compile(db);
 
           const countResult = await db.executeQuery<{ total: number }>(
-            countQuery
+            countQuery,
           );
           totalCount = countResult.rows[0]?.total || 0;
         }
@@ -469,7 +469,7 @@ namespace Patient {
             hasMore: limit ? patients.length === limit : false,
           },
         };
-      }
+      },
     );
 
     /**
@@ -500,7 +500,7 @@ namespace Patient {
         const query = sql`
       ${buildPatientAttributesBaseQuery()}
       AND (
-        LOWER(p.given_name) LIKE LOWER(${searchPattern}) 
+        LOWER(p.given_name) LIKE LOWER(${searchPattern})
         OR LOWER(p.surname) LIKE LOWER(${searchPattern})
         OR LOWER(COALESCE(p.phone, '')) LIKE LOWER(${searchPattern})
         OR LOWER(COALESCE(p.camp, '')) LIKE LOWER(${searchPattern})
@@ -508,9 +508,9 @@ namespace Patient {
         OR LOWER(COALESCE(p.hometown, '')) LIKE LOWER(${searchPattern})
         OR LOWER(CAST(p.id AS TEXT)) = LOWER(${searchQuery})
         OR EXISTS (
-          SELECT 1 
-          FROM patient_additional_attributes paa 
-          WHERE paa.patient_id = p.id 
+          SELECT 1
+          FROM patient_additional_attributes paa
+          WHERE paa.patient_id = p.id
           AND (
             LOWER(COALESCE(paa.string_value, '')) LIKE LOWER(${searchPattern})
             OR CAST(paa.number_value AS TEXT) LIKE ${searchPattern}
@@ -539,7 +539,7 @@ namespace Patient {
           FROM patients p
           WHERE p.is_deleted = false
           AND (
-            LOWER(p.given_name) LIKE LOWER(${searchPattern}) 
+            LOWER(p.given_name) LIKE LOWER(${searchPattern})
             OR LOWER(p.surname) LIKE LOWER(${searchPattern})
             OR LOWER(COALESCE(p.phone, '')) LIKE LOWER(${searchPattern})
             OR LOWER(COALESCE(p.camp, '')) LIKE LOWER(${searchPattern})
@@ -547,9 +547,9 @@ namespace Patient {
             OR LOWER(COALESCE(p.hometown, '')) LIKE LOWER(${searchPattern})
             OR LOWER(CAST(p.id AS TEXT)) = LOWER(${searchQuery})
             OR EXISTS (
-              SELECT 1 
-              FROM patient_additional_attributes paa 
-              WHERE paa.patient_id = p.id 
+              SELECT 1
+              FROM patient_additional_attributes paa
+              WHERE paa.patient_id = p.id
               AND (
                 LOWER(COALESCE(paa.string_value, '')) LIKE LOWER(${searchPattern})
                 OR CAST(paa.number_value AS TEXT) LIKE ${searchPattern}
@@ -564,7 +564,7 @@ namespace Patient {
         `.compile(db);
 
           const countResult = await db.executeQuery<{ total: number }>(
-            countQuery
+            countQuery,
           );
           totalCount = countResult.rows[0]?.total || 0;
         }
@@ -579,7 +579,7 @@ namespace Patient {
             hasMore: limit ? patients.length === limit : false,
           },
         };
-      }
+      },
     );
 
     /**
@@ -601,7 +601,7 @@ namespace Patient {
             image_timestamp: patient.image_timestamp || null,
             hometown: patient.hometown,
             additional_data: sql`${JSON.stringify(
-              safeJSONParse(patient.additional_data, {})
+              safeJSONParse(patient.additional_data, {}),
             )}::jsonb`,
             government_id: patient.government_id,
             external_patient_id: patient.external_patient_id,
@@ -609,14 +609,14 @@ namespace Patient {
             sex: patient.sex,
             camp: patient.camp,
             metadata: sql`${JSON.stringify(
-              safeJSONParse(patient.metadata, {})
+              safeJSONParse(patient.metadata, {}),
             )}::jsonb`,
             is_deleted: patient.is_deleted,
             created_at: sql`${toSafeDateString(
-              patient.created_at
+              patient.created_at,
             )}::timestamp with time zone`,
             updated_at: sql`${toSafeDateString(
-              patient.updated_at
+              patient.updated_at,
             )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
             server_created_at: sql`now()::timestamp with time zone`,
@@ -641,10 +641,10 @@ namespace Patient {
               metadata: (eb) => eb.ref("excluded.metadata"),
               is_deleted: (eb) => eb.ref("excluded.is_deleted"),
               updated_at: sql`${toSafeDateString(
-                patient.updated_at
+                patient.updated_at,
               )}::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
-            })
+            }),
           )
           .executeTakeFirstOrThrow();
       } catch (error) {
@@ -758,6 +758,15 @@ namespace Patient {
     });
   }
 
+  export const getPatientClinicId = serverOnly(async (id: string) => {
+    const patient = await db
+      .selectFrom("patients")
+      .select("primary_clinic_id")
+      .where("id", "=", id)
+      .executeTakeFirst();
+    return patient.primary_clinic_id;
+  });
+
   // export const ignorePatientRowFields = [
   //   "metadata",
   //   "deleted_at",
@@ -780,7 +789,7 @@ namespace Patient {
     export const upsertFromDelta = serverOnly(
       async (delta: Patient.EncodedT) => {
         await API.upsert(delta);
-      }
+      },
     );
     export const deleteFromDelta = serverOnly(async (id: string) => {
       await API.softDelete(id);

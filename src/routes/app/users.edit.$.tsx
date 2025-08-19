@@ -29,20 +29,14 @@ import { toast } from "sonner";
 import { v1 as uuidV1 } from "uuid";
 import { Either, Schema, Option } from "effect";
 import { capabilitiesMiddleware } from "@/middleware/auth";
-
-const getUserById = createServerFn({ method: "GET" })
-  .validator((data: { id?: string | null } = {}) => data)
-  .middleware([capabilitiesMiddleware])
-  .handler(async ({ data, context }) => {
-    if (!context.capabilities.includes(User.CAPABILITIES.READ_USER)) {
-      return Promise.reject({
-        message: "Unauthorized: Insufficient permissions",
-      });
-    }
-    if (!data?.id) return null;
-    const res = await User.API.getById(data.id);
-    return res;
-  });
+import { current } from "immer";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { currentUserHasRole, getUserById } from "@/lib/server-functions/users";
 
 const updateUser = createServerFn({ method: "POST" })
   .validator(
@@ -57,7 +51,7 @@ const updateUser = createServerFn({ method: "POST" })
         | "server_created_at"
         | "deleted_at"
       >;
-    }) => data
+    }) => data,
   )
   .middleware([capabilitiesMiddleware])
   .handler(async ({ data, context }) => {
@@ -71,8 +65,9 @@ const updateUser = createServerFn({ method: "POST" })
   });
 
 const registerUser = createServerFn({ method: "POST" })
-  .validator((data: User.EncodedT) => ({
-    user: data,
+  .validator((data: { user: User.EncodedT; creatorId: string }) => ({
+    user: data.user,
+    creatorId: data.creatorId,
   }))
   .middleware([capabilitiesMiddleware])
   .handler(async ({ data, context }) => {
@@ -81,7 +76,7 @@ const registerUser = createServerFn({ method: "POST" })
         message: "Unauthorized: Insufficient permissions",
       });
     }
-    const res = await User.API.create(data.user);
+    const res = await User.API.create(data.user, data.creatorId);
     return res;
   });
 
@@ -103,12 +98,13 @@ export const Route = createFileRoute("/app/users/edit/$")({
       user: await getUserById({ data: { id: userId } }),
       clinics: await getAllClinics(),
       currentUserId: await getCurrentUserId(),
+      isSuperAdmin: await currentUserHasRole({ data: { role: "super_admin" } }),
     };
   },
 });
 
 function RouteComponent() {
-  const { user, clinics, currentUserId } = Route.useLoaderData();
+  const { user, clinics, currentUserId, isSuperAdmin } = Route.useLoaderData();
   const navigate = Route.useNavigate();
   const userId = Route.useParams()._splat;
   const isEditMode = Boolean(userId && user);
@@ -157,7 +153,10 @@ function RouteComponent() {
           },
           onRight: (user) => {
             registerUser({
-              data: user,
+              data: {
+                user,
+                creatorId: currentUserId || "",
+              },
             })
               .then(() => {
                 toast.success("User created successfully");
@@ -275,7 +274,33 @@ function RouteComponent() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Role (Cannot be changed for current user)
+                    Role{" "}
+                    {currentUserId === userId
+                      ? "(Cannot be changed for current user)"
+                      : ""}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline">?</Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Registrar can only register patients and cannot access
+                          patient records.
+                        </p>
+                        <p>
+                          Providers can view medical history and access patient
+                          records.
+                        </p>
+                        <p>
+                          Admins can view medical history, access patient
+                          records, and manage users.
+                        </p>
+                        <p>
+                          Superadmins can perform all actions and have full
+                          access to the system.
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -347,8 +372,8 @@ function RouteComponent() {
                 {isSubmitting
                   ? "Saving..."
                   : isEditMode
-                  ? "Update User"
-                  : "Create User"}
+                    ? "Update User"
+                    : "Create User"}
               </Button>
             </div>
           </form>
