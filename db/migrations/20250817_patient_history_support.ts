@@ -9,7 +9,7 @@ import { Kysely, sql } from "kysely";
 export async function up(db: Kysely<any>): Promise<void> {
   // 1. Vitals Table
   await db.schema
-    .createTable("vitals")
+    .createTable("patient_vitals")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("patient_id", "uuid", (col) =>
       col.references("patients.id").onDelete("cascade").notNull(),
@@ -55,26 +55,26 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   // Create indexes for vitals
   await db.schema
-    .createIndex("idx_vitals_patient_id")
-    .on("vitals")
+    .createIndex("idx_patient_vitals_patient_id")
+    .on("patient_vitals")
     .column("patient_id")
     .execute();
 
   await db.schema
-    .createIndex("idx_vitals_visit_id")
-    .on("vitals")
+    .createIndex("idx_patient_vitals_visit_id")
+    .on("patient_vitals")
     .column("visit_id")
     .execute();
 
   await db.schema
-    .createIndex("idx_vitals_timestamp")
-    .on("vitals")
+    .createIndex("idx_patient_vitals_timestamp")
+    .on("patient_vitals")
     .column("timestamp")
     .execute();
 
   // 2. Problems Table
   await db.schema
-    .createTable("problems")
+    .createTable("patient_problems")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("patient_id", "uuid", (col) =>
       col.references("patients.id").onDelete("cascade").notNull(),
@@ -83,7 +83,7 @@ export async function up(db: Kysely<any>): Promise<void> {
       col.references("visits.id").onDelete("set null"),
     )
     // icd10cm, snomed, icd11, icd10
-    .addColumn("problem_code_system", "varchar(20)", (col) => col.notNull())
+    .addColumn("problem_code_system", "varchar(50)", (col) => col.notNull())
     // E11.9 for diabetes or I10 for hypertension in icd10
     .addColumn("problem_code", "varchar(100)", (col) => col.notNull())
     // 'Type 2 diabetes mellitus without complications', 'Essential (primary) hypertension'
@@ -114,42 +114,37 @@ export async function up(db: Kysely<any>): Promise<void> {
       col.notNull().defaultTo(sql`now()`),
     )
     .addColumn("deleted_at", "timestamptz")
-    .addUniqueConstraint("problems_patient_code_unique", [
-      "patient_id",
-      "problem_code_system",
-      "problem_code",
-    ])
     .execute();
 
   // Create indexes for problems
   await db.schema
-    .createIndex("idx_problems_patient_id")
-    .on("problems")
+    .createIndex("idx_patient_problems_patient_id")
+    .on("patient_problems")
     .column("patient_id")
     .execute();
 
   await db.schema
-    .createIndex("idx_problems_visit_id")
-    .on("problems")
+    .createIndex("idx_patient_problems_visit_id")
+    .on("patient_problems")
     .column("visit_id")
     .execute();
 
   await db.schema
-    .createIndex("idx_problems_clinical_status")
-    .on("problems")
+    .createIndex("idx_patient_problems_clinical_status")
+    .on("patient_problems")
     .column("clinical_status")
     .execute();
 
   // 3. Allergies Table
   await db.schema
-    .createTable("allergies")
+    .createTable("patient_allergies")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("patient_id", "uuid", (col) =>
       col.references("patients.id").onDelete("cascade").notNull(),
     )
-    .addColumn("allergen_code_system", "varchar(20)")
-    .addColumn("allergen_code", "varchar(100)", (col) => col.notNull())
-    .addColumn("allergen_label", "varchar(255)", (col) => col.notNull())
+    .addColumn("allergen_code_system", "varchar(50)")
+    .addColumn("allergen_code", "varchar(100)")
+    .addColumn("allergen_label", "varchar(255)")
     // chronic vs acute
     .addColumn("allergy_type", "varchar(50)")
     // active vs historical
@@ -182,23 +177,23 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   // Create indexes for allergies
   await db.schema
-    .createIndex("idx_allergies_patient_id")
-    .on("allergies")
+    .createIndex("idx_patient_allergies_patient_id")
+    .on("patient_allergies")
     .column("patient_id")
     .execute();
 
   await db.schema
-    .createIndex("idx_allergies_clinical_status")
-    .on("allergies")
+    .createIndex("idx_patient_allergies_clinical_status")
+    .on("patient_allergies")
     .column("clinical_status")
     .execute();
 
   // 4. Allergy Reactions Table
   await db.schema
-    .createTable("allergy_reactions")
+    .createTable("patient_allergy_reactions")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("allergy_id", "uuid", (col) =>
-      col.references("allergies.id").onDelete("cascade").notNull(),
+      col.references("patient_allergies.id").onDelete("cascade").notNull(),
     )
     .addColumn("reaction_manifestation_code", "varchar(100)")
     .addColumn("reaction_manifestation_label", "varchar(255)", (col) =>
@@ -226,17 +221,17 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   // Create index for allergy_reactions
   await db.schema
-    .createIndex("idx_allergy_reactions_allergy_id")
-    .on("allergy_reactions")
+    .createIndex("idx_patient_allergy_reactions_allergy_id")
+    .on("patient_allergy_reactions")
     .column("allergy_id")
     .execute();
 
   // 5. Tobacco History Table (Specific/Structured)
   await db.schema
-    .createTable("tobacco_history")
+    .createTable("patient_tobacco_history")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("patient_id", "uuid", (col) =>
-      col.references("patients.id").onDelete("cascade").notNull().unique(),
+      col.references("patients.id").onDelete("cascade").notNull(),
     )
     // NOTE: no visit_id since tobacco history is not associated with a specific visit, and can change between visits, which would need the tobacco_history to be mutated and the visit_id constantly updated.
     // smoking_status: never smoked, former smoker, current smoker, unknown
@@ -268,8 +263,8 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   // Create index for tobacco_history
   await db.schema
-    .createIndex("idx_tobacco_history_patient_id")
-    .on("tobacco_history")
+    .createIndex("idx_patient_tobacco_history_patient_id")
+    .on("patient_tobacco_history")
     .column("patient_id")
     .execute();
 
@@ -277,7 +272,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   // 6. Observations Table (Generic/Dynamic)
   await db.schema
-    .createTable("observations")
+    .createTable("patient_observations")
     .addColumn("id", "uuid", (col) => col.primaryKey())
     .addColumn("patient_id", "uuid", (col) =>
       col.references("patients.id").onDelete("cascade").notNull(),
@@ -321,26 +316,26 @@ export async function up(db: Kysely<any>): Promise<void> {
 
   // Create indexes for observations
   await db.schema
-    .createIndex("idx_observations_patient_id")
-    .on("observations")
+    .createIndex("idx_patient_observations_patient_id")
+    .on("patient_observations")
     .column("patient_id")
     .execute();
 
   await db.schema
-    .createIndex("idx_observations_visit_id")
-    .on("observations")
+    .createIndex("idx_patient_observations_visit_id")
+    .on("patient_observations")
     .column("visit_id")
     .execute();
 
   await db.schema
-    .createIndex("idx_observations_timestamp")
-    .on("observations")
+    .createIndex("idx_patient_observations_timestamp")
+    .on("patient_observations")
     .column("timestamp")
     .execute();
 
   await db.schema
-    .createIndex("idx_observations_code")
-    .on("observations")
+    .createIndex("idx_patient_observations_code")
+    .on("patient_observations")
     .columns(["observation_code_system", "observation_code"])
     .execute();
 }
@@ -348,10 +343,10 @@ export async function up(db: Kysely<any>): Promise<void> {
 // This function is executed when the migration is rolled back
 export async function down(db: Kysely<any>): Promise<void> {
   // Drop tables in the reverse order of creation to respect foreign key constraints
-  await db.schema.dropTable("observations").ifExists().execute();
-  await db.schema.dropTable("tobacco_history").ifExists().execute();
-  await db.schema.dropTable("allergy_reactions").ifExists().execute();
-  await db.schema.dropTable("allergies").ifExists().execute();
-  await db.schema.dropTable("problems").ifExists().execute();
-  await db.schema.dropTable("vitals").ifExists().execute();
+  await db.schema.dropTable("patient_observations").ifExists().execute();
+  await db.schema.dropTable("patient_tobacco_history").ifExists().execute();
+  await db.schema.dropTable("patient_allergy_reactions").ifExists().execute();
+  await db.schema.dropTable("patient_allergies").ifExists().execute();
+  await db.schema.dropTable("patient_problems").ifExists().execute();
+  await db.schema.dropTable("patient_vitals").ifExists().execute();
 }
