@@ -11,36 +11,53 @@ export async function up(db: Kysely<any>): Promise<void> {
   // Add ID column to user_clinic_permissions table
   await db.schema
     .alterTable("user_clinic_permissions")
-    .addColumn("id", "uuid", (col) => col.notNull().defaultTo(uuidv1()))
+    .addColumn("id", "uuid")
     .execute();
 
-  // Add ID column to app_config table
-  await db.schema
-    .alterTable("app_config")
-    .addColumn("id", "uuid", (col) => col.notNull().defaultTo(uuidv1()))
+  /// Update all existing rows with a new uuid;
+  await db
+    .updateTable("user_clinic_permissions")
+    .set({ id: uuidv1() })
     .execute();
 
-  // Create unique indexes for the new ID columns
+  /// Set the id column to not null
   await db.schema
-    .createIndex("idx_user_clinic_permissions_id")
+    .alterTable("user_clinic_permissions")
+    .alterColumn("id", (col) => col.setNotNull())
+    .execute();
+
+  /// Set the id column to unique
+  await db.schema
+    .createIndex("user_clinic_permissions_id_idx")
     .on("user_clinic_permissions")
     .column("id")
     .unique()
     .execute();
 
+  ///////////////////////////////////
+  // APP CONFIG
+  // Add ID column to app_config table
+  await db.schema.alterTable("app_config").addColumn("id", "uuid").execute();
+
+  /// Update all existing rows with a new uuid;
+  await db.updateTable("app_config").set({ id: uuidv1() }).execute();
+
+  /// Set the id column to not null
   await db.schema
-    .createIndex("idx_app_config_id")
-    .on("app_config")
+    .alterTable("app_config")
+    .alterColumn("id", (col) => col.setNotNull())
+    .execute();
+
+  /// Set the id column to unique
+  await db.schema
+    .createIndex("app_config_id_idx")
+    .on("user_clinic_permissions")
     .column("id")
     .unique()
     .execute();
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
-  // Drop indexes first
-  await db.schema.dropIndex("idx_app_config_id").execute();
-  await db.schema.dropIndex("idx_user_clinic_permissions_id").execute();
-
   // Drop ID columns
   await db.schema.alterTable("app_config").dropColumn("id").execute();
 
