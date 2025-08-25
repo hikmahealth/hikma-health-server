@@ -10,6 +10,10 @@ import PatientAdditionalAttribute from "./patient-additional-attribute";
 import db from "@/db";
 import EventForm from "./event-form";
 import PatientRegistrationForm from "./patient-registration-form";
+import UserClinicPermissions from "./user-clinic-permissions";
+import AppConfig from "./app-config";
+import PatientVital from "./patient-vital";
+import PatientProblem from "./patient-problem";
 
 namespace Sync {
     /**
@@ -27,7 +31,10 @@ namespace Sync {
         PatientRegistrationForm,
         Appointment,
         Prescription,
-        // Add more syncable entities here
+        PatientVital,
+        PatientProblem
+        // Add more syncable entities here. Do not add any server defined entities here that do not track server_created_at or server_updated_at
+        // FIXME: Add patient vitals, patient problems
     ];
 
     /**
@@ -41,14 +48,15 @@ namespace Sync {
         Event,
         Appointment,
         Prescription,
+        // FIXME add vitals, and problems
     ];
-    
-    
+
+
     const pushTableNameModelMap = ENTITIES_TO_PULL_FROM_MOBILE.reduce((acc, entity) => {
         acc[entity.Table.name] = entity;
         return acc;
     }, {} as Record<PostTableName, typeof ENTITIES_TO_PULL_FROM_MOBILE[number]>);
-    
+
     export type PostTableName = typeof ENTITIES_TO_PULL_FROM_MOBILE[number]["Table"]["name"];
 
     // Core types for WatermelonDB sync
@@ -117,11 +125,11 @@ namespace Sync {
 
     type DBChangeSet = PullResponse["changes"];
 
-    
+
     /**
      * Get the delta records for the last synced at time
-     * @param lastSyncedAt 
-     * @returns 
+     * @param lastSyncedAt
+     * @returns
      */
     export const getDeltaRecords = async (
         lastSyncedAt: number
@@ -171,14 +179,45 @@ namespace Sync {
             result[mobile_table_name] = deltaData;
         }
 
+        // TODO: Pull out these table right up there near SyncableEntity definitions as a down only list of tables.
+        // Process the user clinic permissions. They dont use last modified or server created attribute
+        result["user_clinic_permissions"] = {
+          created:  await db
+              .selectFrom("user_clinic_permissions")
+              .where("created_at", ">", new Date(lastSyncedAt))
+              .selectAll()
+              .execute(),
+          updated: await db
+              .selectFrom("user_clinic_permissions")
+              .where("updated_at", ">", new Date(lastSyncedAt))
+              .selectAll()
+              .execute(),
+          deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
+        }
+
+        // Process the app config. They dont use last modified or server created attribute
+        result["app_config"] = {
+          created:  await db
+              .selectFrom("app_config")
+              .where("created_at", ">", new Date(lastSyncedAt))
+              .selectAll()
+              .execute(),
+          updated: await db
+              .selectFrom("app_config")
+              .where("updated_at", ">", new Date(lastSyncedAt))
+              .selectAll()
+              .execute(),
+          deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
+        }
+
         return result;
     };
-    
-    
+
+
     /**
      * Persist the delta data from the client
-     * @param entity 
-     * @param deltaData 
+     * @param entity
+     * @param deltaData
      */
     export const persistClientChanges = async (data: PushRequest): Promise<void> => {
         console.log("Starting to persist client changes", data);
@@ -191,9 +230,9 @@ namespace Sync {
                 updated: newDeltaJson?.updated || [],
                 deleted: newDeltaJson?.deleted || [],
             };
-    
+
             // console.log(`${tableName} - Records to create: ${deltaData.created.length}, update: ${deltaData.updated.length}, delete: ${deltaData.deleted.length}`);
-    
+
             for (const record of deltaData.created.concat(deltaData.updated)) {
                 // console.log(`Upserting ${tableName} record:`, record.id);
                 await pushTableNameModelMap[tableName].Sync.upsertFromDelta(record as typeof pushTableNameModelMap[typeof tableName].EncodedT);
