@@ -32,6 +32,8 @@ import type PatientAdditionalAttribute from "@/models/patient-additional-attribu
 import type PatientRegistrationForms from "@/models/patient-registration-form";
 import type UserClinicPermissions from "@/models/user-clinic-permissions";
 import type AppConfig from "@/models/app-config";
+import type PatientVital from "@/models/patient-vital";
+import type PatientProblem from "@/models/patient-problem";
 import { Pool, type PoolConfig } from "pg";
 import type { StringId, StringContent } from "@/models/string-content";
 import "dotenv/config";
@@ -54,6 +56,8 @@ export type Database = {
   appointments: Appointment.Table.T;
   user_clinic_permissions: UserClinicPermissions.Table.T;
   app_config: AppConfig.Table.T;
+  patient_problems: PatientProblem.Table.T;
+  patient_vitals: PatientVital.Table.T;
 };
 
 // Environment types

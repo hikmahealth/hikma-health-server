@@ -2,7 +2,7 @@ import type PatientRegistrationForm from "@/models/patient-registration-form";
 
 /**
 Base fields are required for all user registration fields
-  
+
 THESE FIELDS ARE SEARCHABLE BY DEFAULT
 First Name, Last Name, date of birth, sex, registration date
 [
@@ -176,7 +176,7 @@ export const baseFields: PatientRegistrationForm.T["fields"] = [
     baseField: true,
     id: "be6e53d6-120a-11ef-9262-0242ac120002",
     column: "government_id",
-    position: 7,
+    position: 9,
     label: {
       en: "Government ID",
       ar: "الهوية الحكومية",
@@ -194,7 +194,7 @@ export const baseFields: PatientRegistrationForm.T["fields"] = [
     baseField: true,
     id: "b7671870-120a-11ef-9262-0242ac120002",
     column: "external_patient_id",
-    position: 7,
+    position: 10,
     label: {
       en: "Patient ID",
       ar: "رقم المريض",
@@ -207,5 +207,23 @@ export const baseFields: PatientRegistrationForm.T["fields"] = [
     deleted: false,
     isSearchField: false,
     showsInSummary: false,
+  },
+  {
+    baseField: true,
+    id: "fe4d179e-8153-11f0-8de9-0242ac120002",
+    column: "primary_clinic_id",
+    position: 12,
+    label: {
+      en: "Primary Clinic ID",
+      ar: "رقم المشفى الرئيسي",
+      es: "ID de la clínica principal",
+    },
+    fieldType: "text",
+    options: [],
+    visible: true,
+    required: true,
+    isSearchField: false,
+    deleted: false,
+    showsInSummary: true,
   },
 ];

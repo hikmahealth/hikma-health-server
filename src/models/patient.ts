@@ -85,6 +85,8 @@ namespace Patient {
     last_modified: Schema.DateFromSelf,
     server_created_at: Schema.DateFromSelf,
     deleted_at: Schema.OptionFromNullOr(Schema.DateFromSelf),
+    primary_clinic_id: Schema.OptionFromNullOr(Schema.String),
+    last_modified_by: Schema.OptionFromNullOr(Schema.String),
   });
 
   // Define the additional attributes schema
@@ -186,6 +188,8 @@ namespace Patient {
       last_modified: "last_modified",
       server_created_at: "server_created_at",
       deleted_at: "deleted_at",
+      primary_clinic_id: "primary_clinic_id",
+      last_modified_by: "last_modified_by",
     };
 
     export interface T {
@@ -224,6 +228,8 @@ namespace Patient {
         string | null | undefined,
         string | null
       >;
+      primary_clinic_id: string | null;
+      last_modified_by: string | null;
     }
 
     export type Patients = Selectable<T>;
@@ -290,6 +296,14 @@ namespace Patient {
             baseFields.deleted_at,
             (date) => sql`${date.toISOString()}::timestamp with time zone`,
           ),
+          () => null,
+        ),
+        primary_clinic_id: Option.getOrElse(
+          baseFields.primary_clinic_id,
+          () => null,
+        ),
+        last_modified_by: Option.getOrElse(
+          baseFields.last_modified_by,
           () => null,
         ),
       };
@@ -605,6 +619,8 @@ namespace Patient {
             )}::jsonb`,
             government_id: patient.government_id,
             external_patient_id: patient.external_patient_id,
+            primary_clinic_id: patient.primary_clinic_id,
+            last_modified_by: patient.last_modified_by,
             phone: patient.phone,
             sex: patient.sex,
             camp: patient.camp,
@@ -635,6 +651,8 @@ namespace Patient {
               government_id: (eb) => eb.ref("excluded.government_id"),
               external_patient_id: (eb) =>
                 eb.ref("excluded.external_patient_id"),
+              primary_clinic_id: (eb) => eb.ref("excluded.primary_clinic_id"),
+              last_modified_by: (eb) => eb.ref("excluded.last_modified_by"),
               phone: (eb) => eb.ref("excluded.phone"),
               sex: (eb) => eb.ref("excluded.sex"),
               camp: (eb) => eb.ref("excluded.camp"),
