@@ -268,7 +268,7 @@ namespace PatientVital {
     },
   );
 
-  namespace Sync {
+  export namespace Sync {
     export const upsertFromDelta = serverOnly(
       async (deltaData: Table.NewPatientVitals): Promise<void> => {
         await db

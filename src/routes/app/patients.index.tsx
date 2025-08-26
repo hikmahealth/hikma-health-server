@@ -1,27 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import Patient from "@/models/patient";
 import * as React from "react";
-import { type ColumnDef, useReactTable } from "@tanstack/react-table";
-import {
-  ArrowUpDown,
-  ChevronDown,
-  LucideDownload,
-  LucideSearch,
-  MoreHorizontal,
-} from "lucide-react";
-import { Effect, Either, Option, Schema } from "effect";
+import { LucideDownload } from "lucide-react";
+import { Option } from "effect";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -54,10 +37,16 @@ import ExcelJS from "exceljs";
 import Event from "@/models/event";
 import EventForm from "@/models/event-form";
 import { format } from "date-fns";
+import User from "@/models/user";
+import { toast } from "sonner";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
   async () => {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== User.ROLES.SUPER_ADMIN) {
+      throw new Error("Unauthorized");
+    }
     // Use getAllWithAttributes with no limit to get all patients
     const { patients } = await Patient.API.getAllWithAttributes({
       includeCount: false,
@@ -65,7 +54,7 @@ const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
     const eventForms = await EventForm.API.getAll();
     const exportEvents = await Event.API.getAllForExport();
     return { patients, exportEvents, eventForms };
-  }
+  },
 );
 
 export const Route = createFileRoute("/app/patients/")({
@@ -86,7 +75,7 @@ function RouteComponent() {
   const { currentUser, patients, pagination, patientRegistrationForm } =
     Route.useLoaderData();
 
-  const [patientsList, setPatientsList] = React.useState<Patient.T[]>(patients);
+  const [patientsList, setPatientsList] = React.useState(patients);
   const [paginationResults, setPaginationResults] = React.useState<{
     pagination: {
       offset: number;
@@ -102,18 +91,17 @@ function RouteComponent() {
   const [loading, setLoading] = React.useState(false);
 
   const fields = patientRegistrationForm?.fields.filter((f) => !f.deleted);
-  const headers = fields?.map((f) => f.label.en);
-  const additionalDataFields = fields?.filter((f) => !f.baseField);
+  const headers = fields?.map((f) => f.label.en) || [];
 
   // Calculate pagination values using functional approach
   const pageSize = Option.getOrElse(
     Option.fromNullable(paginationResults.pagination.limit),
-    () => 10
+    () => 10,
   );
 
   const totalItems = Option.getOrElse(
     Option.fromNullable(paginationResults.pagination.total),
-    () => 0
+    () => 0,
   );
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -131,9 +119,13 @@ function RouteComponent() {
       },
     })
       .then((res) => {
-        setPatientsList(res.patients);
-        setPaginationResults(res);
-        setCurrentPage(page);
+        if (res.patients) {
+          setPatientsList(res.patients);
+          setPaginationResults(res);
+          setCurrentPage(page);
+          // scroll to the top
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
       })
       .finally(() => {
         setLoading(false);
@@ -156,130 +148,139 @@ function RouteComponent() {
     // Include pages around current page
     const nearbyPages = Array.from(
       { length: 3 },
-      (_, i) => Math.max(2, currentPage - 1) + i
+      (_, i) => Math.max(2, currentPage - 1) + i,
     ).filter((page) => page > firstPage && page < lastPage);
 
     // Combine and sort pages
     return Array.from(new Set([firstPage, ...nearbyPages, lastPage])).sort(
-      (a, b) => a - b
+      (a, b) => a - b,
     );
   };
 
   const handleExport = async () => {
-    // Create a new workbook
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Patients List");
+    try {
+      // Create a new workbook
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Patients List");
 
-    // Set workbook properties
-    workbook.creator = currentUser?.name ?? "";
-    workbook.lastModifiedBy = currentUser?.name ?? "";
-    workbook.created = new Date();
-    workbook.modified = new Date();
-    workbook.lastPrinted = new Date();
+      // Set workbook properties
+      workbook.creator = currentUser?.name ?? "";
+      workbook.lastModifiedBy = currentUser?.name ?? "";
+      workbook.created = new Date();
+      workbook.modified = new Date();
+      workbook.lastPrinted = new Date();
 
-    // Get all patients for export (not paginated)
-    const {
-      patients: allPatients,
-      exportEvents,
-      eventForms,
-    } = await getAllPatientsForExport({});
+      // Get all patients for export (not paginated)
+      const {
+        patients: allPatients,
+        exportEvents,
+        eventForms,
+      } = await getAllPatientsForExport({});
 
-    // for each event form type, add a new worksheet
-    eventForms.forEach((eventForm) => {
-      const worksheet = workbook.addWorksheet(eventForm.name);
-      const extraColumns = {
-        patient_id: "Patient ID",
-        // patient_name: "Patient Name",
-        visit_id: "Visit ID",
-        created_at: "Created At",
-        // provider_id: "Provider ID",
-      };
-      const eventFormFields = eventForm.form_fields;
-      const headerRow = [
-        "ID",
-        ...eventFormFields.map((f) => f.name),
-        ...Object.values(extraColumns),
-      ];
+      // for each event form type, add a new worksheet
+      eventForms.forEach((eventForm) => {
+        const worksheet = workbook.addWorksheet(eventForm.name);
+        const extraColumns = {
+          patient_id: "Patient ID",
+          // patient_name: "Patient Name",
+          visit_id: "Visit ID",
+          created_at: "Created At",
+          // provider_id: "Provider ID",
+        };
+        const eventFormFields = eventForm.form_fields;
+        const headerRow = [
+          "ID",
+          ...eventFormFields.map((f) => f.name),
+          ...Object.values(extraColumns),
+        ];
+        worksheet.addRow(headerRow);
+        worksheet.getRow(1).font = { bold: true };
+
+        exportEvents
+          .filter((ev) => ev.form_id === eventForm.id)
+          .forEach((event) => {
+            const rowData = [event.id];
+            eventFormFields?.forEach((field) => {
+              const fieldData = event.form_data.find(
+                (f) => f.fieldId === field.id,
+              );
+              rowData.push(JSON.stringify(fieldData?.value));
+            });
+
+            rowData.push(event.patient_id);
+            rowData.push(event.visit_id || "");
+            rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
+            // rowData.push(event.provider_id || "");
+            worksheet.addRow(rowData);
+          });
+      });
+
+      const headerRow = ["ID", ...headers];
       worksheet.addRow(headerRow);
       worksheet.getRow(1).font = { bold: true };
+      allPatients.forEach((patient) => {
+        const rowData = [patient.id];
 
-      exportEvents
-        .filter((ev) => ev.form_id === eventForm.id)
-        .forEach((event) => {
-          const rowData = [event.id];
-          eventFormFields?.forEach((field) => {
-            const fieldData = event.form_data.find(
-              (f) => f.fieldId === field.id
+        // Add data for each field in the registration form
+        fields?.forEach((field) => {
+          if (field.baseField) {
+            rowData.push(
+              String(
+                PatientRegistrationForm.renderFieldValue(
+                  field,
+                  patient[field.column as keyof typeof patient],
+                ),
+              ),
             );
-            rowData.push(JSON.stringify(fieldData?.value));
-          });
-
-          rowData.push(event.patient_id);
-          rowData.push(event.visit_id || "");
-          rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
-          // rowData.push(event.provider_id || "");
-          worksheet.addRow(rowData);
+          } else {
+            rowData.push(
+              String(
+                PatientRegistrationForm.renderFieldValue(
+                  field,
+                  patient.additional_attributes[field.id],
+                ),
+              ),
+            );
+          }
         });
-    });
 
-    const headerRow = ["ID", ...headers];
-    worksheet.addRow(headerRow);
-    worksheet.getRow(1).font = { bold: true };
-    allPatients.forEach((patient) => {
-      const rowData = [patient.id];
-
-      // Add data for each field in the registration form
-      fields?.forEach((field) => {
-        if (field.baseField) {
-          rowData.push(
-            PatientRegistrationForm.renderFieldValue(
-              field,
-              patient[field.column as keyof typeof patient]
-            )
-          );
-        } else {
-          rowData.push(
-            PatientRegistrationForm.renderFieldValue(
-              field,
-              patient.additional_attributes[field.id]
-            )
-          );
-        }
+        worksheet.addRow(rowData);
       });
 
-      worksheet.addRow(rowData);
-    });
-
-    // Auto-size columns for better readability
-    worksheet.columns.forEach((column) => {
-      let maxLength = 0;
-      column.eachCell({ includeEmpty: true }, (cell) => {
-        const columnLength = cell.value ? cell.value.toString().length : 10;
-        if (columnLength > maxLength) {
-          maxLength = columnLength;
-        }
+      // Auto-size columns for better readability
+      worksheet.columns?.forEach((column) => {
+        let maxLength = 0;
+        column?.eachCell?.({ includeEmpty: true }, (cell) => {
+          const columnLength = cell.value ? cell.value.toString().length : 10;
+          if (columnLength > maxLength) {
+            maxLength = columnLength;
+          }
+        });
+        column.width = maxLength < 10 ? 10 : maxLength + 2;
       });
-      column.width = maxLength < 10 ? 10 : maxLength + 2;
-    });
 
-    // Generate a filename with current date - so that next download doesn't override previous
-    const fileName = `patients_export_${
-      new Date().toISOString().split("T")[0]
-    }.xlsx`;
+      // Generate a filename with current date - so that next download doesn't override previous
+      const fileName = `patients_export_${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
 
-    // Write to file and trigger download
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = URL.createObjectURL(blob);
+      // Write to file and trigger download
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error: any) {
+      console.error("Error exporting patients:", error, error.message);
+      toast.error("Failed to export patients", error.message);
+    }
   };
 
   const pageNumbers = getPageNumbers();
@@ -349,22 +350,22 @@ function RouteComponent() {
                 <TableCell className="px-6" key={"id"}>
                   {patient.id}
                 </TableCell>
-                {fields.map((field) =>
+                {fields?.map((field) =>
                   field.baseField ? (
                     <TableCell className="px-6" key={field.id}>
                       {PatientRegistrationForm.renderFieldValue(
                         field,
-                        patient[field.column as keyof typeof patient]
+                        patient[field.column as keyof typeof patient],
                       )}
                     </TableCell>
                   ) : (
                     <TableCell className="px-6" key={field.id}>
                       {PatientRegistrationForm.renderFieldValue(
                         field,
-                        patient.additional_attributes[field.id]
+                        patient.additional_attributes[field.id],
                       )}
                     </TableCell>
-                  )
+                  ),
                 )}
               </TableRow>
             ))}

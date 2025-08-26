@@ -14,6 +14,8 @@ import Prescription from "./prescription";
 import Appointment from "./appointment";
 import Event from "./event";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
+import UserClinicPermissions from "./user-clinic-permissions";
+import Patient from "./patient";
 
 namespace Visit {
   export type T = {
@@ -103,7 +105,7 @@ namespace Visit {
   export namespace API {
     export const findById = serverOnly(
       async (
-        id: string
+        id: string,
       ): Promise<
         | {
             id: string;
@@ -117,14 +119,48 @@ namespace Visit {
           .where("id", "=", id)
           .select(["id", "is_deleted", "provider_name"])
           .executeTakeFirst();
-      }
+      },
     );
     /**
-     * Upsert a visit
-     *
-     * note: experimenting with visits coming in with their own ids.
+     * Upsert a patient record without the additional patient attributes
      */
     export const upsert = serverOnly(async (visit: Visit.EncodedT) => {
+      // permissions check
+      const clinicIds =
+        await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+          "can_edit_records",
+        );
+
+      const patientClinicId = await Patient.API.DANGEROUSLY_GET_CLINIC_ID_BY_ID(
+        visit.patient_id,
+      );
+
+      if (
+        patientClinicId &&
+        patientClinicId !== visit.clinic_id &&
+        !clinicIds.includes(patientClinicId)
+      ) {
+        throw new Error("Unauthorized");
+      }
+      return await upsert_core(visit);
+    });
+
+    /**
+     * Upsert a visit record
+     * SYNC ONLY METHOD
+     */
+    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+      async (visit: Visit.EncodedT) => {
+        return await upsert_core(visit);
+      },
+    );
+
+    /**
+     * Upsert a visit
+     * DO NOT EXPORT OR USE DIRECTLY
+     * note: experimenting with visits coming in with their own ids.
+     */
+    const upsert_core = serverOnly(async (visit: Visit.EncodedT) => {
       return await db
         .insertInto(Visit.Table.name)
         .values({
@@ -135,16 +171,16 @@ namespace Visit {
           provider_name: visit.provider_name,
           check_in_timestamp: visit.check_in_timestamp
             ? sql`${toSafeDateString(
-                visit.check_in_timestamp
+                visit.check_in_timestamp,
               )}::timestamp with time zone`
             : null,
           metadata: sql`${safeJSONParse(visit.metadata, {})}::jsonb`,
           is_deleted: visit.is_deleted,
           created_at: sql`${toSafeDateString(
-            visit.created_at
+            visit.created_at,
           )}::timestamp with time zone`,
           updated_at: sql`${toSafeDateString(
-            visit.updated_at
+            visit.updated_at,
           )}::timestamp with time zone`,
           last_modified: sql`now()::timestamp with time zone`,
           server_created_at: sql`now()::timestamp with time zone`,
@@ -161,7 +197,7 @@ namespace Visit {
             is_deleted: (eb) => eb.ref("excluded.is_deleted"),
             updated_at: sql`now()::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
-          })
+          }),
         )
         .executeTakeFirstOrThrow();
     });
@@ -219,7 +255,7 @@ namespace Visit {
 
   export namespace Sync {
     export const upsertFromDelta = serverOnly(async (delta: Visit.EncodedT) => {
-      return API.upsert(delta);
+      return API.DANGEROUS_SYNC_ONLY_upsert(delta);
     });
 
     export const deleteFromDelta = serverOnly(async (id: string) => {
