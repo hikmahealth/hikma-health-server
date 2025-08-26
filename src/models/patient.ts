@@ -17,6 +17,7 @@ import Prescription from "./prescription";
 import Visit from "./visit";
 import Event from "./event";
 import { safeJSONParse, safeStringify, toSafeDateString } from "@/lib/utils";
+import UserClinicPermissions from "./user-clinic-permissions";
 
 namespace Patient {
   // export type T = {
@@ -251,6 +252,21 @@ namespace Patient {
       baseFields: Patient.T;
       additionalAttributes: PatientAdditionalAttribute.T[];
     }) => {
+      // PermissionsCheck
+      const clinicIds =
+        await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+          "can_register_patients",
+        );
+
+      const primaryClinicId = Option.getOrElse(
+        baseFields.primary_clinic_id,
+        () => null,
+      );
+
+      if (primaryClinicId && !clinicIds.includes(primaryClinicId)) {
+        throw new Error("Unauthorized");
+      }
+
       const patientId = uuidv1();
 
       const ptObject = {
@@ -298,10 +314,7 @@ namespace Patient {
           ),
           () => null,
         ),
-        primary_clinic_id: Option.getOrElse(
-          baseFields.primary_clinic_id,
-          () => null,
-        ),
+        primary_clinic_id: primaryClinicId,
         last_modified_by: Option.getOrElse(
           baseFields.last_modified_by,
           () => null,
@@ -380,12 +393,11 @@ namespace Patient {
         ? patient.date_of_birth.toISOString()
         : patient.date_of_birth,
   });
-
   /**
    * Build the base SQL query for retrieving patients with their additional attributes
    * @returns SQL query template
    */
-  const buildPatientAttributesBaseQuery = () => sql`
+  const buildPatientAttributesBaseQuery = (clinicIds: string[]) => sql`
     SELECT
       p.*,
       COALESCE(json_object_agg(
@@ -401,6 +413,7 @@ namespace Patient {
     FROM patients p
     LEFT JOIN patient_additional_attributes pa ON p.id = pa.patient_id
     WHERE p.is_deleted = false
+    AND (${clinicIds.length > 0 ? sql`p.primary_clinic_id IN (${sql.join(clinicIds)})  OR p.primary_clinic_id IS NULL` : sql`p.primary_clinic_id IS NULL`})
   `;
 
   /**
@@ -445,9 +458,15 @@ namespace Patient {
       }): Promise<PatientsQueryResult> => {
         const { limit, offset = 0, includeCount = false } = options || {};
 
+        // permissions check
+        const clinicIds =
+          await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+            "can_view_history",
+          );
+
         // Build the query using the base query and adding pagination
         const query = sql`
-        ${buildPatientAttributesBaseQuery()}
+        ${buildPatientAttributesBaseQuery(clinicIds)}
         GROUP BY p.id
         ORDER BY p.updated_at DESC
         ${offset ? sql`OFFSET ${offset}` : sql``}
@@ -509,10 +528,16 @@ namespace Patient {
       }): Promise<PatientsQueryResult> => {
         const searchPattern = `%${searchQuery}%`;
 
+        // permissions check
+        const clinicIds =
+          await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+            "can_view_history",
+          );
+
         // Build the query using the base query and adding search condition with pagination
         // Search across multiple patient fields and additional attributes
         const query = sql`
-      ${buildPatientAttributesBaseQuery()}
+      ${buildPatientAttributesBaseQuery(clinicIds)}
       AND (
         LOWER(p.given_name) LIKE LOWER(${searchPattern})
         OR LOWER(p.surname) LIKE LOWER(${searchPattern})
@@ -600,6 +625,37 @@ namespace Patient {
      * Upsert a patient record without the additional patient attributes
      */
     export const upsert = serverOnly(async (patient: Patient.EncodedT) => {
+      // permissions check
+      const clinicIds =
+        await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+          "can_register_patients",
+        );
+
+      if (
+        patient.primary_clinic_id &&
+        !clinicIds.includes(patient.primary_clinic_id)
+      ) {
+        throw new Error("Unauthorized");
+      }
+      return await upsert_core(patient);
+    });
+
+    /**
+     * Upsert a patient record without the additional patient attributes
+     * SYNC ONLY METHOD
+     */
+    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+      async (patient: Patient.EncodedT) => {
+        return await upsert_core(patient);
+      },
+    );
+
+    /**
+     * The core logic for upserting a patient record without the additional patient attributes
+     * without any authentication or authorization checks
+     * DO NOT EXPORT OR CALL THIS OUTSIDE OF SYNC FUNCTIONS
+     */
+    const upsert_core = serverOnly(async (patient: Patient.EncodedT) => {
       try {
         return await db
           .insertInto(Patient.Table.name)
@@ -684,8 +740,49 @@ namespace Patient {
 
     /**
      * Soft Delete a patient record without the additional patient attributes
+     * DO NOT EXPORT OR USE THIS FUNCTION DIRECTLY
      */
     export const softDelete = serverOnly(async (id: string) => {
+      // permissions check
+      const clinicIds =
+        await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+          "can_delete_records",
+        );
+
+      const patient = await db
+        .selectFrom("patients")
+        .where("id", "=", id)
+        .select("primary_clinic_id")
+        .executeTakeFirst();
+
+      if (!patient) {
+        throw new Error("Patient not found");
+      }
+
+      if (
+        patient.primary_clinic_id &&
+        !clinicIds.includes(patient.primary_clinic_id)
+      ) {
+        throw new Error("Unauthorized");
+      }
+
+      return await softDelete_core(id);
+    });
+
+    /**
+     * ❌ DO NOT USE
+     */
+    export const DANGEROUS_SYNC_ONLY_softDelete = serverOnly(
+      async (id: string) => {
+        return softDelete_core(id);
+      },
+    );
+
+    /**
+     * Soft Delete a patient record without the additional patient attributes
+     * DO NOT EXPORT OR USE THIS FUNCTION DIRECTLY
+     */
+    const softDelete_core = serverOnly(async (id: string) => {
       // NOTE: Could easily call something like Appointment.API.softDelete(id, trx) - but we
       // still dont know how the tanstackstart api calling convention for "server only" will
       // evolve with respect to transactions.
@@ -774,6 +871,17 @@ namespace Patient {
         throw error;
       }
     });
+
+    export const DANGEROUSLY_GET_CLINIC_ID_BY_ID = serverOnly(
+      async (id: string) => {
+        const patient = await db
+          .selectFrom("patients")
+          .select("primary_clinic_id")
+          .where("id", "=", id)
+          .executeTakeFirst();
+        return patient?.primary_clinic_id;
+      },
+    );
   }
 
   export const getPatientClinicId = serverOnly(async (id: string) => {
@@ -782,7 +890,7 @@ namespace Patient {
       .select("primary_clinic_id")
       .where("id", "=", id)
       .executeTakeFirst();
-    return patient.primary_clinic_id;
+    return patient?.primary_clinic_id;
   });
 
   // export const ignorePatientRowFields = [
@@ -806,11 +914,11 @@ namespace Patient {
   export namespace Sync {
     export const upsertFromDelta = serverOnly(
       async (delta: Patient.EncodedT) => {
-        await API.upsert(delta);
+        await API.DANGEROUS_SYNC_ONLY_upsert(delta);
       },
     );
     export const deleteFromDelta = serverOnly(async (id: string) => {
-      await API.softDelete(id);
+      await API.DANGEROUS_SYNC_ONLY_softDelete(id);
     });
   }
 }

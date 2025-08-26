@@ -21,6 +21,8 @@ import upperFirst from "lodash/upperFirst";
 import { Option } from "effect";
 import { v1 as uuidv1 } from "uuid";
 import PatientAdditionalAttribute from "@/models/patient-additional-attribute";
+import { SelectInput } from "@/components/select-input";
+import { getAllClinics } from "@/lib/server-functions/clinics";
 
 export const createPatient = createServerFn({ method: "POST" })
   .validator<{
@@ -32,7 +34,7 @@ export const createPatient = createServerFn({ method: "POST" })
       data as unknown as {
         baseFields: Patient.T;
         additionalAttributes: PatientAdditionalAttribute.T[];
-      }
+      },
     );
   });
 
@@ -46,12 +48,13 @@ export const Route = createFileRoute("/app/patients/register")({
   component: RouteComponent,
   loader: async () => {
     const patientRegistrationForm = await getAllPatientRegistrationForms();
-    return { patientRegistrationForm: patientRegistrationForm[0] };
+    const clinicsList = await getAllClinics();
+    return { patientRegistrationForm: patientRegistrationForm[0], clinicsList };
   },
 });
 
 function RouteComponent() {
-  const { patientRegistrationForm } = Route.useLoaderData();
+  const { patientRegistrationForm, clinicsList } = Route.useLoaderData();
 
   const { formState, handleSubmit, register, watch, setValue } = useForm({
     mode: "all",
@@ -59,6 +62,8 @@ function RouteComponent() {
 
     // validate: {},
   });
+
+  console.log({ clinicsList });
 
   const onSubmit = async (data: any) => {
     const patient: Patient.T = {
@@ -101,18 +106,20 @@ function RouteComponent() {
             attribute_id: field.id,
             attribute: field.column,
             number_value: Option.fromNullable(
-              field.fieldType === "number" ? Number(data[field.column]) : null
+              field.fieldType === "number" ? Number(data[field.column]) : null,
             ),
             string_value: Option.fromNullable(
               ["text", "select"].includes(field.fieldType)
                 ? String(data[field.column])
-                : null
+                : null,
             ),
             date_value: Option.fromNullable(
-              field.fieldType === "date" ? new Date(data[field.column]) : null
+              field.fieldType === "date" ? new Date(data[field.column]) : null,
             ),
             boolean_value: Option.fromNullable(
-              field.fieldType === "boolean" ? Boolean(data[field.column]) : null
+              field.fieldType === "boolean"
+                ? Boolean(data[field.column])
+                : null,
             ),
             metadata: {},
             is_deleted: false,
@@ -162,7 +169,10 @@ function RouteComponent() {
           {patientRegistrationForm?.fields
             .filter((field) => field.visible && field.deleted !== true)
             .map((field) => {
-              if (field.fieldType === "text") {
+              if (
+                field.fieldType === "text" &&
+                field.column !== "primary_clinic_id"
+              ) {
                 return (
                   <div key={field.id} className="space-y-2">
                     <Label
@@ -172,6 +182,22 @@ function RouteComponent() {
                       {Language.getTranslation(field.label, "en")}
                     </Label>
                     <Input key={field.id} {...register(field.column)} />
+                  </div>
+                );
+              }
+              if (field.column === "primary_clinic_id") {
+                return (
+                  <div key={field.id} className="space-y-2">
+                    <SelectInput
+                      className="w-full"
+                      label={Language.getTranslation(field.label, "en")}
+                      data={clinicsList.map((clinic) => ({
+                        label: clinic.name,
+                        value: clinic.id,
+                      }))}
+                      value={watch(field.column)}
+                      onChange={(v) => setValue(field.column, v)}
+                    />
                   </div>
                 );
               }
@@ -207,7 +233,7 @@ function RouteComponent() {
                         <SelectValue
                           placeholder={`Select ${Language.getTranslation(
                             field.label,
-                            "en"
+                            "en",
                           )}`}
                         />
                       </SelectTrigger>

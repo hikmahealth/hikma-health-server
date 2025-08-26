@@ -9,7 +9,11 @@ import {
 } from "kysely";
 import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
-import type User from "./user";
+import User from "./user";
+import Clinic from "./clinic";
+import { Option } from "effect";
+import Token from "./token";
+import { getCookie } from "@tanstack/react-start/server";
 
 namespace UserClinicPermissions {
   export const UserClinicPermissionsSchema = Schema.Struct({
@@ -83,6 +87,20 @@ namespace UserClinicPermissions {
   export type T = typeof UserClinicPermissionsSchema.Type;
   export type EncodedT = typeof UserClinicPermissionsSchema.Encoded;
 
+  /**
+   * Union type representing the available permission fields that can be checked for a user
+   * within a specific clinic context. These permissions control various aspects of
+   * patient data management and clinic administration.
+   */
+  export type UserPermissionsT = keyof Pick<
+    T,
+    | "can_register_patients"
+    | "can_view_history"
+    | "can_edit_records"
+    | "can_delete_records"
+    | "is_clinic_admin"
+  >;
+
   export const fromDbEntry = (
     entry: UserClinicPermissions.Table.UserClinicPermissions,
   ): Either.Either<UserClinicPermissions.T, Error> => {
@@ -93,16 +111,7 @@ namespace UserClinicPermissions {
    * Given a role, returns the permissions for that role.
    * @param role
    */
-  export const getRolePermissions = (
-    role: User.RoleT,
-  ): Pick<
-    UserClinicPermissions.T,
-    | "can_register_patients"
-    | "can_view_history"
-    | "can_edit_records"
-    | "can_delete_records"
-    | "is_clinic_admin"
-  > => {
+  export const getRolePermissions = (role: User.RoleT): UserPermissionsT => {
     return rolePermissions[role];
   };
 
@@ -166,6 +175,74 @@ namespace UserClinicPermissions {
           .executeTakeFirst();
 
         return result || null;
+      },
+    );
+
+    /**
+     * Get all clinics where a user has a given permission
+     * Similar to getClinicIdsWithPermission, except this gets all the information about the user from the cookie and does not need the parameters passed in.
+     * @param permission Permission to check for
+     * @returns Array of clinics where the user has the permission
+     */
+    export const getClinicIdsWithPermissionFromToken = serverOnly(
+      async (permission: UserPermissionsT) => {
+        const token = getCookie("token");
+        if (!token) {
+          return Promise.reject(new Error("Unauthorized"));
+        }
+        const userOption = await Token.getUser(token);
+
+        if (Option.isNone(userOption)) {
+          return Promise.reject(new Error("Unauthorized"));
+        }
+
+        const user = userOption.value;
+
+        if (!user) return [];
+        return getClinicIdsWithPermission(user.id, permission);
+      },
+    );
+
+    /**
+     * Get all clinics where a user has a given permission
+     * @param userId User ID
+     * @param permission Permission to check for
+     * @returns Array of clinics where the user has the permission
+     */
+    export const getClinicIdsWithPermission = serverOnly(
+      async (
+        userId: string,
+        permission: UserPermissionsT,
+      ): Promise<string[]> => {
+        const user = await db
+          .selectFrom(User.Table.name)
+          .selectAll()
+          .where("id", "=", userId)
+          .executeTakeFirst();
+
+        if (!user) {
+          return [];
+        }
+
+        const userRole = user.role;
+
+        /// SUPER ADMIN CAN ACCESS EVERYTHING.
+        if (userRole === "super_admin") {
+          const ids = await db
+            .selectFrom(Clinic.Table.name)
+            .select("id")
+            .execute();
+          return ids.map((clinic) => clinic.id);
+        }
+
+        const clinics = await db
+          .selectFrom(UserClinicPermissions.Table.name)
+          .select("clinic_id")
+          .where("user_id", "=", userId)
+          .where(permission, "=", true)
+          .execute();
+
+        return clinics.map((clinic) => clinic.clinic_id);
       },
     );
 

@@ -14,6 +14,7 @@ import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
 import { format } from "date-fns";
 import { mapObjectValues, toSafeDateString } from "@/lib/utils";
+import { baseFields } from "@/data/registration-form-base-fields";
 
 namespace PatientRegistrationForm {
   export type T = {
@@ -76,7 +77,7 @@ namespace PatientRegistrationForm {
    * @returns {PatientRegistrationForm.T} entry
    */
   export const fromDbEntry = (
-    entry: PatientRegistrationForm.Table.PatientRegistrationForms
+    entry: PatientRegistrationForm.Table.PatientRegistrationForms,
   ): PatientRegistrationForm.T => {
     return {
       id: entry.id,
@@ -95,7 +96,7 @@ namespace PatientRegistrationForm {
       last_modified: new Date(entry.last_modified as unknown as Date),
       server_created_at: new Date(entry.server_created_at as unknown as Date),
       deleted_at: Option.fromNullable(
-        entry.deleted_at as unknown as Date | null
+        entry.deleted_at as unknown as Date | null,
       ),
     };
   };
@@ -174,10 +175,10 @@ namespace PatientRegistrationForm {
           metadata: sql`${JSON.stringify(form.metadata)}::jsonb`,
           is_deleted: false,
           created_at: sql`${toSafeDateString(
-            form.created_at
+            form.created_at,
           )}::timestamp with time zone`,
           updated_at: sql`${toSafeDateString(
-            form.updated_at
+            form.updated_at,
           )}::timestamp with time zone`,
           last_modified: sql`now()::timestamp with time zone`,
           server_created_at: sql`now()::timestamp with time zone`,
@@ -191,16 +192,16 @@ namespace PatientRegistrationForm {
             metadata: sql`${JSON.stringify(form.metadata)}::jsonb`,
             is_deleted: false,
             updated_at: sql`${toSafeDateString(
-              form.updated_at
+              form.updated_at,
             )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
             server_created_at: sql`now()::timestamp with time zone`,
             deleted_at: null,
-          })
+          }),
         )
         .returning("id")
         .executeTakeFirstOrThrow();
-    }
+    },
   );
 
   /**
@@ -210,8 +211,21 @@ namespace PatientRegistrationForm {
   export const getAll = serverOnly(
     async (): Promise<PatientRegistrationForm.EncodedT[]> => {
       const result = await db.selectFrom(Table.name).selectAll().execute();
-      return result;
-    }
+
+      // Merge with all base fields to support adding base fields on the fly
+      return result.map((form) => {
+        const existingBaseFieldIds = form.fields
+          .filter((f) => f.baseField)
+          .map((f) => f.id);
+        const missingBaseFields = baseFields.filter(
+          (f) => !existingBaseFieldIds.includes(f.id),
+        );
+
+        form.fields = [...form.fields, ...missingBaseFields];
+        form.fields.sort((a, b) => a.position - b.position);
+        return form;
+      });
+    },
   );
 
   /**
@@ -227,7 +241,7 @@ namespace PatientRegistrationForm {
       | Record<
           "string_value" | "number_value" | "boolean_value" | "date_value",
           unknown | null
-        >
+        >,
   ): string | number | boolean => {
     try {
       if (field.baseField) {
