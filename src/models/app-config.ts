@@ -64,9 +64,9 @@ namespace AppConfig {
       display_name: string | null;
       value: string | null;
       data_type: string;
-      created_at: Generated<ColumnType<Date, string | undefined, never>>;
+      created_at: Generated<ColumnType<Date, Date | string | undefined, never>>;
       updated_at: Generated<
-        ColumnType<Date, string | undefined, string | undefined>
+        ColumnType<Date, Date | string | undefined, string | undefined>
       >;
       last_modified: Generated<ColumnType<Date, string | undefined, never>>;
       last_modified_by: string | null;

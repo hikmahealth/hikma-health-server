@@ -136,6 +136,8 @@ namespace Sync {
     ): Promise<DBChangeSet> => {
         const result: DBChangeSet = {};
 
+      const lastSyncDate = new Date(lastSyncedAt);
+
         for (const entity of ENTITIES_TO_PUSH_TO_MOBILE) {
             // It can happen that the server table name is different from the mobile table name
             // This just ensures we do the correct mapping. Often the name is the same.
@@ -145,7 +147,7 @@ namespace Sync {
             // Query for new records created after last sync
             const newRecords = await db
                 .selectFrom(server_table_name)
-                .where("server_created_at", ">", new Date(lastSyncedAt))
+                .where("server_created_at", ">", lastSyncDate)
                 .where("deleted_at", "is", null)
                 .where("is_deleted", "=", false)
                 .selectAll()
@@ -154,8 +156,8 @@ namespace Sync {
             // Query for records updated since last sync (but created before)
             const updatedRecords = await db
                 .selectFrom(server_table_name)
-                .where("last_modified", ">", new Date(lastSyncedAt))
-                .where("server_created_at", "<", new Date(lastSyncedAt))
+                .where("last_modified", ">", lastSyncDate)
+                .where("server_created_at", "<", lastSyncDate)
                 .where("deleted_at", "is", null)
                 .where("is_deleted", "=", false)
                 .selectAll()
@@ -164,7 +166,7 @@ namespace Sync {
             // Query for records deleted since last sync
             const deletedRecords = await db
                 .selectFrom(server_table_name)
-                .where("deleted_at", ">", new Date(lastSyncedAt))
+                .where("deleted_at", ">", lastSyncDate)
                 .where("is_deleted", "=", true)
                 .select("id")
                 .execute();
@@ -184,12 +186,13 @@ namespace Sync {
         result["user_clinic_permissions"] = {
           created:  await db
               .selectFrom("user_clinic_permissions")
-              .where("created_at", ">", new Date(lastSyncedAt))
+              .where("created_at", ">", lastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
               .selectFrom("user_clinic_permissions")
-              .where("updated_at", ">", new Date(lastSyncedAt))
+              .where("created_at", "<", lastSyncDate)
+              .where("updated_at", ">", lastSyncDate)
               .selectAll()
               .execute(),
           deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
@@ -199,12 +202,13 @@ namespace Sync {
         result["app_config"] = {
           created:  await db
               .selectFrom("app_config")
-              .where("created_at", ">", new Date(lastSyncedAt))
+              .where("created_at", ">", lastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
               .selectFrom("app_config")
-              .where("updated_at", ">", new Date(lastSyncedAt))
+              .where("created_at", "<", lastSyncDate)
+              .where("updated_at", ">", lastSyncDate)
               .selectAll()
               .execute(),
           deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
