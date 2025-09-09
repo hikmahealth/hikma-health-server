@@ -137,7 +137,11 @@ namespace PatientVital {
           patient_id: vital.patient_id,
           diastolic_bp: vital.diastolic_bp,
           systolic_bp: vital.systolic_bp,
-          timestamp: vital.timestamp,
+          timestamp: vital.timestamp
+            ? sql`${toSafeDateString(
+                vital.timestamp,
+              )}::timestamp with time zone`
+            : sql`now()`,
           visit_id: vital.visit_id,
           bp_position: vital.bp_position,
           height_cm: vital.height_cm,
