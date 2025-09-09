@@ -48,6 +48,8 @@ namespace Sync {
         Event,
         Appointment,
         Prescription,
+        PatientVital,
+        PatientProblem
         // FIXME add vitals, and problems
     ];
 
