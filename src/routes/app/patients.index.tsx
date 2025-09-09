@@ -75,7 +75,10 @@ function RouteComponent() {
   const { currentUser, patients, pagination, patientRegistrationForm } =
     Route.useLoaderData();
 
-  const [patientsList, setPatientsList] = React.useState(patients);
+  const [patientsList, setPatientsList] =
+    React.useState<(typeof Patient.PatientWithAttributesSchema.Encoded)[]>(
+      patients,
+    );
   const [paginationResults, setPaginationResults] = React.useState<{
     pagination: {
       offset: number;
@@ -86,6 +89,7 @@ function RouteComponent() {
   }>({
     pagination,
   });
+  const navigate = Route.useNavigate();
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [loading, setLoading] = React.useState(false);
@@ -283,6 +287,10 @@ function RouteComponent() {
     }
   };
 
+  const openPatientChart = (patientId: string) => {
+    navigate({ to: `/app/patients/${patientId}` });
+  };
+
   const pageNumbers = getPageNumbers();
 
   if (!patientRegistrationForm) {
@@ -307,7 +315,7 @@ function RouteComponent() {
     <div>
       <div className="w-full flex items-center max-w-2xl gap-4 py-4">
         <Input
-          className="pl-4 pr-4"
+          className="pl-4 pr-4 md:w-lg"
           placeholder="Search patients..."
           type="search"
           value={searchQuery}
@@ -346,7 +354,11 @@ function RouteComponent() {
           </TableHeader>
           <TableBody>
             {patientsList.map((patient) => (
-              <TableRow key={patient.id}>
+              <TableRow
+                className="hover:bg-gray-100 cursor-pointer"
+                onClick={() => openPatientChart(patient.id)}
+                key={patient.id}
+              >
                 <TableCell className="px-6" key={"id"}>
                   {patient.id}
                 </TableCell>

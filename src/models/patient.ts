@@ -6,6 +6,7 @@ import type {
   Insertable,
   Updateable,
   JSONColumnType,
+  CompiledQuery,
 } from "kysely";
 import db from "@/db";
 import { sql } from "kysely";
@@ -393,6 +394,7 @@ namespace Patient {
         ? patient.date_of_birth.toISOString()
         : patient.date_of_birth,
   });
+
   /**
    * Build the base SQL query for retrieving patients with their additional attributes
    * @returns SQL query template
@@ -417,12 +419,41 @@ namespace Patient {
   `;
 
   /**
+   * Build the base SQL for retrieving patients by a given list of ids and their additional attributes
+   * @param ids List of patient ids
+   * @returns SQL query template
+   */
+  const buildPatientAttributesByIdQuery = (
+    clinicIds: string[],
+    patientIds: string[],
+  ) => sql`
+    SELECT
+      p.*,
+      COALESCE(json_object_agg(
+        pa.attribute_id,
+        json_build_object(
+          'attribute', pa.attribute,
+          'number_value', pa.number_value,
+          'string_value', pa.string_value,
+          'date_value', pa.date_value,
+          'boolean_value', pa.boolean_value
+        )
+      ) FILTER (WHERE pa.attribute_id IS NOT NULL), '{}') AS additional_attributes
+    FROM patients p
+    LEFT JOIN patient_additional_attributes pa ON p.id = pa.patient_id
+    WHERE p.is_deleted = false
+    AND (p.primary_clinic_id IN (${sql.join(clinicIds)}) OR p.primary_clinic_id IS NULL)
+    AND p.id IN (${sql.join(patientIds)})
+    GROUP BY p.id
+  `;
+
+  /**
    * Execute a patient query and format the results
    * @param query The SQL query to execute
    * @returns Formatted patient records
    */
   const executePatientQuery = async <T extends { rows: any[] }>(
-    query: SqlQueryWithValues,
+    query: CompiledQuery<unknown>,
   ) => {
     const result = await db.executeQuery<
       Table.Patients & { additional_attributes: Record<string, any> }
@@ -442,6 +473,26 @@ namespace Patient {
   };
 
   export namespace API {
+    export const getById = serverOnly(
+      async (patientId: string): Promise<Patient.EncodedT> => {
+        // permissions check
+        const clinicIds =
+          await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+            "can_view_history",
+          );
+        // ${patientIds.length > 0 ? sql`AND p.id IN (${sql.join(patientIds)})` : ""}
+        //
+
+        // Build the query using the base query and adding pagination
+        const query = sql`
+        ${buildPatientAttributesByIdQuery(clinicIds, [patientId])}
+      `.compile(db);
+
+        const patient = await executePatientQuery(query);
+
+        return patient?.[0];
+      },
+    );
     /**
      * Get all patients with their additional attributes
      * @param {Object} options - Pagination and filter options

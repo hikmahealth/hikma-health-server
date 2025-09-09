@@ -53,7 +53,10 @@ namespace UserClinicPermissions {
   >;
 
   // Role permissions
-  const rolePermissions = {
+  const rolePermissions: Record<
+    User.RoleT,
+    Record<UserPermissionsT, boolean>
+  > = {
     super_admin: {
       [userPermissions.CAN_REGISTER_PATIENTS]: true,
       [userPermissions.CAN_VIEW_HISTORY]: true,
@@ -111,7 +114,9 @@ namespace UserClinicPermissions {
    * Given a role, returns the permissions for that role.
    * @param role
    */
-  export const getRolePermissions = (role: User.RoleT): UserPermissionsT => {
+  export const getRolePermissions = (
+    role: User.RoleT,
+  ): Record<UserPermissionsT, boolean> => {
     return rolePermissions[role];
   };
 
