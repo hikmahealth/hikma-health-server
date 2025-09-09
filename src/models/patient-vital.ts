@@ -12,6 +12,7 @@ import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
+import UserClinicPermissions from "./user-clinic-permissions";
 
 namespace PatientVital {
   export const PatientVitalSchema = Schema.Struct({
@@ -213,6 +214,11 @@ namespace PatientVital {
    */
   export const getByPatientId = serverOnly(
     async (patientId: string): Promise<EncodedT[]> => {
+      // TODO: cross check with the patient's clinic permissions
+      // const clinicIds =
+      // await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+      // "can_view_history",
+      // );
       const result = await db
         .selectFrom(Table.name)
         .where("patient_id", "=", patientId)

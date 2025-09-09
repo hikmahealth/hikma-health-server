@@ -3,6 +3,7 @@ import Patient from "@/models/patient";
 import { userRoleTokenHasCapability } from "../auth/request";
 import User from "@/models/user";
 import * as Sentry from "@sentry/tanstackstart-react";
+import z from "zod";
 
 type Pagination = {
   offset: number;
@@ -115,5 +116,25 @@ export const searchPatients = createServerFn({ method: "GET" })
           error: null,
         };
       });
+    },
+  );
+
+export const getPatientById = createServerFn({
+  method: "GET",
+})
+  .validator((data: { id: string }) => data)
+  .handler(
+    async ({
+      data,
+    }): Promise<{
+      patient: Patient.EncodedT;
+      error: { message: string } | null;
+    }> => {
+      const patient = await Patient.API.getById(data.id);
+
+      return {
+        patient,
+        error: null,
+      };
     },
   );
