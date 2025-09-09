@@ -39,6 +39,7 @@ import EventForm from "@/models/event-form";
 import { format } from "date-fns";
 import User from "@/models/user";
 import { toast } from "sonner";
+import PatientVital from "@/models/patient-vital";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
@@ -53,7 +54,8 @@ const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
     });
     const eventForms = await EventForm.API.getAll();
     const exportEvents = await Event.API.getAllForExport();
-    return { patients, exportEvents, eventForms };
+    const vitals = await PatientVital.API.getAll();
+    return { patients, exportEvents, eventForms, vitals };
   },
 );
 
@@ -161,6 +163,69 @@ function RouteComponent() {
     );
   };
 
+  const addVitalsWorksheet = async (
+    workbook: ExcelJS.Workbook,
+    vitals: PatientVital.EncodedT[],
+  ): ExcelJS.Worksheet => {
+    const vitalsWorksheet = workbook.addWorksheet("Vitals");
+    const columns = {
+      id: "ID",
+      patient_id: "Patient ID",
+      visit_id: "Visit ID",
+      timestamp: "Timestamp",
+      systolic_bp: "Systolic BP",
+      diastolic_bp: "Diastolic BP",
+      bp_position: "BP Position",
+      height_cm: "Height (cm)",
+      weight_kg: "Weight (kg)",
+      bmi: "BMI",
+      waist_circumference_cm: "Waist Circumference (cm)",
+      heart_rate: "Heart Rate",
+      pulse_rate: "Pulse Rate",
+      oxygen_saturation: "Oxygen Saturation",
+      respiratory_rate: "Respiratory Rate",
+      temperature_c: "Temperature (°C)",
+      pain_level: "Pain Level",
+      recorded_by_user_id: "Recorded By User ID",
+      created_at: "Created At",
+      updated_at: "Updated At",
+    };
+    const vitalsHeaderRow = Object.values(columns);
+    vitalsWorksheet.addRow(vitalsHeaderRow);
+    vitalsWorksheet.getRow(1).font = { bold: true };
+
+    const vitalRowData = new Array(vitals.length);
+
+    vitals.forEach((vital) => {
+      vitalRowData.push([
+        vital.id,
+        vital.patient_id,
+        vital.visit_id,
+        vital.timestamp,
+        vital.systolic_bp,
+        vital.diastolic_bp,
+        vital.bp_position,
+        vital.height_cm,
+        vital.weight_kg,
+        vital.bmi,
+        vital.waist_circumference_cm,
+        vital.heart_rate,
+        vital.pulse_rate,
+        vital.oxygen_saturation,
+        vital.respiratory_rate,
+        vital.temperature_celsius,
+        vital.pain_level,
+        vital.recorded_by_user_id,
+        vital.created_at,
+        vital.updated_at,
+      ]);
+    });
+
+    vitalsWorksheet.addRows(vitalRowData);
+
+    return vitalsWorksheet;
+  };
+
   const handleExport = async () => {
     try {
       // Create a new workbook
@@ -176,10 +241,14 @@ function RouteComponent() {
 
       // Get all patients for export (not paginated)
       const {
+        vitals: patientVitals,
         patients: allPatients,
         exportEvents,
         eventForms,
       } = await getAllPatientsForExport({});
+
+      // add Vitals
+      const vitalsWorksheet = await addVitalsWorksheet(workbook, patientVitals);
 
       // for each event form type, add a new worksheet
       eventForms.forEach((eventForm) => {

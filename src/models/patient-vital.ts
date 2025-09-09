@@ -123,231 +123,249 @@ namespace PatientVital {
     export type PatientVitalsUpdate = Updateable<T>;
   }
 
-  /**
-   * Create a new patient vital record
-   * @param vital - The vital data to create
-   * @returns {Promise<EncodedT>} - The created vital record
-   */
-  export const save = serverOnly(
-    async (vital: Table.NewPatientVitals): Promise<EncodedT> => {
-      const id = vital.id || uuidV1();
-      const result = await db
-        .insertInto(Table.name)
-        .values({
-          id,
-          patient_id: vital.patient_id,
-          diastolic_bp: vital.diastolic_bp,
-          systolic_bp: vital.systolic_bp,
-          timestamp: vital.timestamp
-            ? sql`${toSafeDateString(
-                vital.timestamp,
-              )}::timestamp with time zone`
-            : sql`now()`,
-          visit_id: vital.visit_id,
-          bp_position: vital.bp_position,
-          height_cm: vital.height_cm,
-          weight_kg: vital.weight_kg,
-          bmi: vital.bmi,
-          waist_circumference_cm: vital.waist_circumference_cm,
-          heart_rate: vital.heart_rate,
-          pulse_rate: vital.pulse_rate,
-          oxygen_saturation: vital.oxygen_saturation,
-          respiratory_rate: vital.respiratory_rate,
-          temperature_celsius: vital.temperature_celsius,
-          pain_level: vital.pain_level,
-          recorded_by_user_id: vital.recorded_by_user_id,
-          metadata: sql`${JSON.stringify(
-            safeJSONParse(vital.metadata, {}),
-          )}::jsonb`,
-          is_deleted: vital.is_deleted,
-          created_at: sql`${toSafeDateString(
-            vital.created_at,
-          )}::timestamp with time zone`,
-          updated_at: sql`${toSafeDateString(
-            vital.updated_at,
-          )}::timestamp with time zone`,
-          last_modified: sql`now()::timestamp with time zone`,
-          server_created_at: sql`now()::timestamp with time zone`,
-          deleted_at: vital.deleted_at,
-        })
-        .onConflict((oc) =>
-          oc.column("id").doUpdateSet({
-            patient_id: (eb) => eb.ref("excluded.patient_id"),
-            diastolic_bp: (eb) => eb.ref("excluded.diastolic_bp"),
-            systolic_bp: (eb) => eb.ref("excluded.systolic_bp"),
-            timestamp: (eb) => eb.ref("excluded.timestamp"),
-            visit_id: (eb) => eb.ref("excluded.visit_id"),
-            bp_position: (eb) => eb.ref("excluded.bp_position"),
-            height_cm: (eb) => eb.ref("excluded.height_cm"),
-            weight_kg: (eb) => eb.ref("excluded.weight_kg"),
-            bmi: (eb) => eb.ref("excluded.bmi"),
-            waist_circumference_cm: (eb) =>
-              eb.ref("excluded.waist_circumference_cm"),
-            heart_rate: (eb) => eb.ref("excluded.heart_rate"),
-            pulse_rate: (eb) => eb.ref("excluded.pulse_rate"),
-            oxygen_saturation: (eb) => eb.ref("excluded.oxygen_saturation"),
-            respiratory_rate: (eb) => eb.ref("excluded.respiratory_rate"),
-            temperature_celsius: (eb) => eb.ref("excluded.temperature_celsius"),
-            pain_level: (eb) => eb.ref("excluded.pain_level"),
-            recorded_by_user_id: (eb) => eb.ref("excluded.recorded_by_user_id"),
-            metadata: (eb) => eb.ref("excluded.metadata"),
-            is_deleted: (eb) => eb.ref("excluded.is_deleted"),
-
-            created_at: sql`now()::timestamp with time zone`,
-            server_created_at: sql`now()::timestamp with time zone`,
-            updated_at: sql`now()::timestamp with time zone`,
+  export namespace API {
+    /**
+     * Create a new patient vital record
+     * @param vital - The vital data to create
+     * @returns {Promise<EncodedT>} - The created vital record
+     */
+    export const save = serverOnly(
+      async (vital: Table.NewPatientVitals): Promise<EncodedT> => {
+        const id = vital.id || uuidV1();
+        const result = await db
+          .insertInto(Table.name)
+          .values({
+            id,
+            patient_id: vital.patient_id,
+            diastolic_bp: vital.diastolic_bp,
+            systolic_bp: vital.systolic_bp,
+            timestamp: vital.timestamp
+              ? sql`${toSafeDateString(
+                  vital.timestamp,
+                )}::timestamp with time zone`
+              : sql`now()`,
+            visit_id: vital.visit_id,
+            bp_position: vital.bp_position,
+            height_cm: vital.height_cm,
+            weight_kg: vital.weight_kg,
+            bmi: vital.bmi,
+            waist_circumference_cm: vital.waist_circumference_cm,
+            heart_rate: vital.heart_rate,
+            pulse_rate: vital.pulse_rate,
+            oxygen_saturation: vital.oxygen_saturation,
+            respiratory_rate: vital.respiratory_rate,
+            temperature_celsius: vital.temperature_celsius,
+            pain_level: vital.pain_level,
+            recorded_by_user_id: vital.recorded_by_user_id,
+            metadata: sql`${JSON.stringify(
+              safeJSONParse(vital.metadata, {}),
+            )}::jsonb`,
+            is_deleted: vital.is_deleted,
+            created_at: sql`${toSafeDateString(
+              vital.created_at,
+            )}::timestamp with time zone`,
+            updated_at: sql`${toSafeDateString(
+              vital.updated_at,
+            )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
+            server_created_at: sql`now()::timestamp with time zone`,
             deleted_at: vital.deleted_at,
-          }),
-        )
-        .returningAll()
-        .executeTakeFirstOrThrow();
+          })
+          .onConflict((oc) =>
+            oc.column("id").doUpdateSet({
+              patient_id: (eb) => eb.ref("excluded.patient_id"),
+              diastolic_bp: (eb) => eb.ref("excluded.diastolic_bp"),
+              systolic_bp: (eb) => eb.ref("excluded.systolic_bp"),
+              timestamp: (eb) => eb.ref("excluded.timestamp"),
+              visit_id: (eb) => eb.ref("excluded.visit_id"),
+              bp_position: (eb) => eb.ref("excluded.bp_position"),
+              height_cm: (eb) => eb.ref("excluded.height_cm"),
+              weight_kg: (eb) => eb.ref("excluded.weight_kg"),
+              bmi: (eb) => eb.ref("excluded.bmi"),
+              waist_circumference_cm: (eb) =>
+                eb.ref("excluded.waist_circumference_cm"),
+              heart_rate: (eb) => eb.ref("excluded.heart_rate"),
+              pulse_rate: (eb) => eb.ref("excluded.pulse_rate"),
+              oxygen_saturation: (eb) => eb.ref("excluded.oxygen_saturation"),
+              respiratory_rate: (eb) => eb.ref("excluded.respiratory_rate"),
+              temperature_celsius: (eb) =>
+                eb.ref("excluded.temperature_celsius"),
+              pain_level: (eb) => eb.ref("excluded.pain_level"),
+              recorded_by_user_id: (eb) =>
+                eb.ref("excluded.recorded_by_user_id"),
+              metadata: (eb) => eb.ref("excluded.metadata"),
+              is_deleted: (eb) => eb.ref("excluded.is_deleted"),
 
-      return result;
-    },
-  );
+              created_at: sql`now()::timestamp with time zone`,
+              server_created_at: sql`now()::timestamp with time zone`,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+              deleted_at: vital.deleted_at,
+            }),
+          )
+          .returningAll()
+          .executeTakeFirstOrThrow();
 
-  /**
-   * Get all vitals for a patient
-   * @param patientId - The patient ID
-   * @returns {Promise<EncodedT[]>} - List of vital records
-   */
-  export const getByPatientId = serverOnly(
-    async (patientId: string): Promise<EncodedT[]> => {
-      // TODO: cross check with the patient's clinic permissions
-      // const clinicIds =
-      // await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
-      // "can_view_history",
-      // );
+        return result;
+      },
+    );
+
+    /**
+     * Get all vitals for a patient
+     * @param patientId - The patient ID
+     * @returns {Promise<EncodedT[]>} - List of vital records
+     */
+    export const getByPatientId = serverOnly(
+      async (patientId: string): Promise<EncodedT[]> => {
+        // TODO: cross check with the patient's clinic permissions
+        // const clinicIds =
+        // await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+        // "can_view_history",
+        // );
+        const result = await db
+          .selectFrom(Table.name)
+          .where("patient_id", "=", patientId)
+          .where("is_deleted", "=", false)
+          .orderBy("timestamp", "desc")
+          .selectAll()
+          .execute();
+
+        return result;
+      },
+    );
+
+    /**
+     * Gets all vitals without pagination
+     */
+    export const getAll = serverOnly(async (): Promise<EncodedT[]> => {
       const result = await db
         .selectFrom(Table.name)
-        .where("patient_id", "=", patientId)
         .where("is_deleted", "=", false)
         .orderBy("timestamp", "desc")
         .selectAll()
         .execute();
 
       return result;
-    },
-  );
+    });
 
-  /**
-   * Get vitals for a specific visit
-   * @param visitId - The visit ID
-   * @returns {Promise<EncodedT[]>} - List of vital records for the visit
-   */
-  export const getByVisitId = serverOnly(
-    async (visitId: string): Promise<EncodedT[]> => {
-      const result = await db
-        .selectFrom(Table.name)
-        .where("visit_id", "=", visitId)
-        .where("is_deleted", "=", false)
-        .orderBy("timestamp", "desc")
-        .selectAll()
-        .execute();
+    /**
+     * Get vitals for a specific visit
+     * @param visitId - The visit ID
+     * @returns {Promise<EncodedT[]>} - List of vital records for the visit
+     */
+    export const getByVisitId = serverOnly(
+      async (visitId: string): Promise<EncodedT[]> => {
+        const result = await db
+          .selectFrom(Table.name)
+          .where("visit_id", "=", visitId)
+          .where("is_deleted", "=", false)
+          .orderBy("timestamp", "desc")
+          .selectAll()
+          .execute();
 
-      return result;
-    },
-  );
+        return result;
+      },
+    );
 
-  /**
-   * Get the most recent vitals for a patient
-   * @param patientId - The patient ID
-   * @returns {Promise<EncodedT | undefined>} - The most recent vital record
-   */
-  export const getMostRecent = serverOnly(
-    async (patientId: string): Promise<EncodedT | undefined> => {
-      const result = await db
-        .selectFrom(Table.name)
-        .where("patient_id", "=", patientId)
-        .where("is_deleted", "=", false)
-        .orderBy("timestamp", "desc")
-        .selectAll()
-        .limit(1)
-        .executeTakeFirst();
+    /**
+     * Get the most recent vitals for a patient
+     * @param patientId - The patient ID
+     * @returns {Promise<EncodedT | undefined>} - The most recent vital record
+     */
+    export const getMostRecent = serverOnly(
+      async (patientId: string): Promise<EncodedT | undefined> => {
+        const result = await db
+          .selectFrom(Table.name)
+          .where("patient_id", "=", patientId)
+          .where("is_deleted", "=", false)
+          .orderBy("timestamp", "desc")
+          .selectAll()
+          .limit(1)
+          .executeTakeFirst();
 
-      return result;
-    },
-  );
+        return result;
+      },
+    );
 
-  /**
-   * Update a vital record
-   * @param id - The vital record ID
-   * @param updates - The updates to apply
-   * @returns {Promise<EncodedT>} - The updated vital record
-   */
-  export const update = serverOnly(
-    async (
-      id: string,
-      updates: Table.PatientVitalsUpdate,
-    ): Promise<EncodedT> => {
-      const result = await db
+    /**
+     * Update a vital record
+     * @param id - The vital record ID
+     * @param updates - The updates to apply
+     * @returns {Promise<EncodedT>} - The updated vital record
+     */
+    export const update = serverOnly(
+      async (
+        id: string,
+        updates: Table.PatientVitalsUpdate,
+      ): Promise<EncodedT> => {
+        const result = await db
+          .updateTable(Table.name)
+          .set({
+            ...updates,
+            updated_at: new Date().toISOString(),
+          })
+          .where("id", "=", id)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+
+        return result;
+      },
+    );
+
+    /**
+     * Soft delete a vital record
+     * @param id - The vital record ID
+     * @returns {Promise<void>}
+     */
+    export const softDelete = serverOnly(async (id: string): Promise<void> => {
+      await db
         .updateTable(Table.name)
         .set({
-          ...updates,
-          updated_at: new Date().toISOString(),
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
         })
         .where("id", "=", id)
-        .returningAll()
-        .executeTakeFirstOrThrow();
-
-      return result;
-    },
-  );
-
-  /**
-   * Soft delete a vital record
-   * @param id - The vital record ID
-   * @returns {Promise<void>}
-   */
-  export const softDelete = serverOnly(async (id: string): Promise<void> => {
-    await db
-      .updateTable(Table.name)
-      .set({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .where("id", "=", id)
-      .execute();
-  });
-
-  /**
-   * Get vitals within a date range for a patient
-   * @param patientId - The patient ID
-   * @param startDate - Start date of the range
-   * @param endDate - End date of the range
-   * @returns {Promise<EncodedT[]>} - List of vital records
-   */
-  export const getByDateRange = serverOnly(
-    async (
-      patientId: string,
-      startDate: Date,
-      endDate: Date,
-    ): Promise<EncodedT[]> => {
-      const result = await db
-        .selectFrom(Table.name)
-        .where("patient_id", "=", patientId)
-        .where("timestamp", ">=", startDate.toISOString())
-        .where("timestamp", "<=", endDate.toISOString())
-        .where("is_deleted", "=", false)
-        .orderBy("timestamp", "desc")
-        .selectAll()
         .execute();
+    });
 
-      return result;
-    },
-  );
+    /**
+     * Get vitals within a date range for a patient
+     * @param patientId - The patient ID
+     * @param startDate - Start date of the range
+     * @param endDate - End date of the range
+     * @returns {Promise<EncodedT[]>} - List of vital records
+     */
+    export const getByDateRange = serverOnly(
+      async (
+        patientId: string,
+        startDate: Date,
+        endDate: Date,
+      ): Promise<EncodedT[]> => {
+        const result = await db
+          .selectFrom(Table.name)
+          .where("patient_id", "=", patientId)
+          .where("timestamp", ">=", startDate.toISOString())
+          .where("timestamp", "<=", endDate.toISOString())
+          .where("is_deleted", "=", false)
+          .orderBy("timestamp", "desc")
+          .selectAll()
+          .execute();
+
+        return result;
+      },
+    );
+  }
 
   export namespace Sync {
     export const upsertFromDelta = serverOnly(
       async (deltaData: Table.NewPatientVitals): Promise<void> => {
-        await PatientVital.save(deltaData);
+        await PatientVital.API.save(deltaData);
       },
     );
 
     export const deleteFromDelta = serverOnly(
       async (id: string): Promise<void> => {
-        await softDelete(id);
+        await PatientVital.API.softDelete(id);
       },
     );
   }

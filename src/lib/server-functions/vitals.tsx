@@ -21,7 +21,7 @@ export const getPatientVitals = createServerFn({
       }
 
       try {
-        const vitals = await PatientVital.getByPatientId(data.patientId);
+        const vitals = await PatientVital.API.getByPatientId(data.patientId);
         return vitals;
       } catch (error) {
         console.error("Failed to fetch patient vitals:", error);
@@ -49,7 +49,7 @@ export const getMostRecentVital = createServerFn({
       }
 
       try {
-        const vital = await PatientVital.getMostRecent(data.patientId);
+        const vital = await PatientVital.API.getMostRecent(data.patientId);
         return vital;
       } catch (error) {
         console.error("Failed to fetch most recent vital:", error);
@@ -79,7 +79,7 @@ export const getVitalsByDateRange = createServerFn({
       }
 
       try {
-        const vitals = await PatientVital.getByDateRange(
+        const vitals = await PatientVital.API.getByDateRange(
           data.patientId,
           new Date(data.startDate),
           new Date(data.endDate),
@@ -111,7 +111,7 @@ export const createPatientVital = createServerFn({
       }
 
       try {
-        const vital = await PatientVital.save(data);
+        const vital = await PatientVital.API.save(data);
         return vital;
       } catch (error) {
         console.error("Failed to create patient vital:", error);
