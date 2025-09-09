@@ -141,8 +141,7 @@ function RouteComponent() {
                   {patient.given_name || "—"} {patient.surname || "—"}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Patient ID:{" "}
-                  {patient.external_patient_id || patient.id?.slice(0, 8)}
+                  Patient ID: {patient.external_patient_id || patient.id}
                 </CardDescription>
                 <div className="flex items-center gap-4 mt-2">
                   <Badge variant="outline" className="font-normal">
