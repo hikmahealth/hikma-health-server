@@ -39,7 +39,7 @@ namespace PatientProblem {
   export type EncodedT = typeof PatientProblemSchema.Encoded;
 
   export const fromDbEntry = (
-    entry: PatientProblem.Table.PatientProblems
+    entry: PatientProblem.Table.PatientProblems,
   ): Either.Either<PatientProblem.T, Error> => {
     return Schema.decodeUnknownEither(PatientProblemSchema)(entry);
   };
@@ -139,7 +139,7 @@ namespace PatientProblem {
    */
   export const create = serverOnly(
     async (
-      problem: Omit<Table.NewPatientProblems, "id">
+      problem: Omit<Table.NewPatientProblems, "id">,
     ): Promise<EncodedT> => {
       const id = uuidV1();
       const result = await db
@@ -152,7 +152,7 @@ namespace PatientProblem {
         .executeTakeFirstOrThrow();
 
       return result;
-    }
+    },
   );
 
   /**
@@ -171,7 +171,7 @@ namespace PatientProblem {
         .execute();
 
       return result;
-    }
+    },
   );
 
   /**
@@ -192,7 +192,7 @@ namespace PatientProblem {
         .execute();
 
       return result;
-    }
+    },
   );
 
   /**
@@ -211,7 +211,7 @@ namespace PatientProblem {
         .execute();
 
       return result;
-    }
+    },
   );
 
   /**
@@ -229,7 +229,7 @@ namespace PatientProblem {
         .executeTakeFirst();
 
       return result;
-    }
+    },
   );
 
   /**
@@ -241,7 +241,7 @@ namespace PatientProblem {
   export const update = serverOnly(
     async (
       id: string,
-      updates: Table.PatientProblemsUpdate
+      updates: Table.PatientProblemsUpdate,
     ): Promise<EncodedT> => {
       const result = await db
         .updateTable(Table.name)
@@ -254,7 +254,7 @@ namespace PatientProblem {
         .executeTakeFirstOrThrow();
 
       return result;
-    }
+    },
   );
 
   /**
@@ -280,10 +280,7 @@ namespace PatientProblem {
    * @returns {Promise<EncodedT[]>} - List of matching problem records
    */
   export const search = serverOnly(
-    async (
-      searchTerm: string,
-      codeSystem?: string
-    ): Promise<EncodedT[]> => {
+    async (searchTerm: string, codeSystem?: string): Promise<EncodedT[]> => {
       let query = db
         .selectFrom(Table.name)
         .where("is_deleted", "=", false)
@@ -291,20 +288,17 @@ namespace PatientProblem {
           eb.or([
             eb("problem_code", "ilike", `%${searchTerm}%`),
             eb("problem_label", "ilike", `%${searchTerm}%`),
-          ])
+          ]),
         );
 
       if (codeSystem) {
         query = query.where("problem_code_system", "=", codeSystem);
       }
 
-      const result = await query
-        .orderBy("problem_label")
-        .selectAll()
-        .execute();
+      const result = await query.orderBy("problem_label").selectAll().execute();
 
       return result;
-    }
+    },
   );
 
   /**
@@ -314,10 +308,7 @@ namespace PatientProblem {
    * @returns {Promise<EncodedT[]>} - List of problem records
    */
   export const getByClinicalStatus = serverOnly(
-    async (
-      patientId: string,
-      clinicalStatus: string
-    ): Promise<EncodedT[]> => {
+    async (patientId: string, clinicalStatus: string): Promise<EncodedT[]> => {
       const result = await db
         .selectFrom(Table.name)
         .where("patient_id", "=", patientId)
@@ -328,10 +319,10 @@ namespace PatientProblem {
         .execute();
 
       return result;
-    }
+    },
   );
 
-  namespace Sync {
+  export namespace Sync {
     export const upsertFromDelta = serverOnly(
       async (deltaData: Table.NewPatientProblems): Promise<void> => {
         await db
@@ -341,16 +332,16 @@ namespace PatientProblem {
             oc.column("id").doUpdateSet((eb) => ({
               ...deltaData,
               server_created_at: eb.ref("patient_problems.server_created_at"),
-            }))
+            })),
           )
           .execute();
-      }
+      },
     );
 
     export const deleteFromDelta = serverOnly(
       async (id: string): Promise<void> => {
         await softDelete(id);
-      }
+      },
     );
   }
 }

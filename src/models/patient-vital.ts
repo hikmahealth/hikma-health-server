@@ -11,6 +11,7 @@ import {
 import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
+import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 
 namespace PatientVital {
   export const PatientVitalSchema = Schema.Struct({
@@ -126,15 +127,74 @@ namespace PatientVital {
    * @param vital - The vital data to create
    * @returns {Promise<EncodedT>} - The created vital record
    */
-  export const create = serverOnly(
-    async (vital: Omit<Table.NewPatientVitals, "id">): Promise<EncodedT> => {
-      const id = uuidV1();
+  export const save = serverOnly(
+    async (vital: Table.NewPatientVitals): Promise<EncodedT> => {
+      const id = vital.id || uuidV1();
       const result = await db
         .insertInto(Table.name)
         .values({
-          ...vital,
           id,
+          patient_id: vital.patient_id,
+          diastolic_bp: vital.diastolic_bp,
+          systolic_bp: vital.systolic_bp,
+          timestamp: vital.timestamp,
+          visit_id: vital.visit_id,
+          bp_position: vital.bp_position,
+          height_cm: vital.height_cm,
+          weight_kg: vital.weight_kg,
+          bmi: vital.bmi,
+          waist_circumference_cm: vital.waist_circumference_cm,
+          heart_rate: vital.heart_rate,
+          pulse_rate: vital.pulse_rate,
+          oxygen_saturation: vital.oxygen_saturation,
+          respiratory_rate: vital.respiratory_rate,
+          temperature_celsius: vital.temperature_celsius,
+          pain_level: vital.pain_level,
+          recorded_by_user_id: vital.recorded_by_user_id,
+          metadata: sql`${JSON.stringify(
+            safeJSONParse(vital.metadata, {}),
+          )}::jsonb`,
+          is_deleted: vital.is_deleted,
+          created_at: sql`${toSafeDateString(
+            vital.created_at,
+          )}::timestamp with time zone`,
+          updated_at: sql`${toSafeDateString(
+            vital.updated_at,
+          )}::timestamp with time zone`,
+          last_modified: sql`now()::timestamp with time zone`,
+          server_created_at: sql`now()::timestamp with time zone`,
+          deleted_at: vital.deleted_at,
         })
+        .onConflict((oc) =>
+          oc.column("id").doUpdateSet({
+            patient_id: (eb) => eb.ref("excluded.patient_id"),
+            diastolic_bp: (eb) => eb.ref("excluded.diastolic_bp"),
+            systolic_bp: (eb) => eb.ref("excluded.systolic_bp"),
+            timestamp: (eb) => eb.ref("excluded.timestamp"),
+            visit_id: (eb) => eb.ref("excluded.visit_id"),
+            bp_position: (eb) => eb.ref("excluded.bp_position"),
+            height_cm: (eb) => eb.ref("excluded.height_cm"),
+            weight_kg: (eb) => eb.ref("excluded.weight_kg"),
+            bmi: (eb) => eb.ref("excluded.bmi"),
+            waist_circumference_cm: (eb) =>
+              eb.ref("excluded.waist_circumference_cm"),
+            heart_rate: (eb) => eb.ref("excluded.heart_rate"),
+            pulse_rate: (eb) => eb.ref("excluded.pulse_rate"),
+            oxygen_saturation: (eb) => eb.ref("excluded.oxygen_saturation"),
+            respiratory_rate: (eb) => eb.ref("excluded.respiratory_rate"),
+            temperature_celsius: (eb) => eb.ref("excluded.temperature_celsius"),
+            pain_level: (eb) => eb.ref("excluded.pain_level"),
+            recorded_by_user_id: (eb) => eb.ref("excluded.recorded_by_user_id"),
+            metadata: (eb) => eb.ref("excluded.metadata"),
+            is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+
+            created_at: sql`now()::timestamp with time zone`,
+            server_created_at: sql`now()::timestamp with time zone`,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+            deleted_at: vital.deleted_at,
+          }),
+        )
         .returningAll()
         .executeTakeFirstOrThrow();
 
@@ -271,16 +331,7 @@ namespace PatientVital {
   export namespace Sync {
     export const upsertFromDelta = serverOnly(
       async (deltaData: Table.NewPatientVitals): Promise<void> => {
-        await db
-          .insertInto(Table.name)
-          .values(deltaData)
-          .onConflict((oc) =>
-            oc.column("id").doUpdateSet((eb) => ({
-              ...deltaData,
-              server_created_at: eb.ref("patient_vitals.server_created_at"),
-            })),
-          )
-          .execute();
+        await PatientVital.save(deltaData);
       },
     );
 
