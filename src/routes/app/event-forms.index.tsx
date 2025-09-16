@@ -29,7 +29,7 @@ const deleteForm = createServerFn({ method: "POST" })
 
 const toggleFormDetail = createServerFn({ method: "POST" })
   .validator(
-    (d: { id: string; field: "snapshot" | "editable"; value: boolean }) => d
+    (d: { id: string; field: "snapshot" | "editable"; value: boolean }) => d,
   )
   .handler(async ({ data }) => {
     switch (data.field) {
@@ -156,7 +156,10 @@ function RouteComponent() {
                       {format(form.updated_at, "yyyy-MM-dd")}
                     </TableCell>
                     <TableCell className="space-x-2">
-                      <Link to={`/app/event-forms/edit/${form.id}`}>
+                      <Link
+                        to="/app/event-forms/edit/$"
+                        params={{ _splat: form.id }}
+                      >
                         <Button variant="outline" size="sm">
                           Edit
                         </Button>

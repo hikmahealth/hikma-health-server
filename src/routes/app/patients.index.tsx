@@ -163,7 +163,7 @@ function RouteComponent() {
     );
   };
 
-  const addVitalsWorksheet = async (
+  const addVitalsWorksheet = (
     workbook: ExcelJS.Workbook,
     vitals: PatientVital.EncodedT[],
   ): ExcelJS.Worksheet => {
@@ -248,7 +248,7 @@ function RouteComponent() {
       } = await getAllPatientsForExport({});
 
       // add Vitals
-      const vitalsWorksheet = await addVitalsWorksheet(workbook, patientVitals);
+      addVitalsWorksheet(workbook, patientVitals);
 
       // for each event form type, add a new worksheet
       eventForms.forEach((eventForm) => {

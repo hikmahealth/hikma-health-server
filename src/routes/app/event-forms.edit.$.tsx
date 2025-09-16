@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import Language from "@/models/language";
+import { v1 as uuidV1 } from "uuid";
 import { nanoid } from "nanoid";
 import {
   LucideBox,
@@ -21,6 +22,8 @@ import {
 import {
   deduplicateOptions,
   fieldOptionsUnion,
+  findDuplicatesStrings,
+  isValidUUID,
   listToFieldOptions,
 } from "@/lib/utils";
 import { DatePickerInput } from "@/components/date-picker-input";
@@ -30,7 +33,7 @@ import { SelectInput, type SelectOption } from "@/components/select-input";
 import { RadioInput, type RadioOption } from "@/components/radio-input";
 import { MedicineInput } from "@/components/form-builder/MedicineInput";
 import { DiagnosisSelect } from "@/components/form-builder/DiagnosisPicker";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const getFormById = createServerFn({ method: "GET" })
@@ -42,7 +45,7 @@ const getFormById = createServerFn({ method: "GET" })
 
 const saveForm = createServerFn({ method: "POST" })
   .validator(
-    (d: { form: EventForm.EncodedT; updateFormId: null | string }) => d
+    (d: { form: EventForm.EncodedT; updateFormId: null | string }) => d,
   )
   .handler(async ({ data }) => {
     const { updateFormId, form } = data;
@@ -77,6 +80,8 @@ function RouteComponent() {
   const formId = Route.useParams()._splat;
   const isEditing = !!initialForm?.id;
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const formState = useSelector(eventFormStore, (state) => state.context);
 
   useEffect(() => {
@@ -102,15 +107,44 @@ function RouteComponent() {
 
   const handleSaveForm = async (event: React.FormEvent) => {
     event.preventDefault();
+    const duplicateFieldNames = findDuplicatesStrings(
+      formState.form_fields.map((field) => field.name.trim().toLowerCase()),
+    );
+
+    if (duplicateFieldNames.length > 0) {
+      toast.error(
+        `Duplicate field names found: ${duplicateFieldNames.join(", ")}`,
+      );
+      return;
+    }
+
+    const containsReservedFieldNames = formState.form_fields.some((field) =>
+      EventForm.RESERVED_FIELD_NAMES.includes(field.name.trim().toLowerCase()),
+    );
+
+    if (containsReservedFieldNames) {
+      toast.error("Reserved field names are not allowed");
+      return;
+    }
+
+    const updateFormId = (() => {
+      if (typeof formId === "string" && isValidUUID(formId)) {
+        return formId;
+      }
+      return null;
+    })();
     try {
+      setIsSubmitting(true);
       await saveForm({
-        data: { form: formState, updateFormId: formId ?? null },
+        data: { form: formState, updateFormId },
       });
       toast.success("Form saved successfully");
       navigate({ to: "/app/event-forms" });
     } catch (error) {
       toast.error("Failed to save form");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -131,7 +165,7 @@ function RouteComponent() {
 
   const handleFieldOptionChange = (
     fieldId: string,
-    options: EventForm.FieldOption[]
+    options: EventForm.FieldOption[],
   ) => {
     eventFormStore.send({
       type: "set-dropdown-options",
@@ -141,7 +175,7 @@ function RouteComponent() {
 
   const handleFieldUnitChange = (
     fieldId: string,
-    units: EventForm.DoseUnit[] | false
+    units: EventForm.DoseUnit[] | false,
   ) => {
     if (!units) {
       eventFormStore.send({ type: "remove-units", payload: { fieldId } });
@@ -193,7 +227,7 @@ function RouteComponent() {
                 ([key, value]) => ({
                   value: key,
                   label: value,
-                })
+                }),
               )}
             />
             <Input
@@ -236,8 +270,8 @@ function RouteComponent() {
             <Separator className="my-6" />
 
             <AddFormInputButtons addField={addField} />
-            <Button type="submit" className="w-full">
-              Save
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save"}
             </Button>
           </form>
         </div>
@@ -360,7 +394,7 @@ function createComponent(
     label: string;
     icon?: React.ReactNode;
     // render: React.FC<{ field: FieldDescription }>;
-  }
+  },
 ) {
   //   if (!opts.render) {
   //     throw new Error("missing `opts.render` please define or remove component");
@@ -411,7 +445,7 @@ const ComponentRegistry = [
       label: "Text",
       icon: <LucideBox />,
       //   render: FreeTextInput,
-    }
+    },
   ),
   createComponent(
     () =>
@@ -426,7 +460,7 @@ const ComponentRegistry = [
       label: "Date",
       icon: <LucideCalendar />,
       //   render: DateInput,
-    }
+    },
   ),
   createComponent(
     () =>
@@ -443,7 +477,7 @@ const ComponentRegistry = [
       label: "Select",
       icon: <LucideList />,
       //   render: SelectInput,
-    }
+    },
   ),
   createComponent(
     () =>
@@ -460,7 +494,7 @@ const ComponentRegistry = [
       label: "Radio",
       icon: <LucideCircle />,
       //   render: SelectInput,
-    }
+    },
   ),
   createComponent(
     () =>
@@ -479,7 +513,7 @@ const ComponentRegistry = [
       label: "File",
       icon: <LucideFile />,
       //   render: FileInput,
-    }
+    },
   ),
   createComponent(
     () =>
@@ -506,7 +540,7 @@ const ComponentRegistry = [
       label: "Medicine",
       icon: <LucidePill />,
       //   render: FreeTextInput,
-    }
+    },
   ),
   // Diagnoses
   createComponent(
@@ -523,7 +557,7 @@ const ComponentRegistry = [
       label: "Diagnosis",
       icon: <LucideStethoscope />,
       //   render: FreeTextInput,
-    }
+    },
   ),
 ];
 
