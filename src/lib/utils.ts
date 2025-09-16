@@ -15,7 +15,7 @@ Utility function that processes the values of an object
 */
 export function mapObjectValues<T>(obj: T, func: (v: any) => any): T {
   return Object.fromEntries(
-    Object.entries(obj as any).map(([k, v]) => [k, func(v)])
+    Object.entries(obj as any).map(([k, v]) => [k, func(v)]),
   ) as T;
 }
 
@@ -42,13 +42,13 @@ export const camelCaseKeys = <T extends Record<string, any>>(obj: T): T => {
     (acc: Record<string, any>, [key, value]) => {
       if (Object.prototype.hasOwnProperty.call(obj, key)) {
         const camelKey = key.replace(/([-_][a-z])/gi, ($1) =>
-          $1.toUpperCase().replace("-", "").replace("_", "")
+          $1.toUpperCase().replace("-", "").replace("_", ""),
         );
         acc[camelKey] = camelCaseKeys(value);
       }
       return acc;
     },
-    {}
+    {},
   ) as T;
 };
 
@@ -59,7 +59,7 @@ export const camelCaseKeys = <T extends Record<string, any>>(obj: T): T => {
  * @returns {Array<{ label: string, value: string }>} The deduplicated array of options.
  */
 export function deduplicateOptions(
-  options: Array<{ label: string; value: string }>
+  options: Array<{ label: string; value: string }>,
 ): Array<{ label: string; value: string }> {
   const seenValues = new Set<string>();
   const deduplicatedOptions: Array<{ label: string; value: string }> = [];
@@ -227,7 +227,7 @@ export const tryParseDate = (input: unknown, defaultDate?: Date): Date => {
  */
 export function toSafeDateString(
   value: any,
-  defaultValue = new Date().toISOString()
+  defaultValue = new Date().toISOString(),
 ): string {
   if (
     value == null ||
@@ -273,7 +273,7 @@ export function toSafeDateString(
  */
 export function getTopNWithOther(
   obj: Record<string, number>,
-  topN: number
+  topN: number,
 ): Record<string, number> {
   const sortedEntries = Object.entries(obj).sort((a, b) => b[1] - a[1]);
   const topEntries = sortedEntries.slice(0, topN);
@@ -297,7 +297,7 @@ export function getTopNWithOther(
  * @returns {Array<{label: string, value: string}>} An array of field option objects
  */
 export function listToFieldOptions(
-  list: string[]
+  list: string[],
 ): { label: string; value: string }[] {
   return list.map((item) => ({
     label: item,
@@ -308,15 +308,15 @@ export function listToFieldOptions(
 // Return the union of two field options arrays
 export function fieldOptionsUnion(
   options1: { label: string; value: string }[],
-  options2: { label: string; value: string }[]
+  options2: { label: string; value: string }[],
 ): { label: string; value: string }[] {
   const options1Map = options1.reduce(
     (acc, option) => ({ ...acc, [option.value]: option }),
-    {}
+    {},
   );
   const options2Map = options2.reduce(
     (acc, option) => ({ ...acc, [option.value]: option }),
-    {}
+    {},
   );
 
   return Object.values({ ...options1Map, ...options2Map });
@@ -324,7 +324,7 @@ export function fieldOptionsUnion(
 
 // getFieldOptionsValues
 export function getFieldOptionsValues(
-  options: { label: string; value: string }[]
+  options: { label: string; value: string }[],
 ): string[] {
   return options.map((option) => option.value);
 }
@@ -336,7 +336,7 @@ export function getFieldOptionsValues(
  */
 export function isValidUUID(str: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    str
+    str,
   );
 }
 
@@ -353,7 +353,7 @@ export const stringSimilarity = (
   str1: string,
   str2: string,
   substringLength: number = 2,
-  caseSensitive: boolean = false
+  caseSensitive: boolean = false,
 ) => {
   if (!caseSensitive) {
     str1 = str1.toLowerCase();
@@ -379,4 +379,19 @@ export const stringSimilarity = (
   }
 
   return (match * 2) / (str1.length + str2.length - (substringLength - 1) * 2);
+};
+
+/**
+ * Given a list of strings, return the strings that appear more than once.
+ * @param {string[]} strings List of strings to check for duplicates.
+ * @returns {string[]} List of strings that appear more than once.
+ */
+export const findDuplicatesStrings = (strings: string[]): string[] => {
+  const counts = new Map();
+  for (const str of strings) {
+    counts.set(str, (counts.get(str) || 0) + 1);
+  }
+  return Array.from(counts)
+    .filter(([_, count]) => count > 1)
+    .map(([str]) => str);
 };
