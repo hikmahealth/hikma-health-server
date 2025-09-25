@@ -38,7 +38,10 @@ export const getAllPatients = createServerFn({
               total: 0,
               hasMore: false,
             },
-            error: { message: "Unauthorized: Insufficient permissions" },
+            error: {
+              message: "Unauthorized: Insufficient permissions",
+              source: "getAllPatients",
+            },
           };
         }
         const { patients, pagination } = await Patient.API.getAllWithAttributes(
@@ -81,7 +84,10 @@ export const searchPatients = createServerFn({ method: "GET" })
               total: 0,
               hasMore: false,
             },
-            error: { message: "Unauthorized: Insufficient permissions" },
+            error: {
+              message: "Unauthorized: Insufficient permissions",
+              source: "searchPatients",
+            },
           };
         }
 

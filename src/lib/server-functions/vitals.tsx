@@ -17,6 +17,7 @@ export const getPatientVitals = createServerFn({
       if (!authorized) {
         return Promise.reject({
           message: "Unauthorized: Insufficient permissions",
+          source: "getPatientVitals",
         });
       }
 
@@ -45,6 +46,7 @@ export const getMostRecentVital = createServerFn({
       if (!authorized) {
         return Promise.reject({
           message: "Unauthorized: Insufficient permissions",
+          source: "getMostRecentVital",
         });
       }
 
@@ -75,6 +77,7 @@ export const getVitalsByDateRange = createServerFn({
       if (!authorized) {
         return Promise.reject({
           message: "Unauthorized: Insufficient permissions",
+          source: "getVitalsByDateRange",
         });
       }
 
@@ -107,6 +110,7 @@ export const createPatientVital = createServerFn({
       if (!authorized) {
         return Promise.reject({
           message: "Unauthorized: Insufficient permissions",
+          source: "createPatientVital",
         });
       }
 

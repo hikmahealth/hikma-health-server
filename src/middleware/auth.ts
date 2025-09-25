@@ -1,7 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getCookieToken } from "@/lib/auth/request";
 import Token from "@/models/token";
-import { Option } from "effect";
+import { Option, pipe } from "effect";
 import User from "@/models/user";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
 import * as Sentry from "@sentry/tanstackstart-react";
@@ -54,6 +54,9 @@ export const authMiddleware = createMiddleware({ type: "function" })
   });
 
 // FIXME: Update capabilities to use the user-clinic-permissions in addition to the user roles
+/**
+ * @deprecated
+ */
 export const capabilitiesMiddleware = createMiddleware({
   type: "function",
 }).server(async ({ next }) => {
@@ -86,12 +89,11 @@ export const permissionsMiddleware = createMiddleware({
       const token = getCookieToken();
 
       if (!token) {
+        type ClinicId = Clinic.EncodedT["id"];
         return next({
           context: {
-            permissions: {} as Record<
-              Clinic.EncodedT["id"],
-              UserClinicPermissions.EncodedT
-            >,
+            userId: null as string | null,
+            permissions: {} as Record<ClinicId, UserClinicPermissions.EncodedT>,
             role: null as typeof User.RoleSchema.Type | null,
           },
         });
@@ -116,10 +118,18 @@ export const permissionsMiddleware = createMiddleware({
 
       return next({
         context: {
+          // userId: Option.getOrNull(caller)?.id || null,
+          userId: pipe(
+            caller,
+            Option.map((c) => c.id),
+            Option.getOrNull,
+          ),
           permissions,
-          role:
-            Option.getOrNull(caller)?.role ||
-            (null as typeof User.RoleSchema.Type | null),
+          role: pipe(
+            caller,
+            Option.map((c) => c.role),
+            Option.getOrNull,
+          ),
         },
       });
     },

@@ -28,8 +28,8 @@ import { getCurrentUserId } from "@/lib/server-functions/auth";
 import { toast } from "sonner";
 import { v1 as uuidV1 } from "uuid";
 import { Either, Schema, Option } from "effect";
-import { capabilitiesMiddleware } from "@/middleware/auth";
-import { current } from "immer";
+import { permissionsMiddleware } from "@/middleware/auth";
+
 import {
   Tooltip,
   TooltipContent,
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { currentUserHasRole, getUserById } from "@/lib/server-functions/users";
+import UserClinicPermissions from "@/models/user-clinic-permissions";
 
 const updateUser = createServerFn({ method: "POST" })
   .validator(
@@ -53,13 +54,22 @@ const updateUser = createServerFn({ method: "POST" })
       >;
     }) => data,
   )
-  .middleware([capabilitiesMiddleware])
+  .middleware([permissionsMiddleware])
   .handler(async ({ data, context }) => {
-    if (!context.capabilities.includes(User.CAPABILITIES.UPDATE_USER)) {
+    if (!context.userId) {
       return Promise.reject({
         message: "Unauthorized: Insufficient permissions",
+        source: "updateUser",
       });
     }
+
+    console.log("Before");
+    await UserClinicPermissions.API.isAuthorizedWithClinic(
+      data.user.clinic_id,
+      "is_clinic_admin",
+    );
+    console.log("After");
+
     const res = await User.API.update(data.id, data.user);
     return res;
   });
@@ -69,13 +79,31 @@ const registerUser = createServerFn({ method: "POST" })
     user: data.user,
     creatorId: data.creatorId,
   }))
-  .middleware([capabilitiesMiddleware])
+  .middleware([permissionsMiddleware])
   .handler(async ({ data, context }) => {
-    if (!context.capabilities.includes(User.CAPABILITIES.CREATE_USER)) {
+    if (!context.userId) {
       return Promise.reject({
         message: "Unauthorized: Insufficient permissions",
+        source: "registerUser",
       });
     }
+
+    await UserClinicPermissions.API.isAuthorizedWithClinic(
+      data.user.clinic_id,
+      "is_clinic_admin",
+    );
+
+    // If the user is not super admin, they cannot create a super admin user
+    if (
+      data.user.role !== User.ROLES.SUPER_ADMIN &&
+      data.user.role === User.ROLES.SUPER_ADMIN
+    ) {
+      return Promise.reject({
+        message:
+          "Unauthorized: Insufficient permissions. A non super admin cannot create a super admin user",
+      });
+    }
+
     const res = await User.API.create(data.user, data.creatorId);
     return res;
   });
