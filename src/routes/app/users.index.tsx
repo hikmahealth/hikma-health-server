@@ -18,7 +18,13 @@ import { Link } from "@tanstack/react-router";
 import If from "@/components/if";
 import { getCurrentUserId } from "@/lib/server-functions/auth";
 import { toast } from "sonner";
-import { currentUserHasRole } from "@/lib/server-functions/users";
+import {
+  currentUserHasRole,
+  getAllUsers,
+  getClinicIdsWithUserPermission,
+} from "@/lib/server-functions/users";
+import UserClinicPermissions from "@/models/user-clinic-permissions";
+import { permissionsMiddleware } from "@/middleware/auth";
 
 // const getCurrentUserId = createServerFn({ method: "GET" }).handler(async () => {
 //   const tokenCookie = getCookieToken();
@@ -31,14 +37,21 @@ import { currentUserHasRole } from "@/lib/server-functions/users";
 //   });
 // });
 
-const getAllUsers = createServerFn({ method: "GET" }).handler(async () => {
-  const users = await User.API.getAll();
-  return users;
-});
+// const getAllUsers = createServerFn({ method: "GET" }).handler(async () => {
+// const users = await User.API.getAll();
+// return users;
+// });
 
 const deleteUser = createServerFn({ method: "POST" })
   .validator((d: { id: string }) => d)
-  .handler(async ({ data }) => {
+  .middleware([permissionsMiddleware])
+  .handler(async ({ data, context }) => {
+    if (context.role !== User.ROLES.SUPER_ADMIN) {
+      return Promise.reject({
+        message: "Unauthorized: Insufficient permissions",
+        source: "deleteUser",
+      });
+    }
     return User.API.softDelete(data.id);
   });
 
@@ -46,21 +59,34 @@ export const Route = createFileRoute("/app/users/")({
   component: RouteComponent,
 
   loader: async () => {
+    const currentUserId = await getCurrentUserId();
     return {
       users: await getAllUsers(),
-      currentUserId: await getCurrentUserId(),
+      currentUserId,
+      currentUserAdminClinics: await getClinicIdsWithUserPermission({
+        data: {
+          userId: currentUserId || "",
+          permission: "is_clinic_admin",
+        },
+      }),
       isSuperAdmin: await currentUserHasRole({ data: { role: "super_admin" } }),
     };
   },
 });
 
 function RouteComponent() {
-  const { users, currentUserId, isSuperAdmin } = Route.useLoaderData();
+  const { users, currentUserId, isSuperAdmin, currentUserAdminClinics } =
+    Route.useLoaderData();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this user?")) {
+      return;
+    }
+
+    if (!isSuperAdmin) {
+      toast.error("Only Super Admins can delete users.");
       return;
     }
 
@@ -74,6 +100,13 @@ function RouteComponent() {
     } finally {
       setIsDeleting(null);
     }
+  };
+
+  const isUserClinicAdmin = (userId: string, clinicId: string) => {
+    if (isSuperAdmin) return true;
+    if (userId === currentUserId && currentUserAdminClinics.includes(clinicId))
+      return true;
+    return false;
   };
 
   return (
@@ -108,30 +141,42 @@ function RouteComponent() {
                   {new Date(user.created_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link to="/app/users/edit/$" params={{ _splat: user.id }}>
-                      Edit
-                    </Link>
-                  </Button>
-                  {isSuperAdmin && currentUserId !== user.id && (
+                  <If
+                    show={
+                      isSuperAdmin ||
+                      isUserClinicAdmin(
+                        currentUserId || "",
+                        user.clinic_id || "",
+                      )
+                    }
+                  >
                     <Button variant="outline" size="sm" asChild>
-                      <Link
-                        to="/app/users/manage-permissions/$"
-                        params={{ _splat: user.id }}
-                      >
-                        Permissions
+                      <Link to="/app/users/edit/$" params={{ _splat: user.id }}>
+                        Edit
                       </Link>
                     </Button>
-                  )}
-                  <If show={currentUserId !== user.id}>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(user.id)}
-                      disabled={isDeleting === user.id}
-                    >
-                      {isDeleting === user.id ? "Deleting..." : "Delete"}
-                    </Button>
+                  </If>
+                  {/* Only allow super admins to manage permissions or delete users */}
+                  <If show={isSuperAdmin && currentUserId !== user.id}>
+                    <>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link
+                          to="/app/users/manage-permissions/$"
+                          params={{ _splat: user.id }}
+                        >
+                          Permissions
+                        </Link>
+                      </Button>
+
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(user.id)}
+                        disabled={isDeleting === user.id}
+                      >
+                        {isDeleting === user.id ? "Deleting..." : "Delete"}
+                      </Button>
+                    </>
                   </If>
                 </TableCell>
               </TableRow>

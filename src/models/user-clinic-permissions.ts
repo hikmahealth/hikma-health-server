@@ -252,6 +252,26 @@ namespace UserClinicPermissions {
     );
 
     /**
+     * Check if the current user (from token) is authorized to perform an action in a specific clinic
+     * @param {string | null} clinicId - The clinic ID to check authorization for
+     * @param {UserPermissionsT} permission - The permission to check
+     * @throws {Error} Throws "Unauthorized" error if the user doesn't have the permission for the clinic
+     * @returns {Promise<void>} Resolves if authorized, rejects if not
+     */
+    export const isAuthorizedWithClinic = serverOnly(
+      async (clinicId: string | null, permission: UserPermissionsT) => {
+        if (!clinicId) {
+          throw new Error("Unauthorized");
+        }
+        const clinicIds = await getClinicIdsWithPermissionFromToken(permission);
+
+        if (clinicId && !clinicIds.includes(clinicId)) {
+          throw new Error("Unauthorized");
+        }
+      },
+    );
+
+    /**
      * Get all clinic permissions for a user
      * @param {string} userId - The user ID
      * @returns {Promise<UserClinicPermissions.EncodedT[]>} - All clinic permissions for the user
