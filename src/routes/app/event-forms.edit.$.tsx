@@ -127,6 +127,26 @@ function RouteComponent() {
       return;
     }
 
+    // for the medicine fields, remove the empty strings that might be added or after the semicolon
+    formState.form_fields = formState.form_fields.map((field) => {
+      if (field.options) {
+        let cleanedOptions = field.options.map((option) => option.trim());
+        if (field._tag === "medicine") {
+          cleanedOptions = cleanedOptions.filter(
+            (value) => value.trim() !== "",
+          );
+        }
+
+        return {
+          ...field,
+          options: cleanedOptions,
+        };
+      }
+      return field;
+    });
+
+    console.log(formState.form_fields);
+
     const updateFormId = (() => {
       if (typeof formId === "string" && isValidUUID(formId)) {
         return formId;
@@ -519,7 +539,7 @@ const ComponentRegistry = [
     () =>
       new EventForm.MedicineField2({
         id: nanoid(),
-        name: "Medicine",
+        name: "Medication",
         description: "",
         required: false,
         inputType: "input-group",
