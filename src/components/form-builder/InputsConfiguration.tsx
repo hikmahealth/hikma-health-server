@@ -25,6 +25,7 @@ import upperFirst from "lodash/upperFirst";
 import uniq from "lodash/uniq";
 import If from "@/components/if";
 import EventForm from "@/models/event-form";
+import { Textarea } from "../ui/textarea";
 
 let YesNoOptions: { value: string; label: string }[] = [
   { value: "yes", label: "Yes" },
@@ -151,16 +152,18 @@ export function InputsConfiguration({
 
                     {/* IF the field type is medicine, then show the textarea for medication options the doctor can choose from. This is optional. */}
                     <If show={field.fieldType === "medicine"}>
-                      <Input
+                      <Textarea
                         rows={4}
                         value={field.options?.join("; ") || " "}
                         onChange={(e) =>
                           onFieldOptionChange(
                             field.id,
                             e.currentTarget.value
-                              .split(";")
-                              .map((opt) => opt.trim())
-                              .filter((option) => option.trim() !== ""),
+                              .replaceAll("  ", " ")
+                              .split(";"),
+                            // Filtering is ideal to remove empty strings but prevents entry of semi colon. Have to do trims and filters in the submission
+                            // .map((opt) => opt.trim()),
+                            // .filter((option) => option.trim() !== ""),
                           )
                         }
                         label="Medication options, separated by semicolon (;)"

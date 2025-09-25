@@ -162,7 +162,7 @@ export function InputSettingsList({
                         onFieldChange(
                           index,
                           "description",
-                          e.currentTarget.value
+                          e.currentTarget.value,
                         )
                       }
                     />
@@ -181,10 +181,10 @@ export function InputSettingsList({
                             e.currentTarget.value
                               .split(";")
                               .map((opt) => opt.trim())
-                              .filter((option) => option.trim() !== "")
+                              .filter((option) => option.trim() !== ""),
                           )
                         }
-                        label="Medication options, separated by semicolon (;)"
+                        label="Medication options, separated by semicolon (;1)"
                         placeholder="Enter the options - Leave empty if not applicable"
                       />
                     </If>
@@ -193,7 +193,7 @@ export function InputSettingsList({
                     <If
                       show={
                         ["select", "dropdown", "checkbox", "radio"].includes(
-                          item.inputType
+                          item.inputType,
                         ) && item.fieldType !== "diagnosis"
                       }
                     >
@@ -209,7 +209,7 @@ export function InputSettingsList({
                           name="colors"
                           options={fieldOptionsUnion(
                             YesNoOptions,
-                            item.options || []
+                            item.options || [],
                           )}
                           className={
                             colorScheme === "light"
@@ -233,7 +233,7 @@ export function InputSettingsList({
                             index,
                             e.currentTarget.checked
                               ? listToFieldOptions(measurementOptions)
-                              : false
+                              : false,
                           )
                         }
                         checked={item.units && item.units.length > 0}
@@ -249,7 +249,7 @@ export function InputSettingsList({
                             onFieldChange(
                               index,
                               "multi",
-                              e.currentTarget.checked
+                              e.currentTarget.checked,
                             )
                           }
                           checked={item.multi}
@@ -263,7 +263,7 @@ export function InputSettingsList({
                         onFieldChange(
                           index,
                           "required",
-                          e.currentTarget.checked
+                          e.currentTarget.checked,
                         )
                       }
                       checked={item.required}
@@ -288,7 +288,7 @@ export function InputSettingsList({
           </Draggable>
         );
       }),
-    [fields]
+    [fields],
   );
 
   return (
@@ -303,8 +303,8 @@ export function InputSettingsList({
           moveString(
             Object.keys(fields).map(Number),
             source.index,
-            destination.index
-          )
+            destination.index,
+          ),
         );
       }}
     >
@@ -323,15 +323,15 @@ export function InputSettingsList({
 // Return the union of two field options arrays
 function fieldOptionsUnion(
   options1: FieldOption[],
-  options2: FieldOption[]
+  options2: FieldOption[],
 ): FieldOption[] {
   const options1Map = options1.reduce(
     (acc, option) => ({ ...acc, [option.value]: option }),
-    {}
+    {},
   );
   const options2Map = options2.reduce(
     (acc, option) => ({ ...acc, [option.value]: option }),
-    {}
+    {},
   );
 
   return Object.values({ ...options1Map, ...options2Map });
