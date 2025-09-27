@@ -8,7 +8,7 @@ export const getPatientVitals = createServerFn({
   method: "GET",
 })
   .validator((data: { patientId: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<PatientVital.EncodedT[]> => {
     return Sentry.startSpan({ name: "getPatientVitals" }, async () => {
       const authorized = await userRoleTokenHasCapability([
         User.CAPABILITIES.READ_ALL_PATIENT,

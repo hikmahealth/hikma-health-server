@@ -28,7 +28,7 @@ namespace Appointment {
     Schema.Literal("confirmed"),
     Schema.Literal("cancelled"),
     Schema.Literal("completed"),
-    Schema.Literal("checked_in")
+    Schema.Literal("checked_in"),
   );
   export const AppointmentSchema = Schema.Struct({
     id: Schema.String,
@@ -137,7 +137,7 @@ namespace Appointment {
       return res as unknown as EncodedT | null;
     });
 
-    export const getAllWithDetails = serverOnly(async () => {
+    export const getByPatientId = serverOnly(async (patientId: string) => {
       const res = await db.executeQuery<{
         appointment: Appointment.EncodedT;
         patient: Patient.EncodedT;
@@ -145,7 +145,7 @@ namespace Appointment {
         provider: User.EncodedT;
       }>(
         sql`
-        SELECT 
+        SELECT
           row_to_json(appointments.*) as appointment,
           row_to_json(patients.*) as patient,
           row_to_json(clinics.*) as clinic,
@@ -155,7 +155,40 @@ namespace Appointment {
         INNER JOIN clinics ON appointments.clinic_id = clinics.id
         INNER JOIN users ON appointments.provider_id = users.id
         WHERE appointments.is_deleted = false
-      `.compile(db)
+        AND appointments.patient_id = ${patientId}
+      `.compile(db),
+      );
+
+      // const res = await db
+      //   .selectFrom(Appointment.Table.name)
+      //   .where("patient_id", "=", patientId)
+      //   .where("is_deleted", "=", false)
+      //   .selectAll()
+      //   .orderBy("appointments.timestamp", "asc")
+      //   .execute();
+
+      return res.rows || [];
+    });
+
+    export const getAllWithDetails = serverOnly(async () => {
+      const res = await db.executeQuery<{
+        appointment: Appointment.EncodedT;
+        patient: Patient.EncodedT;
+        clinic: Clinic.EncodedT;
+        provider: User.EncodedT;
+      }>(
+        sql`
+        SELECT
+          row_to_json(appointments.*) as appointment,
+          row_to_json(patients.*) as patient,
+          row_to_json(clinics.*) as clinic,
+          row_to_json(users.*) as provider
+        FROM appointments
+        INNER JOIN patients ON appointments.patient_id = patients.id
+        INNER JOIN clinics ON appointments.clinic_id = clinics.id
+        INNER JOIN users ON appointments.provider_id = users.id
+        WHERE appointments.is_deleted = false
+      `.compile(db),
       );
 
       return res.rows;
@@ -172,14 +205,14 @@ namespace Appointment {
           })
           .where("id", "=", id)
           .execute();
-      }
+      },
     );
 
     export const save = serverOnly(
       async (
         id: string | null,
         appointment: Appointment.EncodedT,
-        currentUserName: string
+        currentUserName: string,
       ) => {
         try {
           return await db.transaction().execute(async (trx) => {
@@ -222,16 +255,16 @@ namespace Appointment {
                 user_id: appointment.user_id,
                 current_visit_id: visitId,
                 created_at: sql`${toSafeDateString(
-                  appointment.created_at
+                  appointment.created_at,
                 )}::timestamp with time zone`,
                 updated_at: sql`${toSafeDateString(
-                  appointment.updated_at
+                  appointment.updated_at,
                 )}::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
                 server_created_at: sql`now()::timestamp with time zone`,
                 deleted_at: null,
                 metadata: sql`${JSON.stringify(
-                  safeJSONParse(appointment.metadata, {})
+                  safeJSONParse(appointment.metadata, {}),
                 )}::jsonb`,
                 duration: appointment.duration,
                 reason: appointment.reason,
@@ -243,7 +276,7 @@ namespace Appointment {
                     ? appointment.fulfilled_visit_id
                     : null,
                 timestamp: sql`${toSafeDateString(
-                  appointment.timestamp
+                  appointment.timestamp,
                 )}::timestamp with time zone`,
                 is_deleted: false,
                 // the provider is the user who attends the appointment, this might be known ahead of time or not.
@@ -261,10 +294,10 @@ namespace Appointment {
                   user_id: (eb) => eb.ref("excluded.user_id"),
                   current_visit_id: (eb) => eb.ref("excluded.current_visit_id"),
                   created_at: sql`${toSafeDateString(
-                    appointment.created_at
+                    appointment.created_at,
                   )}::timestamp with time zone`,
                   updated_at: sql`${toSafeDateString(
-                    appointment.updated_at
+                    appointment.updated_at,
                   )}::timestamp with time zone`,
                   last_modified: sql`now()::timestamp with time zone`,
                   deleted_at: (eb) => eb.ref("excluded.deleted_at"),
@@ -280,7 +313,7 @@ namespace Appointment {
                       ? appointment.fulfilled_visit_id
                       : null,
                   timestamp: sql`${toSafeDateString(
-                    appointment.timestamp
+                    appointment.timestamp,
                   )}::timestamp with time zone`,
                   is_deleted: false,
                   provider_id:
@@ -309,7 +342,7 @@ namespace Appointment {
           });
           throw error;
         }
-      }
+      },
     );
 
     export const softDelete = serverOnly(async (id: string) => {
@@ -330,7 +363,7 @@ namespace Appointment {
     export const upsertFromDelta = serverOnly(
       async (delta: Appointment.EncodedT) => {
         return API.save(delta.id || uuidV1(), delta, "");
-      }
+      },
     );
 
     export const deleteFromDelta = serverOnly(async (id: string) => {

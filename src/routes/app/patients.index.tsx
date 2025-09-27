@@ -1,7 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import Patient from "@/models/patient";
 import * as React from "react";
-import { LucideDownload } from "lucide-react";
+import {
+  LucideCalculator,
+  LucideCalendar,
+  LucideCalendarPlus,
+  LucideDownload,
+} from "lucide-react";
 import { Option } from "effect";
 
 import { Button } from "@/components/ui/button";
@@ -31,6 +36,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { truncate } from "es-toolkit/compat";
 import { getCurrentUser } from "@/lib/server-functions/auth";
 
 import ExcelJS from "exceljs";
@@ -360,6 +366,15 @@ function RouteComponent() {
     navigate({ to: `/app/patients/${patientId}` });
   };
 
+  const handleCreateAppointment = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    patientId: string,
+  ) => {
+    event.stopPropagation();
+    event.preventDefault();
+    navigate({ to: `/app/appointments/edit?patientId=${patientId}` });
+  };
+
   const pageNumbers = getPageNumbers();
 
   if (!patientRegistrationForm) {
@@ -411,6 +426,9 @@ function RouteComponent() {
         <Table className="overflow-scroll">
           <TableHeader>
             <TableRow>
+              <TableHead className="px-6" key={"actions"}>
+                Actions
+              </TableHead>
               <TableHead className="px-6" key={"id"}>
                 ID
               </TableHead>
@@ -428,8 +446,16 @@ function RouteComponent() {
                 onClick={() => openPatientChart(patient.id)}
                 key={patient.id}
               >
+                <TableCell className="px-6" key={"actions"}>
+                  <Button
+                    onClick={(evt) => handleCreateAppointment(evt, patient.id)}
+                    variant="outline"
+                  >
+                    <LucideCalendarPlus />
+                  </Button>
+                </TableCell>
                 <TableCell className="px-6" key={"id"}>
-                  {patient.id}
+                  {truncate(patient.id, { length: 12, omission: "…" })}
                 </TableCell>
                 {fields?.map((field) =>
                   field.baseField ? (

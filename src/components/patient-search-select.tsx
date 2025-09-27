@@ -21,6 +21,9 @@ type Props = {
   description?: string;
   withAsterisk?: boolean;
   clearable?: boolean;
+  value?: Patient.EncodedT["id"] | null;
+  defaultValue?: Patient.EncodedT["id"] | Patient.EncodedT["id"][] | null;
+  defaultPatients?: Patient.EncodedT[];
 } & (MultiSelectProps | SingleSelectProps);
 
 export function PatientSearchSelect({
@@ -31,23 +34,29 @@ export function PatientSearchSelect({
   withAsterisk,
   clearable,
   value,
+  defaultValue,
+  defaultPatients,
 }: Props) {
+  const formatPatientOption = (patient: Patient.EncodedT) => ({
+    value: patient.id,
+    label: `${patient.given_name} ${patient.surname}`,
+    patient,
+  });
+
   const loadOptions = async (
     inputValue: string,
-    callback: (options: { value: string; label: string }[]) => void
+    callback: (options: { value: string; label: string }[]) => void,
   ) => {
     callback(
       (
         await searchPatients({
           data: { searchQuery: inputValue, limit: 10 },
         })
-      )?.patients.map((patient) => ({
-        value: patient.id,
-        label: `${patient.given_name} ${patient.surname}`,
-        patient,
-      })) || []
+      )?.patients.map((patient) => formatPatientOption(patient)) || [],
     );
   };
+
+  console.log(defaultPatients, defaultValue);
 
   return (
     <>
@@ -69,7 +78,17 @@ export function PatientSearchSelect({
         clearable={clearable}
         isClearable={clearable}
         placeholder="Search for a patient"
-        defaultValue={value}
+        defaultValue={
+          (defaultPatients || []).length > 0 &&
+          (isMulti
+            ? []
+            : {
+                value: defaultValue,
+                label: defaultPatients
+                  .filter((patient) => patient.id === defaultValue)
+                  .map((patient) => formatPatientOption(patient))[0].label,
+              })
+        }
         loadOptions={loadOptions}
         onChange={(data) => {
           if (isMulti && Array.isArray(data)) {
@@ -79,6 +98,9 @@ export function PatientSearchSelect({
         }}
         isMulti={isMulti}
         label={label}
+        defaultOptions={
+          defaultPatients?.map((patient) => formatPatientOption(patient)) || []
+        }
         description={description}
         // formatOptionLabel={(option) => option.label}
       />
