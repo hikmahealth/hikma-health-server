@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import User from "@/models/user";
 import { permissionsMiddleware } from "@/middleware/auth";
-import { getCurrentUser } from "@/lib/server-functions/auth";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
+import { getCookie } from "@tanstack/react-start/server";
+import Token from "@/models/token";
+import { Option } from "effect";
 // import Patient from "@/models/patient";
 
 /**
@@ -89,10 +91,17 @@ export const getUserById = createServerFn({ method: "GET" })
 export const currentUserHasRole = createServerFn({ method: "GET" })
   .validator((data: { role: User.RoleT }) => data)
   .handler(async ({ data }) => {
-    const currentUser = await getCurrentUser();
-    if (!currentUser) return false;
+    const tokenCookie = getCookie("token");
+    if (!tokenCookie) return false;
 
-    return currentUser.role === data.role;
+    const userOption = await Token.getUser(tokenCookie);
+    const user = Option.match(userOption, {
+      onNone: () => null,
+      onSome: (user) => user,
+    });
+
+    if (!user) return false;
+    return user.role === data.role;
   });
 
 /**

@@ -4,6 +4,12 @@ dist
 dist-ssr
 *.local
 count.txt
+.env
 .output
 .vinxi
 count.txt
+
+.env.*
+
+
+.tanstack/*

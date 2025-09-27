@@ -34,6 +34,8 @@ import { getAllClinics } from "@/lib/server-functions/clinics";
 import { getAllUsers } from "@/lib/server-functions/users";
 import { getCurrentUser } from "@/lib/server-functions/auth";
 import { PatientSearchSelect } from "@/components/patient-search-select";
+import { getPatientById } from "@/lib/server-functions/patients";
+import type Patient from "@/models/patient";
 
 const saveAppointment = createServerFn({ method: "POST" })
   .validator(
@@ -41,7 +43,7 @@ const saveAppointment = createServerFn({ method: "POST" })
       appointment: Appointment.EncodedT;
       id: string | null;
       currentUserName: string;
-    }) => data
+    }) => data,
   )
   .handler(async ({ data }) => {
     const { appointment, id, currentUserName } = data;
@@ -50,22 +52,45 @@ const saveAppointment = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/app/appointments/edit/$")({
   component: RouteComponent,
-  loader: async ({ params }) => {
+  loader: async ({ params, location }) => {
     const appointmentId = params["_splat"];
+
+    let patientId: string | null = null;
+    if (!appointmentId || typeof appointmentId !== "string") {
+      patientId =
+        (location.search as { patientId?: string })?.patientId || null;
+    }
+
     const result: {
       appointment: Appointment.EncodedT | null;
       users: User.EncodedT[];
       clinics: Clinic.EncodedT[];
       currentUser: User.EncodedT | null;
-    } = { appointment: null, users: [], clinics: [], currentUser: null };
+      patient: Patient.EncodedT | null;
+    } = {
+      appointment: null,
+      users: [],
+      clinics: [],
+      currentUser: null,
+      patient: null,
+    };
     if (appointmentId) {
       result.appointment = (await getAppointmentById({
         data: { id: appointmentId },
       })) as Appointment.EncodedT | null;
+      patientId = result?.appointment?.patient_id || null;
     }
+
     result.users = (await getAllUsers()) as User.EncodedT[];
     result.clinics = (await getAllClinics()) as Clinic.EncodedT[];
     result.currentUser = (await getCurrentUser()) as User.EncodedT | null;
+    result.patient = patientId
+      ? ((
+          await getPatientById({
+            data: { id: patientId },
+          })
+        ).patient as Patient.EncodedT | null)
+      : null;
     return result;
   },
 });
@@ -105,43 +130,49 @@ const statusOptions = [
   { label: "Checked In", value: "checked_in" },
 ];
 
+const DEFAULT_FORM_VALUES = {
+  provider_id: null,
+  clinic_id: "",
+  patient_id: "",
+  user_id: "",
+  current_visit_id: "",
+  fulfilled_visit_id: null,
+  timestamp: new Date(),
+  duration: 0,
+  reason: "",
+  notes: "",
+  status: "pending",
+  metadata: {},
+  is_deleted: false,
+  created_at: new Date(),
+  updated_at: new Date(),
+  last_modified: new Date(),
+  server_created_at: new Date(),
+  deleted_at: null,
+};
+
 function RouteComponent() {
   const {
     appointment,
     users: providers,
     clinics,
     currentUser,
+    patient,
   } = Route.useLoaderData();
   const navigate = Route.useNavigate();
   const params = Route.useParams();
   const appointmentId = params._splat;
   const isEditing = !!appointmentId;
 
-  console.log({ appointmentId, providers, clinics });
+  console.log({ appointment });
 
   const form = useForm<Appointment.EncodedT>({
-    defaultValues: appointment
-      ? Schema.encodeUnknownSync(Appointment.AppointmentSchema)(appointment)
-      : {
-          provider_id: null,
-          clinic_id: "",
-          patient_id: "",
-          user_id: currentUser?.id || "",
-          current_visit_id: "",
-          fulfilled_visit_id: null,
-          timestamp: new Date(),
-          duration: 0,
-          reason: "",
-          notes: "",
-          status: "pending",
-          metadata: {},
-          is_deleted: false,
-          created_at: new Date(),
-          updated_at: new Date(),
-          last_modified: new Date(),
-          server_created_at: new Date(),
-          deleted_at: null,
-        },
+    defaultValues: {
+      ...DEFAULT_FORM_VALUES,
+      ...appointment,
+      patient_id: patient?.id || "",
+      provider_id: currentUser?.id || "",
+    },
   });
 
   // Handle form submission
@@ -163,7 +194,7 @@ function RouteComponent() {
       toast.success(
         isEditing
           ? "Appointment updated successfully"
-          : "Appointment created successfully"
+          : "Appointment created successfully",
       );
       navigate({ to: "/app/appointments" });
     } catch (error) {
@@ -192,6 +223,8 @@ function RouteComponent() {
                 onChange={(patient) =>
                   form.setValue("patient_id", patient?.id || "")
                 }
+                defaultValue={patient?.id || ""}
+                defaultPatients={patient ? [patient] : []}
                 label="Patient"
                 clearable
                 description="Select the patient for the appointment"
@@ -249,7 +282,7 @@ function RouteComponent() {
                             variant="outline"
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
                             )}
                           >
                             {field.value ? (

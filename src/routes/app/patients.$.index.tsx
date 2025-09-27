@@ -18,7 +18,6 @@ import {
   Calendar,
   Phone,
   MapPin,
-  User,
   Heart,
   Activity,
   Thermometer,
@@ -27,49 +26,86 @@ import {
   Brain,
   Ruler,
   Weight,
+  LucideUser,
 } from "lucide-react";
 import { format } from "date-fns";
 import type PatientVital from "@/models/patient-vital";
+import type Patient from "@/models/patient";
+import Appointment from "@/models/appointment";
+import type Prescription from "@/models/prescription";
 import { useEffect, useState } from "react";
+import { getAppointmentsByPatientId } from "@/lib/server-functions/appointments";
+import type Clinic from "@/models/clinic";
+import type User from "@/models/user";
 
 export const Route = createFileRoute("/app/patients/$/")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const patientId = params["_splat"];
+
+    const result: {
+      patient: Patient.EncodedT | null;
+      vitals: PatientVital.EncodedT[];
+      appointments: {
+        appointment: Appointment.EncodedT;
+        patient: Patient.EncodedT;
+        clinic: Clinic.EncodedT;
+        provider: User.EncodedT;
+      }[];
+      prescriptions: Prescription.EncodedT[];
+    } = {
+      patient: null,
+      vitals: [],
+      appointments: [],
+      prescriptions: [],
+    };
     if (!patientId || patientId === "new") {
-      return { patient: null, vitals: [] };
+      return result;
     }
 
     try {
       const { patient } = await getPatientById({ data: { id: patientId } });
 
       if (!patient) {
-        return { patient: null, vitals: [] };
+        return result;
       }
 
+      result.patient = patient;
+
+      const { data, error } = await getAppointmentsByPatientId({
+        data: { patientId },
+      });
+      error && console.error(error);
+      result.appointments = data || [];
+
       // Get patient vitals
-      let vitals: PatientVital.EncodedT[] = [];
       try {
         const fetchedVitals = await getPatientVitals({
           data: { patientId },
         });
         console.log({ fetchedVitals });
-        vitals = fetchedVitals || [];
+        result.vitals = fetchedVitals || [];
       } catch (error) {
         console.error("Failed to fetch vitals:", error);
       }
 
-      return { patient, vitals };
+      return result;
     } catch (error) {
       console.error("Failed to fetch patient:", error);
-      return { patient: null, vitals: [] };
+      return result;
     }
   },
 });
 
 function RouteComponent() {
-  const { patient, vitals: initialVitals } = Route.useLoaderData();
+  const {
+    patient,
+    vitals: initialVitals,
+    appointments,
+    prescriptions,
+  } = Route.useLoaderData();
   const params = Route.useParams();
+  const navigate = Route.useNavigate();
   const patientId = params._splat;
   const isEditing = !!patientId && patientId !== "new";
   const [mostRecentVital, setMostRecentVital] = useState<
@@ -121,7 +157,11 @@ function RouteComponent() {
     return `${value} ${unit}`;
   };
 
-  console.log({ patient });
+  const handleEditAppointment = (appointmentId: Appointment.EncodedT["id"]) => {
+    navigate({
+      to: `/app/appointments/edit/${appointmentId}`,
+    });
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -145,7 +185,7 @@ function RouteComponent() {
                 </CardDescription>
                 <div className="flex items-center gap-4 mt-2">
                   <Badge variant="outline" className="font-normal">
-                    <User className="mr-1 h-3 w-3" />
+                    <LucideUser className="mr-1 h-3 w-3" />
                     {patient.sex || "Unknown"}
                   </Badge>
                   <Badge variant="outline" className="font-normal">
@@ -454,9 +494,94 @@ function RouteComponent() {
               <CardDescription>Upcoming and past appointments</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                No appointments scheduled
-              </div>
+              {appointments.length === 0 && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No appointments scheduled
+                </div>
+              )}
+              {appointments.map(({ appointment, provider, clinic }) => (
+                <div
+                  key={appointment.id}
+                  className="border rounded-lg p-4 mb-4 last:mb-0"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="space-y-1">
+                      <p className="font-medium">
+                        {format(
+                          new Date(appointment.timestamp),
+                          "MMM dd, yyyy",
+                        )}{" "}
+                        at {format(new Date(appointment.timestamp), "HH:mm")}
+                      </p>
+                      <div className="flex gap-2">
+                        <Badge
+                          variant={
+                            appointment.status === "completed"
+                              ? "default"
+                              : appointment.status === "confirmed"
+                                ? "secondary"
+                                : appointment.status === "cancelled"
+                                  ? "destructive"
+                                  : appointment.status === "checked_in"
+                                    ? "outline"
+                                    : "secondary"
+                          }
+                        >
+                          {appointment.status || "Pending"}
+                        </Badge>
+                        {appointment.duration && (
+                          <Badge variant="outline">
+                            {appointment.duration} min
+                          </Badge>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditAppointment(appointment.id)}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm">
+                      <p className="text-muted-foreground">Appointment ID</p>
+                      <p className="font-mono text-xs">
+                        {appointment.id.slice(0, 8)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {appointment.notes && (
+                    <div className="mb-3">
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Notes
+                      </p>
+                      <p className="text-sm">{appointment.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {appointment.clinic_id && (
+                      <div>
+                        <span className="text-muted-foreground">Clinic: </span>
+                        <span className="font-medium">
+                          {clinic.name || "Unknown"}
+                        </span>
+                      </div>
+                    )}
+                    {appointment.provider_id && (
+                      <div>
+                        <span className="text-muted-foreground">
+                          Provider:{" "}
+                        </span>
+                        <span className="font-medium">
+                          {provider.name || "Unknown"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
         </TabsContent>

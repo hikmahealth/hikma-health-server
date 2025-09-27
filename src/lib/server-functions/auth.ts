@@ -9,7 +9,7 @@ import UserClinicPermissions from "@/models/user-clinic-permissions";
  * Get the current user's ID
  * @returns {Promise<string | null>} - The user's ID or null if not authenticated
  */
-const getCurrentUserId = createServerFn({ method: "GET" })
+export const getCurrentUserId = createServerFn({ method: "GET" })
   .validator(() => ({}))
   .handler(async () => {
     const tokenCookie = getCookie("token");
@@ -26,7 +26,7 @@ const getCurrentUserId = createServerFn({ method: "GET" })
  * Get the current user all masked details
  * @returns {Promise<User.EncodedT | null>} - The user or null if not authenticated
  */
-const getCurrentUser = createServerFn({ method: "GET" })
+export const getCurrentUser = createServerFn({ method: "GET" })
   .validator(() => ({}))
   .handler(async () => {
     const tokenCookie = getCookie("token");
@@ -55,7 +55,7 @@ const getCurrentUser = createServerFn({ method: "GET" })
  * @param {Array<keyof Pick<UserClinicPermissions.T, 'can_register_patients' | 'can_view_history' | 'can_edit_records' | 'can_delete_records' | 'is_clinic_admin'>>} permissions - Array of permissions to check
  * @returns {Promise<boolean>} - True if user has all specified permissions, false otherwise
  */
-const currentUserHasPermissions = createServerFn({ method: "GET" })
+export const currentUserHasPermissions = createServerFn({ method: "GET" })
   .validator(
     (input: {
       clinicId: string;
@@ -98,5 +98,3 @@ const currentUserHasPermissions = createServerFn({ method: "GET" })
       (permission) => userPermissions[permission] === true,
     );
   });
-
-export { getCurrentUserId, getCurrentUser, currentUserHasPermissions };
