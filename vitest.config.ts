@@ -11,7 +11,11 @@ export default defineConfig({
     exclude: ["**/node_modules/**", "**/dist/**", "**/e2e/**"],
     coverage: {
       reporter: ["text", "json", "html"],
-      exclude: ["**/node_modules/**", "**/test/**"],
+      exclude: [
+        "**/node_modules/**",
+        "**/test/**",
+        "**/src/components/ui/**", // UI components from shadcn
+      ],
     },
   },
   resolve: {

@@ -1,9 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { v4 as uuidv4, v1 as uuidv1, v3 as uuidv3, v5 as uuidv5 } from "uuid";
 import {
+  camelCaseKeys,
+  cn,
+  deduplicateOptions,
   isValidUUID,
+  mapObjectValues,
   safeJSONParse,
   safeStringify,
+  stringSimilarity,
   tryParseDate,
 } from "../../src/lib/utils";
 
@@ -265,5 +270,80 @@ describe("tryParseDate", () => {
     const invalidDefaultDate = new Date("invalid-date");
 
     expect(() => tryParseDate(invalidDate, invalidDefaultDate)).toThrow();
+  });
+});
+
+// Add tests for missing functions:
+describe("cn", () => {
+  it("should merge class names correctly", () => {
+    expect(cn("px-4", "py-2")).toBe("px-4 py-2");
+    expect(cn("px-4", { "bg-red": true })).toBe("px-4 bg-red");
+    expect(cn("px-4", undefined, null, "py-2")).toBe("px-4 py-2");
+  });
+
+  it("should handle tailwind conflicts", () => {
+    expect(cn("px-2", "px-4")).toBe("px-4");
+    expect(cn("text-sm", "text-lg")).toBe("text-lg");
+  });
+});
+
+describe("mapObjectValues", () => {
+  it("should apply function to all values", () => {
+    const input = { a: 1, b: 2, c: 3 };
+    const result = mapObjectValues(input, (v) => v * 2);
+    expect(result).toEqual({ a: 2, b: 4, c: 6 });
+  });
+
+  it("should handle empty objects", () => {
+    const result = mapObjectValues({}, (v) => v * 2);
+    expect(result).toEqual({});
+  });
+});
+
+describe("camelCaseKeys", () => {
+  it("should convert snake_case to camelCase", () => {
+    const input = { user_name: "John", first_name: "Jane" };
+    const result = camelCaseKeys(input);
+    expect(result).toEqual({ userName: "John", firstName: "Jane" });
+  });
+
+  it("should handle nested objects", () => {
+    const input = { user_data: { first_name: "John", last_name: "Doe" } };
+    const result = camelCaseKeys(input);
+    expect(result).toEqual({
+      userData: { firstName: "John", lastName: "Doe" },
+    });
+  });
+
+  it("should handle arrays", () => {
+    const input = [{ user_name: "John" }, { user_name: "Jane" }];
+    const result = camelCaseKeys(input);
+    expect(result).toEqual([{ userName: "John" }, { userName: "Jane" }]);
+  });
+});
+
+describe("deduplicateOptions", () => {
+  it("should remove duplicate options", () => {
+    const options = [
+      { label: "Option 1", value: "opt1" },
+      { label: "Option 2", value: "opt2" },
+      { label: "Option 1 Dup", value: "opt1" },
+    ];
+    const result = deduplicateOptions(options);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({ label: "Option 1", value: "opt1" });
+  });
+});
+
+describe("stringSimilarity", () => {
+  it("should calculate similarity correctly", () => {
+    expect(stringSimilarity("hello", "hello")).toBe(1);
+    expect(stringSimilarity("hello", "hallo")).toBeGreaterThan(0.25);
+    expect(stringSimilarity("hello", "world")).toBeLessThan(0.5);
+  });
+
+  it("should handle case sensitivity", () => {
+    expect(stringSimilarity("Hello", "hello", 2, false)).toBe(1);
+    expect(stringSimilarity("Hello", "hello", 2, true)).toBeLessThan(1);
   });
 });

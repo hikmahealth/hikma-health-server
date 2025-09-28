@@ -81,7 +81,12 @@ export function NavMain({
             </SidebarMenuItem>
           </Collapsible>
         ))}
-        <SidebarMenuButton asChild tooltip="Sign out" onClick={handleSignOut}>
+        <SidebarMenuButton
+          asChild
+          tooltip="Sign out"
+          id="sign-out-button"
+          onClick={handleSignOut}
+        >
           <div className="flex space-x-2">
             <LucideLogOut className="w-4 h-4" />
             <span>Sign out</span>
