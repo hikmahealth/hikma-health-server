@@ -53,7 +53,7 @@ namespace UserClinicPermissions {
   >;
 
   // Role permissions
-  const rolePermissions: Record<
+  export const rolePermissions: Record<
     User.RoleT,
     Record<UserPermissionsT, boolean>
   > = {
@@ -89,6 +89,7 @@ namespace UserClinicPermissions {
 
   export type T = typeof UserClinicPermissionsSchema.Type;
   export type EncodedT = typeof UserClinicPermissionsSchema.Encoded;
+  export type RolePermissions = typeof rolePermissions;
 
   /**
    * Union type representing the available permission fields that can be checked for a user
