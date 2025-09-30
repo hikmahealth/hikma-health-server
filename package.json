@@ -7,6 +7,7 @@
     "db:migrate": "npx dotenv -e .env -- npx kysely migrate latest",
     "start-only": "node .output/server/index.mjs",
     "start": "pnpm run db:migrate && pnpm run start-only",
+    "start:with-recovery": "pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
     "build": "vite build",
     "serve": "vite preview",
     "test": "vitest run",
@@ -18,7 +19,9 @@
     "format": "biome format",
     "lint": "biome lint",
     "check": "biome check",
-    "migrate:latest": "pnpx tsx src/db/migrate-to-latest.ts"
+    "migrate:latest": "pnpx tsx src/db/migrate-to-latest.ts",
+    "recovery:permissions": "pnpx tsx scripts/user_permissions_recovery.ts",
+    "recovery:permissions:dry-run": "DRY_RUN=true pnpx tsx scripts/user_permissions_recovery.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

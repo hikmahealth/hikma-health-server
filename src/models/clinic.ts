@@ -22,12 +22,13 @@ namespace Clinic {
     last_modified: Schema.DateFromSelf,
     server_created_at: Schema.DateFromSelf,
     deleted_at: Schema.OptionFromNullOr(Schema.DateFromSelf),
+    is_archived: Schema.Boolean,
   });
   export type T = typeof ClinicSchema.Type;
   export type EncodedT = typeof ClinicSchema.Encoded;
 
   export const fromDbEntry = (
-    entry: Clinic.Table.Clinics
+    entry: Clinic.Table.Clinics,
   ): Either.Either<Clinic.T, Error> => {
     return Schema.decodeUnknownEither(ClinicSchema)(entry);
   };
@@ -55,6 +56,7 @@ namespace Clinic {
       last_modified: "last_modified",
       server_created_at: "server_created_at",
       deleted_at: "deleted_at",
+      is_archived: "is_archived",
     };
 
     export interface T {
@@ -72,10 +74,28 @@ namespace Clinic {
         string | null | undefined,
         string | null
       >;
+      is_archived: ColumnType<boolean, boolean, boolean>;
     }
     export type Clinics = Selectable<T>;
     export type NewClinics = Insertable<T>;
     export type ClinicsUpdate = Updateable<T>;
+  }
+
+  export namespace API {
+    /**
+     * Set the archived status of a clinic
+     * @param {string} id of the clinic
+     * @param {boolean} isArchived - The new archived status of the clinic
+     */
+    export const setArchivedStatus = serverOnly(
+      async (id: string, isArchived: boolean = false): Promise<void> => {
+        await db
+          .updateTable(Clinic.Table.name)
+          .where("id", "=", id)
+          .set({ is_archived: isArchived })
+          .execute();
+      },
+    );
   }
 
   /**
@@ -95,6 +115,7 @@ namespace Clinic {
   /**
    * Deletes a clinic given an id, and that the clinic does not have any registered members,
    * If there are registered members, the clinic will not be deleted and an error will be thrown
+   * TODO: We should prevent deleting clinics, only archive them
    * @param {string} id - The id of the clinic to delete
    * @returns {Promise<void>} - Resolves when the clinic is deleted
    * @throws {Error} - If the clinic has registered users
@@ -111,7 +132,7 @@ namespace Clinic {
     // If there are users, throw an error
     if (usersInClinic.length > 0) {
       throw new Error(
-        `Cannot delete clinic with ID ${id} because it has ${usersInClinic.length} registered users. Please remove or reassign all users before deleting the clinic.`
+        `Cannot delete clinic with ID ${id} because it has ${usersInClinic.length} registered users. Please remove or reassign all users before deleting the clinic.`,
       );
     }
 
@@ -147,6 +168,7 @@ namespace Clinic {
             last_modified: sql`now()`,
             server_created_at: sql`now()`,
             deleted_at: null,
+            is_archived: false,
           })
           .execute();
       } else {
@@ -158,23 +180,25 @@ namespace Clinic {
           .where("id", "=", id)
           .execute();
       }
-    }
+    },
   );
 
   /**
    * Get by id
    * @param {string} id - The id of the clinic to get
-   * @returns {Promise<Clinic.T>} - The clinic
+   * @returns {Promise<Clinic.EncodedT>} - The clinic
    */
-  export const getById = serverOnly(async (id: string): Promise<Clinic.T> => {
-    const result = await db
-      .selectFrom(Clinic.Table.name)
-      .where("id", "=", id)
-      .where("is_deleted", "=", false)
-      .selectAll()
-      .executeTakeFirstOrThrow();
-    return result;
-  });
+  export const getById = serverOnly(
+    async (id: string): Promise<Clinic.EncodedT> => {
+      const result = await db
+        .selectFrom(Clinic.Table.name)
+        .where("id", "=", id)
+        .where("is_deleted", "=", false)
+        .selectAll()
+        .executeTakeFirstOrThrow();
+      return result;
+    },
+  );
 }
 
 export default Clinic;

@@ -33,6 +33,7 @@ import { Route as AppPatientsRegisterRouteImport } from './routes/app/patients.r
 import { Route as AppPatientsCustomizeRegistrationFormRouteImport } from './routes/app/patients.customize-registration-form'
 import { Route as AppDataEventsRouteImport } from './routes/app/data.events'
 import { Route as AppPatientsSplatIndexRouteImport } from './routes/app/patients.$.index'
+import { Route as AppClinicsSplatIndexRouteImport } from './routes/app/clinics.$.index'
 import { Route as AppUsersManagePermissionsSplatRouteImport } from './routes/app/users.manage-permissions.$'
 import { Route as AppUsersEditSplatRouteImport } from './routes/app/users.edit.$'
 import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/prescriptions.edit.$'
@@ -161,6 +162,11 @@ const AppPatientsSplatIndexRoute = AppPatientsSplatIndexRouteImport.update({
   path: '/patients/$/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppClinicsSplatIndexRoute = AppClinicsSplatIndexRouteImport.update({
+  id: '/clinics/$/',
+  path: '/clinics/$/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppUsersManagePermissionsSplatRoute =
   AppUsersManagePermissionsSplatRouteImport.update({
     id: '/users/manage-permissions/$',
@@ -259,6 +265,7 @@ export interface FileRoutesByFullPath {
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
+  '/app/clinics/$': typeof AppClinicsSplatIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
 }
 export interface FileRoutesByTo {
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
+  '/app/clinics/$': typeof AppClinicsSplatIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
 }
 export interface FileRoutesById {
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
+  '/app/clinics/$/': typeof AppClinicsSplatIndexRoute
   '/app/patients/$/': typeof AppPatientsSplatIndexRoute
 }
 export interface FileRouteTypes {
@@ -351,6 +360,7 @@ export interface FileRouteTypes {
     | '/app/prescriptions/edit/$'
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
+    | '/app/clinics/$'
     | '/app/patients/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -380,6 +390,7 @@ export interface FileRouteTypes {
     | '/app/prescriptions/edit/$'
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
+    | '/app/clinics/$'
     | '/app/patients/$'
   id:
     | '__root__'
@@ -410,6 +421,7 @@ export interface FileRouteTypes {
     | '/app/prescriptions/edit/$'
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
+    | '/app/clinics/$/'
     | '/app/patients/$/'
   fileRoutesById: FileRoutesById
 }
@@ -649,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPatientsSplatIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/clinics/$/': {
+      id: '/app/clinics/$/'
+      path: '/clinics/$'
+      fullPath: '/app/clinics/$'
+      preLoaderRoute: typeof AppClinicsSplatIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/users/manage-permissions/$': {
       id: '/app/users/manage-permissions/$'
       path: '/users/manage-permissions/$'
@@ -765,6 +784,7 @@ interface AppRouteChildren {
   AppPrescriptionsEditSplatRoute: typeof AppPrescriptionsEditSplatRoute
   AppUsersEditSplatRoute: typeof AppUsersEditSplatRoute
   AppUsersManagePermissionsSplatRoute: typeof AppUsersManagePermissionsSplatRoute
+  AppClinicsSplatIndexRoute: typeof AppClinicsSplatIndexRoute
   AppPatientsSplatIndexRoute: typeof AppPatientsSplatIndexRoute
 }
 
@@ -787,6 +807,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPrescriptionsEditSplatRoute: AppPrescriptionsEditSplatRoute,
   AppUsersEditSplatRoute: AppUsersEditSplatRoute,
   AppUsersManagePermissionsSplatRoute: AppUsersManagePermissionsSplatRoute,
+  AppClinicsSplatIndexRoute: AppClinicsSplatIndexRoute,
   AppPatientsSplatIndexRoute: AppPatientsSplatIndexRoute,
 }
 

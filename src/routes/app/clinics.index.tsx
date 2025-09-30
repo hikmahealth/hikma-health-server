@@ -14,7 +14,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { LucideEdit, LucideTrash } from "lucide-react";
+import {
+  LucideArchive,
+  LucideEdit,
+  LucideTrash,
+  LucideView,
+} from "lucide-react";
 import { toast } from "sonner";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { Link } from "@tanstack/react-router";
@@ -23,6 +28,12 @@ const deleteClinic = createServerFn({ method: "POST" })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     return Clinic.softDelete(data.id);
+  });
+
+export const archiveClinic = createServerFn({ method: "POST" })
+  .validator((data: { id: string; isArchived: boolean }) => data)
+  .handler(async ({ data }) => {
+    return Clinic.API.setArchivedStatus(data.id, data.isArchived);
   });
 
 export const Route = createFileRoute("/app/clinics/")({
@@ -42,7 +53,12 @@ function RouteComponent() {
     navigate({ to: `/app/clinics/edit/${id}` });
   };
 
+  const handleOpen = (id: string) => {
+    navigate({ to: `/app/clinics/${id}` });
+  };
+
   const handleDelete = (id: string) => {
+    return;
     if (!window.confirm("Are you sure you want to delete this clinic?")) {
       return;
     }
@@ -54,6 +70,23 @@ function RouteComponent() {
       })
       .then(() => {
         toast.success("Clinic deleted successfully");
+        router.invalidate({ sync: true });
+      });
+  };
+
+  const handleArchive = (id: string) => {
+    return;
+    if (!window.confirm("Are you sure you want to archive this clinic?")) {
+      return;
+    }
+
+    archiveClinic({ data: { id } })
+      .catch((error) => {
+        console.error(error);
+        toast.error(error.message);
+      })
+      .then(() => {
+        toast.success("Clinic archived successfully");
         router.invalidate({ sync: true });
       });
   };
@@ -83,18 +116,34 @@ function RouteComponent() {
                 <TableCell className="flex gap-4">
                   <Button
                     variant="outline"
+                    onClick={() => handleOpen(clinic.id)}
+                  >
+                    <LucideView className="mr-2" />
+                    Open
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => handleEdit(clinic.id)}
                   >
                     <LucideEdit className="mr-2" />
                     Edit
                   </Button>
-                  <Button
+                  {/* DELETE IS NOT ALLOWED */}
+                  {/*<Button
                     variant="outline"
                     className="text-red-500"
                     onClick={() => handleDelete(clinic.id)}
                   >
                     <LucideTrash className="mr-2" />
                     Delete
+                  </Button>*/}
+                  <Button
+                    variant="outline"
+                    className="text-red-500"
+                    onClick={() => handleArchive(clinic.id)}
+                  >
+                    <LucideArchive className="mr-2" />
+                    Archive
                   </Button>
                 </TableCell>
               </TableRow>
