@@ -18,20 +18,29 @@ export const test = base.extend<AuthFixtures>({
       );
     }
 
+    page.on("dialog", (dialog) => console.log(dialog.message()));
+    page.on("dialog", (dialog) => dialog.accept());
+
     // Clear cookies
     await page.context().clearCookies();
 
     // Navigate to the login page
     await page.goto("/");
 
-    // Wait for the login form to be visible
+    // Check that the login form elements are present
     await expect(page.locator("#email")).toBeVisible();
+    await expect(page.locator("#password")).toBeVisible();
+    await expect(page.locator("#login-button")).toBeVisible();
 
     // Fill in the login form
-    await page.fill("#email", email);
-    await page.fill("#password", password);
+    // await page.waitForTimeout(3000);
+    await page.locator("#email").fill(email);
+    await page.locator("#password").fill(password);
 
-    // Wait for the button to be enabled
+    expect(page.locator("#email")).toHaveValue(email);
+    expect(page.locator("#password")).toHaveValue(password);
+
+    // Wait for the button to be enabled and click it
     const loginButton = page.locator("#login-button");
     await expect(loginButton).toBeEnabled();
 
@@ -50,7 +59,7 @@ export const test = base.extend<AuthFixtures>({
     ]);
 
     // Wait for navigation to the dashboard with explicit timeout
-    await page.waitForURL("/app", { timeout: 10000 });
+    await page.waitForURL("/app", { timeout: 3000 });
 
     // Wait for page to be fully loaded
     await page.waitForLoadState("networkidle");

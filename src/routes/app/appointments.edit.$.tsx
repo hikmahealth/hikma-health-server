@@ -3,6 +3,9 @@ import { getAppointmentById } from "@/lib/server-functions/appointments";
 import Appointment from "@/models/appointment";
 import { useForm } from "react-hook-form";
 import { createServerFn } from "@tanstack/react-start";
+import Select from "react-select";
+import { useEffect, useState } from "react";
+import ClinicDepartment from "@/models/clinic-department";
 import {
   Form,
   FormControl,
@@ -13,7 +16,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { toast } from "sonner";
-import { Schema } from "effect";
 import { v1 as uuidV1 } from "uuid";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,12 +32,14 @@ import { cn } from "@/lib/utils";
 import User from "@/models/user";
 import Clinic from "@/models/clinic";
 import { SelectInput } from "@/components/select-input";
-import { getAllClinics } from "@/lib/server-functions/clinics";
+import { getAllClinics, getClinicById } from "@/lib/server-functions/clinics";
 import { getAllUsers } from "@/lib/server-functions/users";
 import { getCurrentUser } from "@/lib/server-functions/auth";
 import { PatientSearchSelect } from "@/components/patient-search-select";
 import { getPatientById } from "@/lib/server-functions/patients";
 import type Patient from "@/models/patient";
+import If from "@/components/if";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const saveAppointment = createServerFn({ method: "POST" })
   .validator(
@@ -84,13 +88,12 @@ export const Route = createFileRoute("/app/appointments/edit/$")({
     result.users = (await getAllUsers()) as User.EncodedT[];
     result.clinics = (await getAllClinics()) as Clinic.EncodedT[];
     result.currentUser = (await getCurrentUser()) as User.EncodedT | null;
-    result.patient = patientId
-      ? ((
-          await getPatientById({
-            data: { id: patientId },
-          })
-        ).patient as Patient.EncodedT | null)
-      : null;
+    if (patientId) {
+      const patientResult = await getPatientById({
+        data: { id: patientId },
+      });
+      result.patient = patientResult?.patient || null;
+    }
     return result;
   },
 });
@@ -109,7 +112,7 @@ const durationOptions = [
 
 // Reason options
 const reasonOptions = [
-  { label: "Walk-in", value: "walk-in" },
+  // { label: "Walk-in", value: "walk-in" },
   { label: "Doctor's Visit", value: "doctor-visit" },
   { label: "Screening", value: "screening" },
   { label: "Referral", value: "referral" },
@@ -130,7 +133,7 @@ const statusOptions = [
   { label: "Checked In", value: "checked_in" },
 ];
 
-const DEFAULT_FORM_VALUES = {
+const DEFAULT_FORM_VALUES: Partial<Appointment.EncodedT> = {
   provider_id: null,
   clinic_id: "",
   patient_id: "",
@@ -141,8 +144,10 @@ const DEFAULT_FORM_VALUES = {
   duration: 0,
   reason: "",
   notes: "",
-  status: "pending",
+  status: "pending" as const,
   metadata: {},
+  departments: [],
+  is_walk_in: false,
   is_deleted: false,
   created_at: new Date(),
   updated_at: new Date(),
@@ -166,13 +171,17 @@ function RouteComponent() {
 
   console.log({ appointment });
 
+  const [availableDepartments, setAvailableDepartments] = useState<
+    ClinicDepartment.EncodedT[]
+  >([]);
+
   const form = useForm<Appointment.EncodedT>({
     defaultValues: {
       ...DEFAULT_FORM_VALUES,
       ...appointment,
       patient_id: patient?.id || "",
       provider_id: currentUser?.id || "",
-    },
+    } as Appointment.EncodedT,
   });
 
   // Handle form submission
@@ -203,7 +212,45 @@ function RouteComponent() {
     }
   };
 
+  // print out the selected clinic
+  console.log("Selected Clinic:", form.watch("clinic_id"));
+
+  const selectedClinic = form.watch("clinic_id");
+
+  // Fetch departments when clinic changes
+  useEffect(() => {
+    const handleDepartmentsUpdate = async () => {
+      if (selectedClinic) {
+        try {
+          const clinicResponse = await getClinicById({
+            data: { id: selectedClinic },
+          });
+          if (clinicResponse?.data?.departments) {
+            setAvailableDepartments(clinicResponse.data.departments);
+
+            // Update form field with departments if they don't already have values
+            const currentDepartments = form.getValues("departments");
+            if (!currentDepartments || currentDepartments.length === 0) {
+              // Don't auto-populate departments, let user select them
+              form.setValue("departments", []);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch departments:", error);
+          setAvailableDepartments([]);
+        }
+      } else {
+        setAvailableDepartments([]);
+        form.setValue("departments", []);
+      }
+    };
+
+    handleDepartmentsUpdate();
+  }, [selectedClinic]);
+
   // TODO: Default provider and clinic selection based on who is the current use
+
+  console.log(form.watch());
 
   return (
     <div className="">
@@ -219,10 +266,29 @@ function RouteComponent() {
           </p>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 gap-4">
+                <FormField
+                  control={form.control}
+                  name="is_walk_in"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Checkbox
+                          label="Walk-in"
+                          description="Is this a walk-in appointment?"
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
               <PatientSearchSelect
                 onChange={(patient) =>
                   form.setValue("patient_id", patient?.id || "")
                 }
+                value={patient?.id || ""}
                 defaultValue={patient?.id || ""}
                 defaultPatients={patient ? [patient] : []}
                 label="Patient"
@@ -265,6 +331,132 @@ function RouteComponent() {
                   />
                 )}
               />
+
+              <If show={selectedClinic.length > 0}>
+                <FormField
+                  control={form.control}
+                  name="departments"
+                  render={({ field }) => {
+                    const selectedDepartments = field.value || [];
+
+                    // Create options from available departments
+                    const departmentOptions = availableDepartments.map(
+                      (dept) => ({
+                        value: dept.id,
+                        label: dept.name,
+                        department: dept,
+                      }),
+                    );
+
+                    // Map current value to options format
+                    const currentValue = selectedDepartments.map((dept) => ({
+                      value: dept.id,
+                      label:
+                        availableDepartments.find((d) => d.id === dept.id)
+                          ?.name || dept.id,
+                      department: availableDepartments.find(
+                        (d) => d.id === dept.id,
+                      ),
+                    }));
+
+                    return (
+                      <FormItem>
+                        <FormLabel>Departments</FormLabel>
+                        <Select
+                          isMulti
+                          options={departmentOptions}
+                          value={currentValue}
+                          onChange={(selected) => {
+                            const newDepartments = (selected || []).map(
+                              (option) => ({
+                                id: option.value,
+                                name: option.label,
+                                seen_at: null,
+                                seen_by: null,
+                                status: "pending" as const,
+                              }),
+                            );
+
+                            // Preserve existing data for departments that were already selected
+                            const updatedDepartments = newDepartments.map(
+                              (newDept) => {
+                                const existing = selectedDepartments.find(
+                                  (d: any) => d.id === newDept.id,
+                                );
+                                if (existing) {
+                                  return existing; // Keep existing data
+                                }
+                                return newDept; // New department with defaults
+                              },
+                            );
+
+                            field.onChange(updatedDepartments);
+                          }}
+                          placeholder="Select departments..."
+                          className="basic-multi-select"
+                          classNamePrefix="select"
+                          // styles={{
+                          //   control: (base) => ({
+                          //     ...base,
+                          //     minHeight: "36px",
+                          //     backgroundColor: "hsl(var(--background))",
+                          //     borderColor: "hsl(var(--border))",
+                          //     "&:hover": {
+                          //       borderColor: "hsl(var(--border))",
+                          //     },
+                          //   }),
+                          //   menu: (base) => ({
+                          //     ...base,
+                          //     backgroundColor: "hsl(var(--background))",
+                          //     border: "1px solid hsl(var(--border))",
+                          //   }),
+                          //   option: (base, state) => ({
+                          //     ...base,
+                          //     backgroundColor: state.isFocused
+                          //       ? "hsl(var(--accent))"
+                          //       : "hsl(var(--background))",
+                          //     color: "hsl(var(--foreground))",
+                          //     cursor: "pointer",
+                          //     "&:hover": {
+                          //       backgroundColor: "hsl(var(--accent))",
+                          //     },
+                          //   }),
+                          //   multiValue: (base) => ({
+                          //     ...base,
+                          //     backgroundColor: "hsl(var(--secondary))",
+                          //   }),
+                          //   multiValueLabel: (base) => ({
+                          //     ...base,
+                          //     color: "hsl(var(--secondary-foreground))",
+                          //   }),
+                          //   multiValueRemove: (base) => ({
+                          //     ...base,
+                          //     color: "hsl(var(--secondary-foreground))",
+                          //     "&:hover": {
+                          //       backgroundColor: "hsl(var(--destructive))",
+                          //       color: "hsl(var(--destructive-foreground))",
+                          //     },
+                          //   }),
+                          //   input: (base) => ({
+                          //     ...base,
+                          //     color: "hsl(var(--foreground))",
+                          //   }),
+                          //   placeholder: (base) => ({
+                          //     ...base,
+                          //     color: "hsl(var(--muted-foreground))",
+                          //   }),
+                          // }}
+                        />
+                        <FormDescription>
+                          Select the departments this appointment should be
+                          routed through
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </If>
 
               <FormField
                 control={form.control}
@@ -325,7 +517,13 @@ function RouteComponent() {
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <If show={form.watch("is_walk_in")}>
+                      <FormDescription>
+                        Walk-ins do not require a date time to be set. They are
+                        scheduled on a first-come, first-served basis.
+                        <FormMessage />
+                      </FormDescription>
+                    </If>
                   </FormItem>
                 )}
               />

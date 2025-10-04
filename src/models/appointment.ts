@@ -30,6 +30,23 @@ namespace Appointment {
     Schema.Literal("completed"),
     Schema.Literal("checked_in"),
   );
+
+  export const DepartmentStatusSchema = Schema.Union(
+    Schema.Literal("pending"),
+    Schema.Literal("in_progress"),
+    Schema.Literal("completed"),
+    Schema.Literal("cancelled"),
+    Schema.Literal("checked_in"),
+  );
+
+  export const DepartmentSchema = Schema.Struct({
+    id: Schema.String,
+    name: Schema.String,
+    seen_at: Schema.OptionFromNullOr(Schema.String),
+    seen_by: Schema.OptionFromNullOr(Schema.String),
+    status: DepartmentStatusSchema,
+  });
+
   export const AppointmentSchema = Schema.Struct({
     id: Schema.String,
     provider_id: Schema.OptionFromNullOr(Schema.String),
@@ -43,6 +60,8 @@ namespace Appointment {
     reason: Schema.String,
     notes: Schema.String,
     status: StatusSchema,
+    departments: Schema.Array(DepartmentSchema),
+    is_walk_in: Schema.Boolean,
     metadata: Schema.Record({ key: Schema.String, value: Schema.Unknown }),
     is_deleted: Schema.Boolean,
     created_at: Schema.DateFromSelf,
@@ -55,6 +74,11 @@ namespace Appointment {
   export type EncodedT = typeof AppointmentSchema.Encoded;
 
   export namespace Table {
+    /**
+     * If set to true, this table is always pushed regardless of the the last sync date times. All sync events push to mobile the latest table.
+     * IMPORTANT: If ALWAYS_PUSH_TO_MOBILE is true, content of the table should never be edited on the client or pushed to the server from mobile. its one way only.
+     * */
+    export const ALWAYS_PUSH_TO_MOBILE = false;
     export const name = "appointments";
 
     /** The name of the table in the mobile database */
@@ -73,6 +97,8 @@ namespace Appointment {
       reason: "reason",
       notes: "notes",
       status: "status",
+      departments: "departments",
+      is_walk_in: "is_walk_in",
       metadata: "metadata",
       is_deleted: "is_deleted",
       created_at: "created_at",
@@ -95,6 +121,16 @@ namespace Appointment {
       reason: string;
       notes: string;
       status: string;
+      departments: JSONColumnType<
+        Array<{
+          id: string;
+          name: string;
+          seen_at: string | null;
+          seen_by: string | null;
+          status: "pending" | "in_progress" | "completed" | "checked_in";
+        }>
+      >;
+      is_walk_in: boolean;
       metadata: JSONColumnType<Record<string, unknown>>;
       is_deleted: Generated<boolean>;
       created_at: Generated<ColumnType<Date, string | undefined, never>>;
@@ -263,6 +299,10 @@ namespace Appointment {
                 last_modified: sql`now()::timestamp with time zone`,
                 server_created_at: sql`now()::timestamp with time zone`,
                 deleted_at: null,
+                departments: sql`${JSON.stringify(
+                  safeJSONParse(appointment.departments, []),
+                )}::jsonb`,
+                is_walk_in: appointment.is_walk_in,
                 metadata: sql`${JSON.stringify(
                   safeJSONParse(appointment.metadata, {}),
                 )}::jsonb`,
@@ -301,6 +341,8 @@ namespace Appointment {
                   )}::timestamp with time zone`,
                   last_modified: sql`now()::timestamp with time zone`,
                   deleted_at: (eb) => eb.ref("excluded.deleted_at"),
+                  departments: (eb) => eb.ref("excluded.departments"),
+                  is_walk_in: appointment.is_walk_in,
                   metadata: (eb) => eb.ref("excluded.metadata"),
                   duration: appointment.duration,
                   reason: appointment.reason,

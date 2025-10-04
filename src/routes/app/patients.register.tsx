@@ -168,7 +168,7 @@ function RouteComponent() {
         <div style={{ maxWidth: 500 }} className="space-y-4">
           {patientRegistrationForm?.fields
             .filter((field) => field.visible && field.deleted !== true)
-            .map((field) => {
+            .map((field, idx) => {
               if (
                 field.fieldType === "text" &&
                 field.column !== "primary_clinic_id"
@@ -181,7 +181,13 @@ function RouteComponent() {
                     >
                       {Language.getTranslation(field.label, "en")}
                     </Label>
-                    <Input key={field.id} {...register(field.column)} />
+                    <Input
+                      data-testid={"register-patient-" + idx}
+                      data-inputtype={"text"}
+                      data-column={field.column}
+                      key={field.id}
+                      {...register(field.column)}
+                    />
                   </div>
                 );
               }
@@ -190,6 +196,8 @@ function RouteComponent() {
                   <div key={field.id} className="space-y-2">
                     <SelectInput
                       className="w-full"
+                      data-testid={"register-patient-" + idx}
+                      data-inputtype={"select"}
                       label={Language.getTranslation(field.label, "en")}
                       data={clinicsList.map((clinic) => ({
                         label: clinic.name,
@@ -210,7 +218,12 @@ function RouteComponent() {
                     >
                       {Language.getTranslation(field.label, "en")}
                     </Label>
-                    <Input key={field.id} {...register(field.column)} />
+                    <Input
+                      data-inputtype={"number"}
+                      data-testid={"register-patient-" + idx}
+                      key={field.id}
+                      {...register(field.column)}
+                    />
                   </div>
                 );
               }
@@ -227,6 +240,8 @@ function RouteComponent() {
                       key={field.id}
                       {...register(field.column)}
                       value={watch(field.column)}
+                      data-inputtype="select"
+                      data-testid={"register-patient-" + idx}
                       onValueChange={(value) => setValue(field.column, value)}
                     >
                       <SelectTrigger className="w-full">
@@ -245,6 +260,7 @@ function RouteComponent() {
                           {field.options.map((opt) => (
                             <SelectItem
                               key={Language.getTranslation(opt, "en")}
+                              data-testid={Language.getTranslation(opt, "en")}
                               value={Language.getTranslation(opt, "en")}
                             >
                               {upperFirst(Language.getTranslation(opt, "en"))}
@@ -271,6 +287,8 @@ function RouteComponent() {
                       //   label={Language.getTranslation(field.label, "en")}
                       required={field.required}
                       placeholder="Pick date"
+                      data-testid={"register-patient-" + idx}
+                      data-inputtype="date"
                       {...register(field.column)}
                       value={watch(field.column)}
                       onChange={(date) => setValue(field.column, date)}
@@ -281,7 +299,11 @@ function RouteComponent() {
               return <div></div>;
             })}
 
-          <Button type="submit" className="primary">
+          <Button
+            type="submit"
+            data-testid={"submit-button"}
+            className="primary"
+          >
             {formState.isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </div>

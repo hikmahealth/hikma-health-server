@@ -84,7 +84,7 @@ export function NavMain({
         <SidebarMenuButton
           asChild
           tooltip="Sign out"
-          id="sign-out-button"
+          data-testid="sign-out-button"
           onClick={handleSignOut}
         >
           <div className="flex space-x-2">

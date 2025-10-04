@@ -56,6 +56,7 @@ function Login() {
     console.log({ data });
     if ("error" in data) {
       setLoadingAuth(false);
+      console.error(data);
       alert(data.error);
     } else {
       navigate({ to: "/app" });
@@ -78,6 +79,7 @@ function Login() {
                 id="email"
                 type="email"
                 value={email}
+                data-testid="email-input"
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@hikmahealth.org"
                 required
@@ -89,6 +91,7 @@ function Login() {
               <Input
                 id="password"
                 type="password"
+                data-testid="password-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Your password"

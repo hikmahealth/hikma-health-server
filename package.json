@@ -6,7 +6,7 @@
     "dev": "vite dev --port 3000",
     "db:migrate": "npx dotenv -e .env -- npx kysely migrate latest",
     "start-only": "node .output/server/index.mjs",
-    "start": "pnpm run db:migrate && pnpm run start-only",
+    "start": "pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
     "start:with-recovery": "pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
     "build": "vite build",
     "serve": "vite preview",
