@@ -73,25 +73,25 @@ function RouteComponent() {
         <StatsCard
           title="Clinic Users"
           value={clinicUsers}
-          description="Total users in your clinic's account"
+          description="Users in your clinic's account"
           icon={<Users size={20} />}
         />
         <StatsCard
           title="Total Patients"
           value={totalPatients}
-          description="Total patients registered to your clinic"
+          description="All patients registered to your clinic"
           icon={<FileText size={20} />}
         />
         <StatsCard
           title="Total Visits"
           value={totalVisits}
-          description="Total visits to your clinic"
+          description="Visits across your clinic"
           icon={<Activity size={20} />}
         />
         <StatsCard
           title="Total Forms"
           value={totalForms}
-          description="Total forms created in your clinic"
+          description="Forms created in your clinic"
           icon={<ClipboardList size={20} />}
         />
       </div>

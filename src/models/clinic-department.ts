@@ -85,6 +85,11 @@ namespace ClinicDepartment {
   };
 
   export namespace Table {
+    /**
+     * If set to true, this table is always pushed regardless of the the last sync date times. All sync events push to mobile the latest table.
+     * IMPORTANT: If ALWAYS_PUSH_TO_MOBILE is true, content of the table should never be edited on the client or pushed to the server from mobile. its one way only.
+     * */
+    export const ALWAYS_PUSH_TO_MOBILE = true;
     export const name = "clinic_departments";
     /** The name of the table in the mobile database */
     export const mobileName = "clinic_departments";
@@ -458,6 +463,16 @@ namespace ClinicDepartment {
       .join("")
       .toUpperCase()
       .slice(0, 4);
+  }
+
+  export namespace Sync {
+    export const upsertFromDelta = serverOnly(async (delta: EncodedT) => {
+      return API.upsert(delta);
+    });
+
+    export const deleteFromDelta = serverOnly(async (id: string) => {
+      return Promise.resolve(id);
+    });
   }
 }
 

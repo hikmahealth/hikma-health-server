@@ -23,7 +23,7 @@ namespace Prescription {
     Schema.Literal("high"),
     Schema.Literal("low"),
     Schema.Literal("normal"),
-    Schema.Literal("emergency")
+    Schema.Literal("emergency"),
   );
 
   export const priorityValues = ["high", "low", "normal", "emergency"] as const;
@@ -35,7 +35,7 @@ namespace Prescription {
     Schema.Literal("not-picked-up"),
     Schema.Literal("partially-picked-up"),
     Schema.Literal("cancelled"),
-    Schema.Literal("other")
+    Schema.Literal("other"),
   );
   export const statusValues = [
     "pending",
@@ -74,6 +74,11 @@ namespace Prescription {
   export type EncodedT = typeof PrescriptionSchema.Encoded;
 
   export namespace Table {
+    /**
+     * If set to true, this table is always pushed regardless of the the last sync date times. All sync events push to mobile the latest table.
+     * IMPORTANT: If ALWAYS_PUSH_TO_MOBILE is true, content of the table should never be edited on the client or pushed to the server from mobile. its one way only.
+     * */
+    export const ALWAYS_PUSH_TO_MOBILE = false;
     export const name = "prescriptions";
     /** The name of the table in the mobile database */
     export const mobileName = "prescriptions";
@@ -153,7 +158,7 @@ namespace Prescription {
           .execute();
 
         return res as unknown as Prescription.EncodedT[];
-      }
+      },
     );
 
     export const toggleStatus = serverOnly(
@@ -167,7 +172,7 @@ namespace Prescription {
           })
           .where("id", "=", id)
           .execute();
-      }
+      },
     );
 
     export const getAllWithDetails = serverOnly(async () => {
@@ -178,7 +183,7 @@ namespace Prescription {
         provider: User.EncodedT;
       }>(
         sql`
-        SELECT 
+        SELECT
           row_to_json(prescriptions.*) as prescription,
           row_to_json(patients.*) as patient,
           row_to_json(clinics.*) as clinic,
@@ -188,7 +193,7 @@ namespace Prescription {
         INNER JOIN clinics ON prescriptions.clinic_id = clinics.id
         INNER JOIN users ON prescriptions.provider_id = users.id
         WHERE prescriptions.is_deleted = false
-      `.compile(db)
+      `.compile(db),
       );
 
       return res.rows;
@@ -202,7 +207,7 @@ namespace Prescription {
         id: string | null,
         prescription: Prescription.EncodedT,
         currentUserName: string,
-        currentClinicId: string
+        currentClinicId: string,
       ) => {
         try {
           return await db.transaction().execute(async (trx) => {
@@ -246,7 +251,7 @@ namespace Prescription {
                 .executeTakeFirstOrThrow();
               if (!provider.clinic_id) {
                 throw new Error(
-                  "Provider has no clinic_id, and appointment has no pickup_clinic_id"
+                  "Provider has no clinic_id, and appointment has no pickup_clinic_id",
                 );
               }
               pickupClinicId = provider.clinic_id;
@@ -264,29 +269,29 @@ namespace Prescription {
                 priority: prescription.priority,
                 expiration_date: prescription.expiration_date
                   ? sql`${toSafeDateString(
-                      prescription.expiration_date
+                      prescription.expiration_date,
                     )}::timestamp with time zone`
                   : null,
                 prescribed_at: sql`${toSafeDateString(
-                  prescription.prescribed_at
+                  prescription.prescribed_at,
                 )}::timestamp with time zone`,
                 filled_at: prescription.filled_at
                   ? sql`${toSafeDateString(
-                      prescription.filled_at
+                      prescription.filled_at,
                     )}::timestamp with time zone`
                   : null,
                 status: prescription.status,
                 items: sql`${JSON.stringify(
-                  safeJSONParse(prescription.items, [])
+                  safeJSONParse(prescription.items, []),
                 )}::jsonb`,
                 notes: prescription.notes || "",
                 metadata: {} as any,
                 is_deleted: false,
                 created_at: sql`${toSafeDateString(
-                  prescription.created_at
+                  prescription.created_at,
                 )}::timestamp with time zone`,
                 updated_at: sql`${toSafeDateString(
-                  prescription.updated_at
+                  prescription.updated_at,
                 )}::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
                 server_created_at: sql`now()::timestamp with time zone`,
@@ -306,7 +311,7 @@ namespace Prescription {
                   notes: (eb) => eb.ref("excluded.notes"),
                   metadata: (eb) => eb.ref("excluded.metadata"),
                   updated_at: sql`${toSafeDateString(
-                    prescription.updated_at
+                    prescription.updated_at,
                   )}::timestamp with time zone`,
                   last_modified: sql`now()::timestamp with time zone`,
                 });
@@ -336,7 +341,7 @@ namespace Prescription {
           });
           throw error;
         }
-      }
+      },
     );
 
     /**
@@ -359,7 +364,7 @@ namespace Prescription {
     export const upsertFromDelta = serverOnly(
       async (delta: Prescription.EncodedT) => {
         return API.save(delta.id || uuidV1(), delta, "", "");
-      }
+      },
     );
 
     export const deleteFromDelta = serverOnly(async (id: string) => {

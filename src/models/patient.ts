@@ -165,6 +165,7 @@ namespace Patient {
   };
 
   export namespace Table {
+    export const ALWAYS_PUSH_TO_MOBILE = false;
     export const name = "patients";
     /** The name of the table in the mobile database */
     export const mobileName = "patients";

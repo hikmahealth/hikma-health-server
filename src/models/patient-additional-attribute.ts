@@ -51,6 +51,11 @@ namespace PatientAdditionalAttribute {
   };
 
   export namespace Table {
+    /**
+     * If set to true, this table is always pushed regardless of the the last sync date times. All sync events push to mobile the latest table.
+     * IMPORTANT: If ALWAYS_PUSH_TO_MOBILE is true, content of the table should never be edited on the client or pushed to the server from mobile. its one way only.
+     * */
+    export const ALWAYS_PUSH_TO_MOBILE = false;
     export const name = "patient_additional_attributes";
     export const mobileName = "patient_additional_attributes";
     export const columns = {
@@ -121,19 +126,19 @@ namespace PatientAdditionalAttribute {
             string_value: attribute.string_value || null,
             date_value: attribute.date_value
               ? sql`${toSafeDateString(
-                  attribute.date_value
+                  attribute.date_value,
                 )}::timestamp with time zone`
               : null,
             boolean_value: attribute.boolean_value || null,
             metadata: sql`${JSON.stringify(
-              safeJSONParse(attribute.metadata, {})
+              safeJSONParse(attribute.metadata, {}),
             )}::jsonb`,
             is_deleted: attribute.is_deleted,
             created_at: sql`${toSafeDateString(
-              attribute.created_at
+              attribute.created_at,
             )}::timestamp with time zone`,
             updated_at: sql`${toSafeDateString(
-              attribute.updated_at
+              attribute.updated_at,
             )}::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
             server_created_at: sql`now()::timestamp with time zone`,
@@ -152,10 +157,10 @@ namespace PatientAdditionalAttribute {
               is_deleted: (eb) => eb.ref("excluded.is_deleted"),
               updated_at: sql`now()::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
-            })
+            }),
           )
           .executeTakeFirstOrThrow();
-      }
+      },
     );
 
     /**
@@ -179,7 +184,7 @@ namespace PatientAdditionalAttribute {
     export const upsertFromDelta = serverOnly(
       async (delta: PatientAdditionalAttribute.EncodedT) => {
         return API.upsert(delta);
-      }
+      },
     );
 
     export const deleteFromDelta = serverOnly(async (id: string) => {
