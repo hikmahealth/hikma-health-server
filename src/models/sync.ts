@@ -150,7 +150,9 @@ namespace Sync {
             const mobile_table_name = entity.Table.mobileName;
             const always_push_to_mobile = entity.Table?.ALWAYS_PUSH_TO_MOBILE || false;
 
-            let lastSyncDate = always_push_to_mobile ? now : clientLastSyncDate;
+            // TODO: Implementation logic for always_push_to_mobile needs to be thought out first.
+            // let lastSyncDate = always_push_to_mobile ? now : clientLastSyncDate;
+            let lastSyncDate = clientLastSyncDate;
 
             // Query for new records created after last sync
             const newRecords = await db
