@@ -78,6 +78,11 @@ namespace ClinicDepartment {
   export type T = typeof ClinicDepartmentSchema.Type;
   export type EncodedT = typeof ClinicDepartmentSchema.Encoded;
 
+  export type DepartmentCapability =
+    | "can_dispense_medications"
+    | "can_perform_labs"
+    | "can_perform_imaging";
+
   export const fromDbEntry = (
     dbDepartment: ClinicDepartment.Table.Departments,
   ): Either.Either<ClinicDepartment.T, Error> => {
@@ -358,6 +363,29 @@ namespace ClinicDepartment {
             last_modified: sql`now()`,
           })
           .where("id", "=", id)
+          .execute();
+      },
+    );
+
+    /**
+     * Toggle a capability of the department
+     * @param {string} departmentId
+     * @param {DepartmentCapability} capability to be toggled
+     */
+    export const toggleCapability = serverOnly(
+      async (
+        departmentId: string,
+        capability: DepartmentCapability,
+      ): Promise<void> => {
+        await db
+          .updateTable(Table.name)
+          .set((eb) => ({
+            [capability]: eb.not(capability),
+            // [capability]: sql`not ${capability}`,
+            updated_at: sql`now()`,
+            last_modified: sql`now()`,
+          }))
+          .where("id", "=", departmentId)
           .execute();
       },
     );

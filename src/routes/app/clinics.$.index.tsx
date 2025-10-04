@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import {
   Card,
@@ -27,10 +27,12 @@ import If from "@/components/if";
 import {
   createDepartment,
   getClinicById,
+  toggleDepartmentCapability,
 } from "@/lib/server-functions/clinics";
 import type Clinic from "@/models/clinic";
 import type ClinicDepartment from "@/models/clinic-department";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/clinics/$/")({
   loader: async ({ params }) => {
@@ -236,6 +238,7 @@ function ErrorComponent({ error }: { error: Error }) {
 function RouteComponent() {
   const { clinic, departments } = Route.useLoaderData();
   const navigate = Route.useNavigate();
+  const route = useRouter();
 
   const [departmentSectionState, setDepartmentSectionState] = useState<
     "view" | "edit"
@@ -261,6 +264,27 @@ function RouteComponent() {
 
   const handleEditClinic = () => {
     navigate({ to: `/app/clinics/edit/${clinic.id}` });
+  };
+
+  const handleToggleCapability = async (
+    clinicId: string,
+    departmentId: string,
+    capability: ClinicDepartment.DepartmentCapability,
+  ) => {
+    let toastId = toast.loading("Toggling capability...");
+    try {
+      console.log("Toggling capability:", capability);
+      await toggleDepartmentCapability({
+        data: { clinicId, departmentId, capability },
+      });
+
+      route.invalidate({ sync: true });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to toggle capability");
+    } finally {
+      toast.dismiss(toastId);
+    }
   };
 
   const handleCreateDepartment = async (e: React.FormEvent) => {
@@ -458,6 +482,39 @@ function RouteComponent() {
                           {department.description}
                         </p>
                       )}
+
+                      {/*Manage what the clinic can do directly here*/}
+
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600 mt-2">
+                          Capabilities:
+                        </p>
+                        <Checkbox
+                          label="Can Dispense Medications"
+                          size="sm"
+                          checked={department.can_dispense_medications}
+                          onCheckedChange={() =>
+                            handleToggleCapability(
+                              department.clinic_id,
+                              department.id,
+                              "can_dispense_medications",
+                            )
+                          }
+                        />
+
+                        <Checkbox
+                          label="Can Perform Labs"
+                          size="sm"
+                          checked={department.can_perform_labs}
+                          onCheckedChange={() =>
+                            handleToggleCapability(
+                              department.clinic_id,
+                              department.id,
+                              "can_perform_labs",
+                            )
+                          }
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       {department.can_dispense_medications && (
