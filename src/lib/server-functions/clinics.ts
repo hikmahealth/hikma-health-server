@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import Clinic from "@/models/clinic";
 import * as Sentry from "@sentry/tanstackstart-react";
 import ClinicDepartment from "@/models/clinic-department";
+import { permissionsMiddleware } from "@/middleware/auth";
+import UserClinicPermissions from "@/models/user-clinic-permissions";
 
 /**
  * Get all clinics
@@ -81,4 +83,55 @@ export const createDepartment = createServerFn({ method: "POST" })
     });
 
     return { success: true, departmentId };
+  });
+
+export const toggleDepartmentCapability = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      clinicId: string;
+      departmentId: string;
+      capability: ClinicDepartment.DepartmentCapability;
+    }) => data,
+  )
+  .middleware([permissionsMiddleware])
+  .handler(async ({ data, context }) => {
+    if (!context.userId) {
+      return Promise.reject({
+        message: "Unauthorized: Isufficient permissions",
+        source: "deleteDepartment",
+      });
+    }
+
+    console.log("toggleDepartmentCapability", data);
+
+    await UserClinicPermissions.API.isAuthorizedWithClinic(
+      data.clinicId,
+      "is_clinic_admin",
+    );
+    const { departmentId, capability } = data;
+
+    return await ClinicDepartment.API.toggleCapability(
+      departmentId,
+      capability,
+    );
+  });
+
+export const deleteDepartment = createServerFn({ method: "POST" })
+  .validator((data: { clinicId: string; departmentId: string }) => data)
+  .middleware([permissionsMiddleware])
+  .handler(async ({ data, context }) => {
+    if (!context.userId) {
+      return Promise.reject({
+        message: "Unauthorized: Isufficient permissions",
+        source: "deleteDepartment",
+      });
+    }
+
+    await UserClinicPermissions.API.isAuthorizedWithClinic(
+      data.clinicId,
+      "is_clinic_admin",
+    );
+    const { departmentId } = data;
+
+    return await ClinicDepartment.API.softDelete(departmentId);
   });
