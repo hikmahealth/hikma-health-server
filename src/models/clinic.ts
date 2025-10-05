@@ -111,6 +111,7 @@ namespace Clinic {
     const result = await db
       .selectFrom(Clinic.Table.name)
       .where("is_deleted", "=", false)
+      .where("is_archived", "=", false)
       .selectAll()
       .execute();
 
