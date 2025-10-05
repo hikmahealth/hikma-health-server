@@ -224,6 +224,8 @@ namespace Appointment {
               INNER JOIN clinics ON appointments.clinic_id = clinics.id
               LEFT JOIN users ON appointments.provider_id = users.id
               WHERE appointments.is_deleted = false
+              ORDER BY appointments.timestamp DESC
+              LIMIT 100
             `.compile(db),
       );
 
