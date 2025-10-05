@@ -130,19 +130,32 @@ function RouteComponent() {
     // for the medicine fields, remove the empty strings that might be added or after the semicolon
     formState.form_fields = formState.form_fields.map((field) => {
       if (field.options) {
-        let cleanedOptions = field.options.map((option) => {
-          console.log({ option });
-          if (typeof option === "string") {
+        let cleanedOptions = field.options.map(
+          (
+            option:
+              | { label: string; value: string; __isNew__?: boolean }
+              | string,
+          ) => {
+            console.log({ option }); // Object { label: "Damas", value: "Damas", __isNew__: true }
+            if (typeof option === "string") {
+              return option?.trim();
+            } else if (typeof option === "object") {
+              return {
+                ...option,
+                label: option.label?.trim(),
+                value: option.value?.trim(),
+                __isNew__: option.__isNew__,
+              };
+            } else if (
+              Array.isArray(option) &&
+              option.length > 0 &&
+              option[0]?.value
+            ) {
+              return option.map((subOption) => subOption.value?.trim());
+            }
             return option?.trim();
-          } else if (
-            Array.isArray(option) &&
-            option.length > 0 &&
-            option[0]?.value
-          ) {
-            return option.map((subOption) => subOption.value?.trim());
-          }
-          return option?.trim();
-        });
+          },
+        );
         if (field._tag === "medicine") {
           cleanedOptions = cleanedOptions.filter(
             (value) => value?.trim() !== "",
