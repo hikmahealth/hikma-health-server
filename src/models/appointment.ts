@@ -214,19 +214,20 @@ namespace Appointment {
         provider: User.EncodedT;
       }>(
         sql`
-        SELECT
-          row_to_json(appointments.*) as appointment,
-          row_to_json(patients.*) as patient,
-          row_to_json(clinics.*) as clinic,
-          row_to_json(users.*) as provider
-        FROM appointments
-        INNER JOIN patients ON appointments.patient_id = patients.id
-        INNER JOIN clinics ON appointments.clinic_id = clinics.id
-        INNER JOIN users ON appointments.provider_id = users.id
-        WHERE appointments.is_deleted = false
-      `.compile(db),
+              SELECT
+                row_to_json(appointments.*) as appointment,
+                row_to_json(patients.*) as patient,
+                row_to_json(clinics.*) as clinic,
+                row_to_json(users.*) as provider
+              FROM appointments
+              INNER JOIN patients ON appointments.patient_id = patients.id
+              INNER JOIN clinics ON appointments.clinic_id = clinics.id
+              LEFT JOIN users ON appointments.provider_id = users.id
+              WHERE appointments.is_deleted = false
+            `.compile(db),
       );
 
+      console.log({ appoins: res.rows });
       return res.rows;
     });
 

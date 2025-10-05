@@ -42,7 +42,7 @@ export const getAppointmentsByPatientId = createServerFn({ method: "GET" })
           appointment: Appointment.EncodedT;
           patient: Patient.EncodedT;
           clinic: Clinic.EncodedT;
-          provider: User.EncodedT;
+          provider: User.EncodedT | null;
         }[];
       }>
     > => {
@@ -63,7 +63,7 @@ export const getAppointmentsByPatientId = createServerFn({ method: "GET" })
 
 /**
  * Get all appointments with their patients, clinics, and providers information
- * @returns {Promise<{appointment: Appointment.EncodedT, patient: Patient.EncodedT, clinic: Clinic.EncodedT, provider: User.EncodedT}[]>} - The list of appointments with their patients, clinics, and providers information
+ * @returns {Promise<{appointment: Appointment.EncodedT, patient: Patient.EncodedT, clinic: Clinic.EncodedT, provider: User.EncodedT | null}[]>} - The list of appointments with their patients, clinics, and providers information
  */
 export const getAllAppointmentsWithDetails = createServerFn({
   method: "GET",
@@ -73,7 +73,7 @@ export const getAllAppointmentsWithDetails = createServerFn({
       appointment: Appointment.EncodedT;
       patient: Patient.EncodedT;
       clinic: Clinic.EncodedT;
-      provider: User.EncodedT;
+      provider: User.EncodedT | null;
     }[]
   > => {
     const res = await Appointment.API.getAllWithDetails();

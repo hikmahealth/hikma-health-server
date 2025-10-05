@@ -161,15 +161,16 @@ function RouteComponent() {
                       {calculateAge(appt?.patient?.date_of_birth)}
                     </TableCell>
                     <TableCell>{appt?.clinic?.name}</TableCell>
-                    <TableCell>{appt?.provider?.name}</TableCell>
+                    <TableCell>{appt?.provider?.name || ""}</TableCell>
                     <TableCell>
                       {appt?.appointment?.departments &&
                       appt?.appointment?.departments.length > 0 ? (
                         <div className="flex flex-col gap-1">
                           {appt.appointment.departments.map((dept: any) => {
-                            const deptName =
+                            const deptName = String(
                               departmentNames[dept.id] ||
-                              `Dept ${dept.id.substring(0, 8)}`;
+                                `Dept ${dept.id.substring(0, 8)}`,
+                            );
                             const statusIcon =
                               dept.status === "completed"
                                 ? "✓"
@@ -211,7 +212,7 @@ function RouteComponent() {
                                       </p>
                                     )}
                                     {dept.seen_by && (
-                                      <p>Seen by: {dept.seen_by}</p>
+                                      <p>Seen by: {String(dept.seen_by)}</p>
                                     )}
                                   </div>
                                 </TooltipContent>
