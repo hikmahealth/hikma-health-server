@@ -108,7 +108,7 @@ function RouteComponent() {
   const handleSaveForm = async (event: React.FormEvent) => {
     event.preventDefault();
     const duplicateFieldNames = findDuplicatesStrings(
-      formState.form_fields.map((field) => field.name.trim().toLowerCase()),
+      formState.form_fields.map((field) => field.name?.trim().toLowerCase()),
     );
 
     if (duplicateFieldNames.length > 0) {
@@ -119,7 +119,7 @@ function RouteComponent() {
     }
 
     const containsReservedFieldNames = formState.form_fields.some((field) =>
-      EventForm.RESERVED_FIELD_NAMES.includes(field.name.trim().toLowerCase()),
+      EventForm.RESERVED_FIELD_NAMES.includes(field.name?.trim().toLowerCase()),
     );
 
     if (containsReservedFieldNames) {
@@ -130,10 +130,22 @@ function RouteComponent() {
     // for the medicine fields, remove the empty strings that might be added or after the semicolon
     formState.form_fields = formState.form_fields.map((field) => {
       if (field.options) {
-        let cleanedOptions = field.options.map((option) => option.trim());
+        let cleanedOptions = field.options.map((option) => {
+          console.log({ option });
+          if (typeof option === "string") {
+            return option?.trim();
+          } else if (
+            Array.isArray(option) &&
+            option.length > 0 &&
+            option[0]?.value
+          ) {
+            return option.map((subOption) => subOption.value?.trim());
+          }
+          return option?.trim();
+        });
         if (field._tag === "medicine") {
           cleanedOptions = cleanedOptions.filter(
-            (value) => value.trim() !== "",
+            (value) => value?.trim() !== "",
           );
         }
 
