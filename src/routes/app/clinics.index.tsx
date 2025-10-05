@@ -75,12 +75,11 @@ function RouteComponent() {
   };
 
   const handleArchive = (id: string) => {
-    return;
     if (!window.confirm("Are you sure you want to archive this clinic?")) {
       return;
     }
 
-    archiveClinic({ data: { id } })
+    archiveClinic({ data: { id, isArchived: true } })
       .catch((error) => {
         console.error(error);
         toast.error(error.message);
