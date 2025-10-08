@@ -49,6 +49,8 @@ function RouteComponent() {
   const navigate = useNavigate();
   const router = useRouter();
 
+  console.log("Clinics:", clinics);
+
   const handleEdit = (id: string) => {
     navigate({ to: `/app/clinics/edit/${id}` });
   };
@@ -75,6 +77,12 @@ function RouteComponent() {
   };
 
   const handleArchive = (id: string) => {
+    const usersCount =
+      clinics.find((clinic) => clinic.id === id)?.users?.length || 0;
+    if (usersCount > 0) {
+      toast.error("Cannot archive a clinic with users");
+      return;
+    }
     if (!window.confirm("Are you sure you want to archive this clinic?")) {
       return;
     }
@@ -105,6 +113,7 @@ function RouteComponent() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Users</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -112,6 +121,9 @@ function RouteComponent() {
             {clinics?.map((clinic) => (
               <TableRow key={clinic.id} className="py-2">
                 <TableCell>{clinic.name}</TableCell>
+                <TableCell align="center">
+                  {clinic?.users?.length || 0}
+                </TableCell>
                 <TableCell className="flex gap-4">
                   <Button
                     variant="outline"

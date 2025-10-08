@@ -62,6 +62,7 @@ export const getUserById = createServerFn({ method: "GET" })
         source: "getUserById",
       });
     }
+
     if (!data?.id) return null;
 
     const res = await User.API.getById(data.id);
@@ -69,10 +70,21 @@ export const getUserById = createServerFn({ method: "GET" })
     const clinicId = res?.clinic_id;
     if (!clinicId) return null;
 
+    console.log({
+      data,
+      clinicId: res?.clinic_id,
+      specificContext: context.permissions[clinicId],
+      context: JSON.stringify(
+        Object.entries(context.permissions).slice(0, 5),
+        null,
+        2,
+      ),
+    });
+
     // check if the user is a super admin, is the owner of the user requested or is an admin of the clinic
     if (
-      context.permissions[clinicId].is_clinic_admin ||
-      context.role === User.ROLES.SUPER_ADMIN
+      context.role === User.ROLES.SUPER_ADMIN ||
+      context.permissions[clinicId]?.is_clinic_admin
     ) {
       return res;
     } else {
