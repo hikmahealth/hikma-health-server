@@ -100,7 +100,11 @@ namespace Clinic {
         await db
           .updateTable(Clinic.Table.name)
           .where("id", "=", id)
-          .set({ is_archived: isArchived })
+          .set({
+            is_archived: isArchived,
+            updated_at: sql`now()`,
+            last_modified: sql`now()`,
+          })
           .execute();
       },
     );
