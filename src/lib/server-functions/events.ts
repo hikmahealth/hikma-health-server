@@ -7,7 +7,7 @@ import Event from "@/models/event";
  */
 export const getEventsByFormId = createServerFn({ method: "GET" })
   .validator(
-    (data: { form_id: string; limit?: number; offset?: number }) => data
+    (data: { form_id: string; limit?: number; offset?: number }) => data,
   )
   .handler(
     async ({
@@ -29,7 +29,7 @@ export const getEventsByFormId = createServerFn({ method: "GET" })
         includeCount: true,
       });
 
-      console.log({ result, form_id: data.form_id });
+      // console.log({ result, form_id: data.form_id });
       return {
         events: result,
         pagination: {
@@ -39,5 +39,5 @@ export const getEventsByFormId = createServerFn({ method: "GET" })
           hasMore: result.length >= limit,
         },
       };
-    }
+    },
   );
