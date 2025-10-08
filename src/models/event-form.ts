@@ -1,4 +1,4 @@
-import { Data, Either, Option } from "effect";
+import { Data, Either, Match, Option } from "effect";
 import {
   type ColumnType,
   type Generated,
@@ -399,6 +399,20 @@ namespace EventForm {
       _tag: Schema.Literal(tag),
       fieldType: Schema.Literal(tag),
     }).pipe(Schema.extend(specific), Schema.extend(BaseFieldSchema));
+
+  // Given a fieldType and inputType, return the appropriate _tag field
+  export const getFieldTag = (fieldType: Field["fieldType"]): Field["_tag"] => {
+    return Match.value(fieldType).pipe(
+      Match.when("binary", () => "binary"),
+      Match.when("free-text", () => "free-text"),
+      Match.when("medicine", () => "medicine"),
+      Match.when("diagnosis", () => "diagnosis"),
+      Match.when("date", () => "date"),
+      Match.when("file", () => "file"),
+      Match.when("options", () => "options"),
+      Match.exhaustive,
+    ) as Field["_tag"];
+  };
 
   export const BinaryFieldSchema = createFieldSchema(
     "binary",

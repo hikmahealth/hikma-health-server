@@ -11,6 +11,9 @@ import db from "@/db";
 import { serverOnly } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import User from "./user";
+import UserClinicPermissions from "./user-clinic-permissions";
+import Token from "./token";
+import { getCookie } from "@tanstack/react-start/server";
 
 namespace Clinic {
   export const ClinicSchema = Schema.Struct({
@@ -105,18 +108,48 @@ namespace Clinic {
 
   /**
    * Returns a list of all the clinics
-   * @returns {Promise<EncodedT>[]} - List of clinics
+   * @returns {Promise<(EncodedT & { users?: { id: string; clinic_id: string }[] })[]>} - List of clinics
    */
-  export const getAll = serverOnly(async (): Promise<EncodedT[]> => {
-    const result = await db
-      .selectFrom(Clinic.Table.name)
-      .where("is_deleted", "=", false)
-      .where("is_archived", "=", false)
-      .selectAll()
-      .execute();
+  export const getAll = serverOnly(
+    async (
+      options: { includeUsers: boolean } = { includeUsers: true },
+    ): Promise<
+      (EncodedT & { users?: { id: string; clinic_id: string }[] })[]
+    > => {
+      const baseQuery = db
+        .selectFrom(Clinic.Table.name)
+        .where("is_deleted", "=", false)
+        .where("is_archived", "=", false);
 
-    return result;
-  });
+      if (options.includeUsers) {
+        const query = sql`
+          SELECT
+              clinic.*,
+              COALESCE(
+                ARRAY_AGG(
+                  JSON_BUILD_OBJECT(
+                    'id', users.id,
+                    'clinic_id', users.clinic_id
+                  )
+                ) FILTER (WHERE users.id IS NOT NULL),
+                ARRAY[]::json[]
+              ) as users
+            FROM  ${sql.id(Clinic.Table.name)} clinic
+            LEFT JOIN users ON users.clinic_id = clinic.id
+            WHERE clinic.is_deleted = false AND clinic.is_archived = false
+            GROUP BY clinic.id
+        `.compile(db);
+
+        const result = await db.executeQuery(query);
+
+        return result.rows;
+      }
+
+      const result = await baseQuery.selectAll().execute();
+
+      return result;
+    },
+  );
 
   /**
    * Deletes a clinic given an id, and that the clinic does not have any registered members,
@@ -161,6 +194,17 @@ namespace Clinic {
    */
   export const save = serverOnly(
     async ({ id, name }: { id?: string; name: string }): Promise<void> => {
+      const token = getCookie("token");
+      if (!token) {
+        return Promise.reject(new Error("Unauthorized"));
+      }
+      const userOption = await Token.getUser(token);
+      if (Option.isNone(userOption)) {
+        return Promise.reject(new Error("Unauthorized"));
+      }
+
+      const currentUser = userOption.value;
+
       if (typeof id !== "string" || id.length <= 5) {
         const clinicId = uuidV1();
         await db
@@ -177,6 +221,10 @@ namespace Clinic {
             is_archived: false,
           })
           .execute();
+
+        // get all the current super admins
+        // going to ignore any errors here
+        UserClinicPermissions.API.newClinicCreated(clinicId, currentUser.id);
       } else {
         await db
           .updateTable(Clinic.Table.name)

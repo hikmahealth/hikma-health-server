@@ -25,6 +25,7 @@ import {
   findDuplicatesStrings,
   isValidUUID,
   listToFieldOptions,
+  safeJSONParse,
 } from "@/lib/utils";
 import { DatePickerInput } from "@/components/date-picker-input";
 import { Separator } from "@/components/ui/separator";
@@ -40,7 +41,43 @@ const getFormById = createServerFn({ method: "GET" })
   .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const res = await EventForm.API.getById(data.id);
-    return res;
+
+    // For some users migrating from old old version, where the "form_fields" is a JSON string;
+    const formFields = (() => {
+      let data;
+      if (typeof res.form_fields === "string") {
+        data = safeJSONParse(res.form_fields, []);
+        // on error, just return the original string. usually we would return an empty []. But I want to allow the client side code one more chance to fix without throwing an error.
+        if (data.length === 0) {
+          data = res.form_fields;
+        }
+      } else {
+        data = res.form_fields;
+      }
+
+      // process the array to make sure all fields are formatted from older versions of data to new ones.
+      // also act as an ongoing robustness measure
+      if (Array.isArray(data)) {
+        data.forEach((field) => {
+          // migrate text area to text input with long length
+          if (field.inputType === "textarea") {
+            field.inputType = "text";
+            field.length = "long";
+          }
+          // Add a _tag to each field
+          field._tag = EventForm.getFieldTag(field.fieldType);
+        });
+      }
+
+      return data;
+    })();
+
+    console.log({ formFields });
+
+    return {
+      ...res,
+      form_fields: formFields,
+    };
   });
 
 const saveForm = createServerFn({ method: "POST" })
@@ -76,6 +113,7 @@ export const Route = createFileRoute("/app/event-forms/edit/$")({
 
 function RouteComponent() {
   const { form: initialForm } = Route.useLoaderData();
+  console.log({ initialForm });
   const navigate = Route.useNavigate();
   const formId = Route.useParams()._splat;
   const isEditing = !!initialForm?.id;

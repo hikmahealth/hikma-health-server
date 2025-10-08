@@ -360,6 +360,40 @@ namespace UserClinicPermissions {
     );
 
     /**
+     * When a new clinic is created, we update all the permissions for all super_admins for that clinic
+     * @param {string} clinicId
+     * @param {string} currentUserId
+     */
+    export const newClinicCreated = serverOnly(
+      async (clinicId: string, currentUserId: string) => {
+        const superAdmins = await db
+          .selectFrom(User.Table.name)
+          .where("role", "=", User.ROLES.SUPER_ADMIN)
+          .selectAll()
+          .execute();
+
+        await Promise.all(
+          superAdmins.map(async (superAdmin) => {
+            await db
+              .insertInto(UserClinicPermissions.Table.name)
+              .values({
+                user_id: superAdmin.id,
+                clinic_id: clinicId,
+                can_register_patients: true,
+                can_view_history: true,
+                can_edit_records: true,
+                can_delete_records: true,
+                is_clinic_admin: true,
+                last_modified_by: currentUserId,
+                updated_at: sql`now()::timestamp with time zone`,
+              })
+              .executeTakeFirstOrThrow();
+          }),
+        );
+      },
+    );
+
+    /**
      * Delete user clinic permissions
      * @param {string} userId - The user ID
      * @param {string} clinicId - The clinic ID
