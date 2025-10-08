@@ -70,17 +70,6 @@ export const getUserById = createServerFn({ method: "GET" })
     const clinicId = res?.clinic_id;
     if (!clinicId) return null;
 
-    console.log({
-      data,
-      clinicId: res?.clinic_id,
-      specificContext: context.permissions[clinicId],
-      context: JSON.stringify(
-        Object.entries(context.permissions).slice(0, 5),
-        null,
-        2,
-      ),
-    });
-
     // check if the user is a super admin, is the owner of the user requested or is an admin of the clinic
     if (
       context.role === User.ROLES.SUPER_ADMIN ||
