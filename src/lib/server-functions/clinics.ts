@@ -11,8 +11,15 @@ import UserClinicPermissions from "@/models/user-clinic-permissions";
  */
 export const getAllClinics = createServerFn({ method: "GET" }).handler(
   async () => {
-    const res = await Clinic.getAll();
-    return res;
+    return Sentry.startSpan({ name: "Get all clinics" }, async () => {
+      try {
+        const clinics = await Clinic.getAll();
+        return clinics;
+      } catch (error) {
+        Sentry.captureException(error);
+        return [];
+      }
+    });
   },
 );
 

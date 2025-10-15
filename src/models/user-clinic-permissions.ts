@@ -155,10 +155,9 @@ namespace UserClinicPermissions {
       is_clinic_admin: Generated<boolean>;
       created_by: string | null;
       last_modified_by: string | null;
-      created_at: Generated<ColumnType<Date, Date | string | undefined, never>>;
-      updated_at: Generated<
-        ColumnType<Date, Date | string | undefined, string | undefined>
-      >;
+      // created_at: Generated<ColumnType<Date, Date | string | undefined, never>>;
+      created_at: Generated<Date>;
+      updated_at: Generated<Date>;
     }
 
     export type UserClinicPermissions = Selectable<T>;

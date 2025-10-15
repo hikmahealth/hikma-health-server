@@ -49,7 +49,7 @@ const Checkbox = React.forwardRef<
       required,
       ...props
     },
-    ref
+    ref,
   ) => {
     const sizeClasses = {
       sm: "size-3.5",
@@ -77,7 +77,7 @@ const Checkbox = React.forwardRef<
       secondary:
         "data-[state=checked]:bg-secondary data-[state=checked]:border-secondary data-[state=checked]:text-secondary-foreground",
       destructive:
-        "data-[state=checked]:bg-destructive data-[state=checked]:border-destructive data-[state=checked]:text-destructive-foreground",
+        "data-[state=checked]:bg-destructive data-[state=checked]:border-destructive data-[state=checked]:text-primary-foreground",
     };
 
     const radiusClasses = {
@@ -113,7 +113,7 @@ const Checkbox = React.forwardRef<
           indeterminate
             ? "data-[state=indeterminate]:bg-primary data-[state=indeterminate]:border-primary data-[state=indeterminate]:text-primary-foreground"
             : "",
-          className
+          className,
         )}
         aria-invalid={hasError ? true : false}
         aria-describedby={
@@ -178,7 +178,7 @@ const Checkbox = React.forwardRef<
         )}
       </div>
     );
-  }
+  },
 );
 
 Checkbox.displayName = "Checkbox";

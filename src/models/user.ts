@@ -37,7 +37,7 @@ namespace User {
     PROVIDER: "provider",
     ADMIN: "admin",
     SUPER_ADMIN: "super_admin",
-  };
+  } as const;
 
   export const roles = [
     ROLES.REGISTRAR,

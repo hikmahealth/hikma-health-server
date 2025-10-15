@@ -9,16 +9,7 @@ if (typeof global !== "undefined") {
 
 import type Patient from "@/models/patient";
 import type Clinic from "@/models/clinic";
-import {
-  Kysely,
-  PostgresDialect,
-  type ColumnType,
-  type Generated,
-  type Insertable,
-  type JSONColumnType,
-  type Selectable,
-  type Updateable,
-} from "kysely";
+import { Kysely, PostgresDialect } from "kysely";
 import type User from "@/models/user";
 import type Token from "@/models/token";
 import type Visit from "@/models/visit";
@@ -35,7 +26,12 @@ import type AppConfig from "@/models/app-config";
 import type PatientVital from "@/models/patient-vital";
 import type PatientProblem from "@/models/patient-problem";
 import type ClinicDepartment from "@/models/clinic-department";
-import { Pool, type PoolConfig } from "pg";
+import type DrugCatalogue from "@/models/drug-catalogue";
+import type ClinicInventory from "@/models/clinic-inventory";
+import type InventoryTransactions from "@/models/inventory-transactions";
+import type DrugBatches from "@/models/drug-batches";
+import type PrescriptionItems from "@/models/prescription-items";
+import { Pool } from "pg";
 import type { StringId, StringContent } from "@/models/string-content";
 import "dotenv/config";
 
@@ -60,6 +56,11 @@ export type Database = {
   patient_problems: PatientProblem.Table.T;
   patient_vitals: PatientVital.Table.T;
   clinic_departments: ClinicDepartment.Table.T;
+  drug_catalogue: DrugCatalogue.Table.T;
+  clinic_inventory: ClinicInventory.Table.T;
+  inventory_transactions: InventoryTransactions.Table.T;
+  drug_batches: DrugBatches.Table.T;
+  prescription_items: PrescriptionItems.Table.T;
 };
 
 // Environment types
