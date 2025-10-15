@@ -17,6 +17,8 @@ import User from "./user";
 import { isValidUUID, safeJSONParse, toSafeDateString } from "@/lib/utils";
 import { v1 as uuidV1 } from "uuid";
 import Visit from "./visit";
+import type { PrescriptionItemValues } from "@/components/prescription-form";
+import PrescriptionItem from "./prescription-items";
 
 namespace Prescription {
   export const PrioritySchema = Schema.Union(
@@ -206,6 +208,8 @@ namespace Prescription {
       async (
         id: string | null,
         prescription: Prescription.EncodedT,
+        // prescription_items:  PrescriptionItem.EncodedT[],
+        prescription_items: PrescriptionItemValues[], // TODO: replace this with the above. HACK: this is temporary
         currentUserName: string,
         currentClinicId: string,
       ) => {
@@ -257,10 +261,12 @@ namespace Prescription {
               pickupClinicId = provider.clinic_id;
             }
 
+            const prescriptionId = id || prescription.id || uuidV1();
+
             const res = await trx
               .insertInto(Prescription.Table.name)
               .values({
-                id: id || prescription.id || uuidV1(),
+                id: prescriptionId,
                 patient_id: prescription.patient_id,
                 provider_id: prescription.provider_id,
                 pickup_clinic_id: pickupClinicId,
@@ -281,9 +287,11 @@ namespace Prescription {
                     )}::timestamp with time zone`
                   : null,
                 status: prescription.status,
-                items: sql`${JSON.stringify(
-                  safeJSONParse(prescription.items, []),
-                )}::jsonb`,
+                // items here is replaced by the prescription_items table
+                // items: sql`${JSON.stringify(
+                //   safeJSONParse(prescription.items, []),
+                // )}::jsonb`,
+                items: sql`${JSON.stringify([])}::jsonb`,
                 notes: prescription.notes || "",
                 metadata: {} as any,
                 is_deleted: false,
@@ -317,6 +325,28 @@ namespace Prescription {
                 });
               })
               .executeTakeFirstOrThrow();
+
+            if (prescription_items.length > 0) {
+              const itemsRes = await trx
+                .insertInto(PrescriptionItem.Table.name)
+                .values(
+                  prescription_items.map((item) => ({
+                    clinic_id: pickupClinicId,
+                    dosage_instructions: item.dosage_instructions,
+                    drug_id: item.drug_id,
+                    id: item.id || uuidV1(),
+                    patient_id: prescription.patient_id,
+                    prescription_id: prescriptionId,
+                    quantity_prescribed: item.quantity_prescribed,
+                    item_status: item.item_status,
+                    notes: item.notes,
+                    quantity_dispensed: item.quantity_dispensed,
+                    refills_authorized: item.refills_authorized,
+                    refills_used: item.refills_used,
+                  })),
+                )
+                .executeTakeFirstOrThrow();
+            }
 
             return res;
           });
@@ -363,7 +393,7 @@ namespace Prescription {
   export namespace Sync {
     export const upsertFromDelta = serverOnly(
       async (delta: Prescription.EncodedT) => {
-        return API.save(delta.id || uuidV1(), delta, "", "");
+        return API.save(delta.id || uuidV1(), delta, [], "", "");
       },
     );
 

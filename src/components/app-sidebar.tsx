@@ -11,6 +11,7 @@ import {
   FolderCog,
   LucideFormInput,
   LucideListChecks,
+  Box,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -146,6 +147,22 @@ export const navData = {
       ],
     },
     {
+      title: "Inventory",
+      url: "#",
+      icon: Box,
+      isActive: true,
+      items: [
+        {
+          title: "Drug Catalogue",
+          url: "/app/inventory/drug-catalogue",
+        },
+        {
+          title: "Clinic Inventory",
+          url: "/app/inventory/clinic-inventory",
+        },
+      ],
+    },
+    {
       title: "Prescriptions",
       url: "#",
       icon: Pill,
@@ -188,9 +205,13 @@ export const navData = {
           url: "/app/settings/register-mobile-app",
         },
         {
-          title: "File Storage",
-          url: "/app/settings/file-storage",
+          title: "Configuration",
+          url: "/app/settings/configurations",
         },
+        // {
+        //   title: "File Storage",
+        //   url: "/app/settings/file-storage",
+        // },
       ],
     },
     // {

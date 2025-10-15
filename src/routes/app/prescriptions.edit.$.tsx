@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, isValidUUID } from "@/lib/utils";
 import { SelectInput } from "@/components/select-input";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { getAllUsers } from "@/lib/server-functions/users";
@@ -36,25 +36,34 @@ import { PatientSearchSelect } from "@/components/patient-search-select";
 import Clinic from "@/models/clinic";
 import User from "@/models/user";
 import type Patient from "@/models/patient";
+import {
+  PrescriptionForm,
+  type PrescriptionFormValues,
+  type PrescriptionItemValues,
+} from "@/components/prescription-form";
 
 // Create a save prescription server function
 const savePrescription = createServerFn({ method: "POST" })
   .validator(
     (data: {
-      prescription: Prescription.EncodedT;
+      prescription: PrescriptionFormValues;
+      items: PrescriptionItemValues[];
       id: string | null;
       currentUserName: string;
       currentClinicId: string;
-    }) => data
+    }) => data,
   )
   .handler(async ({ data }) => {
-    const { prescription, id, currentUserName, currentClinicId } = data;
+    const { prescription, items, id, currentUserName, currentClinicId } = data;
+
+    const prescriptionId = isValidUUID(id || "") ? id : null;
 
     return Prescription.API.save(
-      id,
+      prescriptionId,
       prescription,
+      items,
       currentUserName,
-      currentClinicId
+      currentClinicId,
     );
   });
 
@@ -127,7 +136,7 @@ function RouteComponent() {
   const navigate = Route.useNavigate();
   const params = Route.useParams();
   const prescriptionId = params._splat;
-  const isEditing = !!prescriptionId;
+  const isEditing = isValidUUID(prescriptionId || "");
 
   const form = useForm<Prescription.EncodedT>({
     defaultValues: prescription || {
@@ -157,17 +166,15 @@ function RouteComponent() {
   console.log({ currentUser });
 
   // Handle form submission
-  const onSubmit = async (values: Prescription.EncodedT) => {
-    console.log({
-      prescription: values,
-      id: prescriptionId,
-      currentUserName: currentUser?.name || "Unknown",
-      currentClinicId: currentUser?.clinic_id || "Unknown",
-    });
+  const onSubmit = async (
+    prescription: PrescriptionFormValues,
+    items: PrescriptionItemValues[],
+  ) => {
     try {
       await savePrescription({
         data: {
-          prescription: values,
+          prescription,
+          items,
           id: prescriptionId || null,
           currentUserName: currentUser?.name || "Unknown",
           currentClinicId: currentUser?.clinic_id || "Unknown",
@@ -175,7 +182,7 @@ function RouteComponent() {
       });
 
       toast.success(
-        `Prescription ${isEditing ? "updated" : "created"} successfully`
+        `Prescription ${isEditing ? "updated" : "created"} successfully`,
       );
 
       navigate({ to: "/app/prescriptions" });
@@ -193,8 +200,23 @@ function RouteComponent() {
 
       <div className="grid grid-cols-1 gap-6 max-w-2xl">
         <div className="p-6">
+          <PrescriptionForm
+            onSubmit={(prescription, prescriptionItems) =>
+              onSubmit(prescription, prescriptionItems)
+            }
+            onPickupClinicChange={console.log}
+            providers={providers}
+            clinics={clinics.map((cl) => ({ id: cl.id, name: cl.name }))}
+            medications={[]}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 max-w-2xl">
+        <div className="p-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/*If isEditing, do not allow changing the prescription items*/}
+            <form contentEditable={!isEditing} className="space-y-6">
               <FormField
                 control={form.control}
                 name="patient_id"
@@ -279,7 +301,7 @@ function RouteComponent() {
                             variant={"outline"}
                             className={cn(
                               "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
+                              !field.value && "text-muted-foreground",
                             )}
                           >
                             {field.value ? (

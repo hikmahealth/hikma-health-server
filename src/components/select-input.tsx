@@ -16,6 +16,7 @@ export interface SelectOption {
   value: string;
   label: string;
   disabled?: boolean;
+  key?: string;
 }
 
 export interface SelectGroup {
@@ -88,7 +89,7 @@ const SelectInput = React.forwardRef<
       "aria-label": ariaLabel,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [internalValue, setInternalValue] = React.useState(defaultValue);
     const controlledValue = value !== undefined ? value : internalValue;
@@ -114,15 +115,15 @@ const SelectInput = React.forwardRef<
     const normalizedData = React.useMemo(() => {
       return data.map((item) => {
         if (typeof item === "string") {
-          return { value: item, label: item };
+          return { value: item, label: item, key: item };
         }
         if ("options" in item) {
           return {
             ...item,
             options: item.options.map((option) =>
               typeof option === "string"
-                ? { value: option, label: option }
-                : option
+                ? { value: option, label: option, key: option }
+                : option,
             ),
           };
         }
@@ -132,7 +133,7 @@ const SelectInput = React.forwardRef<
 
     // Find selected option for onChange callback
     const findSelectedOption = (
-      selectedValue: string
+      selectedValue: string,
     ): SelectOption | undefined => {
       for (const item of normalizedData) {
         if ("options" in item) {
@@ -189,7 +190,7 @@ const SelectInput = React.forwardRef<
               (size === "sm" ? "pl-8" : size === "lg" ? "pl-10" : "pl-9"),
             (rightSection || showClearButton) &&
               (size === "sm" ? "pr-12" : size === "lg" ? "pr-14" : "pr-13"),
-            className
+            className,
           )}
           aria-label={ariaLabel}
           aria-invalid={hasError === true}
@@ -209,8 +210,8 @@ const SelectInput = React.forwardRef<
                 size === "sm"
                   ? "w-8 h-8"
                   : size === "lg"
-                  ? "w-10 h-10"
-                  : "w-9 h-9"
+                    ? "w-10 h-10"
+                    : "w-9 h-9",
               )}
               style={{ pointerEvents: leftSectionPointerEvents }}
             >
@@ -226,7 +227,7 @@ const SelectInput = React.forwardRef<
               onClick={handleClear}
               className={cn(
                 "absolute right-2 z-20 flex items-center justify-center text-muted-foreground hover:text-foreground",
-                size === "sm" ? "w-4 h-4" : "w-5 h-5"
+                size === "sm" ? "w-4 h-4" : "w-5 h-5",
               )}
               style={{ pointerEvents: rightSectionPointerEvents }}
             >
@@ -241,8 +242,8 @@ const SelectInput = React.forwardRef<
                 size === "sm"
                   ? "w-8 h-8"
                   : size === "lg"
-                  ? "w-10 h-10"
-                  : "w-9 h-9"
+                    ? "w-10 h-10"
+                    : "w-9 h-9",
               )}
               style={{ pointerEvents: rightSectionPointerEvents }}
             >
@@ -260,7 +261,7 @@ const SelectInput = React.forwardRef<
                   <SelectLabel>{item.label}</SelectLabel>
                   {item.options.map((option) => (
                     <SelectItem
-                      key={option.value}
+                      key={option.key || option.label}
                       value={option.value}
                       disabled={option.disabled}
                     >
@@ -273,7 +274,7 @@ const SelectInput = React.forwardRef<
               // Render individual option
               return (
                 <SelectItem
-                  key={item.value}
+                  key={item.key || item.label}
                   value={item.value}
                   disabled={item.disabled}
                 >
@@ -322,7 +323,7 @@ const SelectInput = React.forwardRef<
         )}
       </div>
     );
-  }
+  },
 );
 
 SelectInput.displayName = "SelectInput";

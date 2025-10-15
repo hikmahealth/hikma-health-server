@@ -29,10 +29,13 @@ import { Route as DemoSentryTestingRouteImport } from './routes/demo.sentry.test
 import { Route as DemoFormSimpleRouteImport } from './routes/demo.form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo.form.address'
 import { Route as AppSettingsRegisterMobileAppRouteImport } from './routes/app/settings.register-mobile-app'
+import { Route as AppSettingsConfigurationsRouteImport } from './routes/app/settings.configurations'
 import { Route as AppPatientsRegisterRouteImport } from './routes/app/patients.register'
 import { Route as AppPatientsCustomizeRegistrationFormRouteImport } from './routes/app/patients.customize-registration-form'
 import { Route as AppDataEventsRouteImport } from './routes/app/data.events'
 import { Route as AppPatientsSplatIndexRouteImport } from './routes/app/patients.$.index'
+import { Route as AppInventoryDrugCatalogueIndexRouteImport } from './routes/app/inventory/drug-catalogue.index'
+import { Route as AppInventoryClinicInventoryIndexRouteImport } from './routes/app/inventory/clinic-inventory.index'
 import { Route as AppClinicsSplatIndexRouteImport } from './routes/app/clinics.$.index'
 import { Route as AppUsersManagePermissionsSplatRouteImport } from './routes/app/users.manage-permissions.$'
 import { Route as AppUsersEditSplatRouteImport } from './routes/app/users.edit.$'
@@ -40,6 +43,8 @@ import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/pres
 import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-forms.edit.$'
 import { Route as AppClinicsEditSplatRouteImport } from './routes/app/clinics.edit.$'
 import { Route as AppAppointmentsEditSplatRouteImport } from './routes/app/appointments.edit.$'
+import { Route as AppInventoryClinicInventoryEditSplatRouteImport } from './routes/app/inventory/clinic-inventory.edit.$'
+import { Route as AppInventoryClinicInventoryDrugEditSplatRouteImport } from './routes/app/inventory/clinic-inventory.drug.edit.$'
 import { ServerRoute as ApiLoginServerRouteImport } from './routes/api/login'
 import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
 import { ServerRoute as ApiV2SyncServerRouteImport } from './routes/api/v2.sync'
@@ -141,6 +146,12 @@ const AppSettingsRegisterMobileAppRoute =
     path: '/settings/register-mobile-app',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSettingsConfigurationsRoute =
+  AppSettingsConfigurationsRouteImport.update({
+    id: '/settings/configurations',
+    path: '/settings/configurations',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppPatientsRegisterRoute = AppPatientsRegisterRouteImport.update({
   id: '/patients/register',
   path: '/patients/register',
@@ -162,6 +173,18 @@ const AppPatientsSplatIndexRoute = AppPatientsSplatIndexRouteImport.update({
   path: '/patients/$/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInventoryDrugCatalogueIndexRoute =
+  AppInventoryDrugCatalogueIndexRouteImport.update({
+    id: '/inventory/drug-catalogue/',
+    path: '/inventory/drug-catalogue/',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppInventoryClinicInventoryIndexRoute =
+  AppInventoryClinicInventoryIndexRouteImport.update({
+    id: '/inventory/clinic-inventory/',
+    path: '/inventory/clinic-inventory/',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppClinicsSplatIndexRoute = AppClinicsSplatIndexRouteImport.update({
   id: '/clinics/$/',
   path: '/clinics/$/',
@@ -198,6 +221,18 @@ const AppAppointmentsEditSplatRoute =
   AppAppointmentsEditSplatRouteImport.update({
     id: '/appointments/edit/$',
     path: '/appointments/edit/$',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppInventoryClinicInventoryEditSplatRoute =
+  AppInventoryClinicInventoryEditSplatRouteImport.update({
+    id: '/inventory/clinic-inventory/edit/$',
+    path: '/inventory/clinic-inventory/edit/$',
+    getParentRoute: () => AppRoute,
+  } as any)
+const AppInventoryClinicInventoryDrugEditSplatRoute =
+  AppInventoryClinicInventoryDrugEditSplatRouteImport.update({
+    id: '/inventory/clinic-inventory/drug/edit/$',
+    path: '/inventory/clinic-inventory/drug/edit/$',
     getParentRoute: () => AppRoute,
   } as any)
 const ApiLoginServerRoute = ApiLoginServerRouteImport.update({
@@ -247,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
+  '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -266,7 +302,11 @@ export interface FileRoutesByFullPath {
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
   '/app/clinics/$': typeof AppClinicsSplatIndexRoute
+  '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
+  '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
+  '/app/inventory/clinic-inventory/edit/$': typeof AppInventoryClinicInventoryEditSplatRoute
+  '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -277,6 +317,7 @@ export interface FileRoutesByTo {
   '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
+  '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -296,7 +337,11 @@ export interface FileRoutesByTo {
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
   '/app/clinics/$': typeof AppClinicsSplatIndexRoute
+  '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
+  '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
+  '/app/inventory/clinic-inventory/edit/$': typeof AppInventoryClinicInventoryEditSplatRoute
+  '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -309,6 +354,7 @@ export interface FileRoutesById {
   '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
+  '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
   '/demo/form/address': typeof DemoFormAddressRoute
   '/demo/form/simple': typeof DemoFormSimpleRoute
@@ -328,7 +374,11 @@ export interface FileRoutesById {
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
   '/app/clinics/$/': typeof AppClinicsSplatIndexRoute
+  '/app/inventory/clinic-inventory/': typeof AppInventoryClinicInventoryIndexRoute
+  '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$/': typeof AppPatientsSplatIndexRoute
+  '/app/inventory/clinic-inventory/edit/$': typeof AppInventoryClinicInventoryEditSplatRoute
+  '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -342,6 +392,7 @@ export interface FileRouteTypes {
     | '/app/data/events'
     | '/app/patients/customize-registration-form'
     | '/app/patients/register'
+    | '/app/settings/configurations'
     | '/app/settings/register-mobile-app'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -361,7 +412,11 @@ export interface FileRouteTypes {
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
     | '/app/clinics/$'
+    | '/app/inventory/clinic-inventory'
+    | '/app/inventory/drug-catalogue'
     | '/app/patients/$'
+    | '/app/inventory/clinic-inventory/edit/$'
+    | '/app/inventory/clinic-inventory/drug/edit/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -372,6 +427,7 @@ export interface FileRouteTypes {
     | '/app/data/events'
     | '/app/patients/customize-registration-form'
     | '/app/patients/register'
+    | '/app/settings/configurations'
     | '/app/settings/register-mobile-app'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -391,7 +447,11 @@ export interface FileRouteTypes {
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
     | '/app/clinics/$'
+    | '/app/inventory/clinic-inventory'
+    | '/app/inventory/drug-catalogue'
     | '/app/patients/$'
+    | '/app/inventory/clinic-inventory/edit/$'
+    | '/app/inventory/clinic-inventory/drug/edit/$'
   id:
     | '__root__'
     | '/'
@@ -403,6 +463,7 @@ export interface FileRouteTypes {
     | '/app/data/events'
     | '/app/patients/customize-registration-form'
     | '/app/patients/register'
+    | '/app/settings/configurations'
     | '/app/settings/register-mobile-app'
     | '/demo/form/address'
     | '/demo/form/simple'
@@ -422,7 +483,11 @@ export interface FileRouteTypes {
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
     | '/app/clinics/$/'
+    | '/app/inventory/clinic-inventory/'
+    | '/app/inventory/drug-catalogue/'
     | '/app/patients/$/'
+    | '/app/inventory/clinic-inventory/edit/$'
+    | '/app/inventory/clinic-inventory/drug/edit/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -633,6 +698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRegisterMobileAppRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings/configurations': {
+      id: '/app/settings/configurations'
+      path: '/settings/configurations'
+      fullPath: '/app/settings/configurations'
+      preLoaderRoute: typeof AppSettingsConfigurationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/patients/register': {
       id: '/app/patients/register'
       path: '/patients/register'
@@ -659,6 +731,20 @@ declare module '@tanstack/react-router' {
       path: '/patients/$'
       fullPath: '/app/patients/$'
       preLoaderRoute: typeof AppPatientsSplatIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory/drug-catalogue/': {
+      id: '/app/inventory/drug-catalogue/'
+      path: '/inventory/drug-catalogue'
+      fullPath: '/app/inventory/drug-catalogue'
+      preLoaderRoute: typeof AppInventoryDrugCatalogueIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory/clinic-inventory/': {
+      id: '/app/inventory/clinic-inventory/'
+      path: '/inventory/clinic-inventory'
+      fullPath: '/app/inventory/clinic-inventory'
+      preLoaderRoute: typeof AppInventoryClinicInventoryIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/clinics/$/': {
@@ -708,6 +794,20 @@ declare module '@tanstack/react-router' {
       path: '/appointments/edit/$'
       fullPath: '/app/appointments/edit/$'
       preLoaderRoute: typeof AppAppointmentsEditSplatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory/clinic-inventory/edit/$': {
+      id: '/app/inventory/clinic-inventory/edit/$'
+      path: '/inventory/clinic-inventory/edit/$'
+      fullPath: '/app/inventory/clinic-inventory/edit/$'
+      preLoaderRoute: typeof AppInventoryClinicInventoryEditSplatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/inventory/clinic-inventory/drug/edit/$': {
+      id: '/app/inventory/clinic-inventory/drug/edit/$'
+      path: '/inventory/clinic-inventory/drug/edit/$'
+      fullPath: '/app/inventory/clinic-inventory/drug/edit/$'
+      preLoaderRoute: typeof AppInventoryClinicInventoryDrugEditSplatRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -771,6 +871,7 @@ interface AppRouteChildren {
   AppDataEventsRoute: typeof AppDataEventsRoute
   AppPatientsCustomizeRegistrationFormRoute: typeof AppPatientsCustomizeRegistrationFormRoute
   AppPatientsRegisterRoute: typeof AppPatientsRegisterRoute
+  AppSettingsConfigurationsRoute: typeof AppSettingsConfigurationsRoute
   AppSettingsRegisterMobileAppRoute: typeof AppSettingsRegisterMobileAppRoute
   AppAppointmentsIndexRoute: typeof AppAppointmentsIndexRoute
   AppClinicsIndexRoute: typeof AppClinicsIndexRoute
@@ -785,7 +886,11 @@ interface AppRouteChildren {
   AppUsersEditSplatRoute: typeof AppUsersEditSplatRoute
   AppUsersManagePermissionsSplatRoute: typeof AppUsersManagePermissionsSplatRoute
   AppClinicsSplatIndexRoute: typeof AppClinicsSplatIndexRoute
+  AppInventoryClinicInventoryIndexRoute: typeof AppInventoryClinicInventoryIndexRoute
+  AppInventoryDrugCatalogueIndexRoute: typeof AppInventoryDrugCatalogueIndexRoute
   AppPatientsSplatIndexRoute: typeof AppPatientsSplatIndexRoute
+  AppInventoryClinicInventoryEditSplatRoute: typeof AppInventoryClinicInventoryEditSplatRoute
+  AppInventoryClinicInventoryDrugEditSplatRoute: typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -794,6 +899,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppPatientsCustomizeRegistrationFormRoute:
     AppPatientsCustomizeRegistrationFormRoute,
   AppPatientsRegisterRoute: AppPatientsRegisterRoute,
+  AppSettingsConfigurationsRoute: AppSettingsConfigurationsRoute,
   AppSettingsRegisterMobileAppRoute: AppSettingsRegisterMobileAppRoute,
   AppAppointmentsIndexRoute: AppAppointmentsIndexRoute,
   AppClinicsIndexRoute: AppClinicsIndexRoute,
@@ -808,7 +914,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersEditSplatRoute: AppUsersEditSplatRoute,
   AppUsersManagePermissionsSplatRoute: AppUsersManagePermissionsSplatRoute,
   AppClinicsSplatIndexRoute: AppClinicsSplatIndexRoute,
+  AppInventoryClinicInventoryIndexRoute: AppInventoryClinicInventoryIndexRoute,
+  AppInventoryDrugCatalogueIndexRoute: AppInventoryDrugCatalogueIndexRoute,
   AppPatientsSplatIndexRoute: AppPatientsSplatIndexRoute,
+  AppInventoryClinicInventoryEditSplatRoute:
+    AppInventoryClinicInventoryEditSplatRoute,
+  AppInventoryClinicInventoryDrugEditSplatRoute:
+    AppInventoryClinicInventoryDrugEditSplatRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

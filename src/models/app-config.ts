@@ -31,6 +31,19 @@ namespace AppConfig {
     last_modified_by: Schema.NullOr(Schema.String),
   });
 
+  /** Common configuration namespaces */
+  export const Namespaces = {
+    UI: "ui",
+    SYNC: "sync",
+    FEATURE_FLAGS: "feature_flags",
+    SYSTEM: "system",
+    CLINIC: "clinic",
+    ORGANIZATION: "organization",
+    AUTH: "auth",
+  } as const;
+
+  export type NamespacesT = (typeof Namespaces)[keyof typeof Namespaces];
+
   export type T = typeof AppConfigSchema.Type;
   export type EncodedT = typeof AppConfigSchema.Encoded;
   export type DataTypeT = typeof DataTypeSchema.Type;
@@ -64,11 +77,9 @@ namespace AppConfig {
       display_name: string | null;
       value: string | null;
       data_type: string;
-      created_at: Generated<ColumnType<Date, Date | string | undefined, never>>;
-      updated_at: Generated<
-        ColumnType<Date, Date | string | undefined, string | undefined>
-      >;
-      last_modified: Generated<ColumnType<Date, string | undefined, never>>;
+      created_at: Generated<Date>;
+      updated_at: Generated<Date>;
+      last_modified: Generated<Date>;
       last_modified_by: string | null;
     }
 
@@ -149,7 +160,7 @@ namespace AppConfig {
         namespace: string,
         key: string,
         displayName: string | null,
-        value: string | null,
+        value: string | null | number | boolean,
         dataType: AppConfig.DataTypeT,
         updatedBy: string | null = null,
       ): Promise<AppConfig.EncodedT> => {
@@ -159,7 +170,7 @@ namespace AppConfig {
             namespace,
             key,
             display_name: displayName,
-            value,
+            value: Utils.serializeValue(value, dataType),
             data_type: dataType,
             last_modified_by: updatedBy,
             created_at: sql`now()::timestamp with time zone`,
@@ -297,7 +308,7 @@ namespace AppConfig {
 
       switch (config.data_type) {
         case "string":
-          return config.value;
+          return String(config.value).replace(/"/g, "");
         case "number":
           return parseFloat(config.value);
         case "boolean":
@@ -345,6 +356,26 @@ namespace AppConfig {
         default:
           return String(value);
       }
+    };
+
+    /**
+     * Given a Config object, and a key of interest, return the value or null
+     * @param {AppConfig.EncodedT} config - The Config object
+     * @param {AppConfig.NamespacesT} namespace - The namespace of interest
+     * @param {string} key - The key of interest
+     * @returns {T | null} - The value or null
+     */
+    export const getValue = <T>(
+      config: AppConfig.EncodedT[],
+      namespace: AppConfig.NamespacesT,
+      key: string,
+    ): T | null => {
+      const item = config.find(
+        (item) => item.namespace === namespace && item.key === key,
+      );
+      if (!item) return null;
+
+      return parseValue(item);
     };
   }
 }
