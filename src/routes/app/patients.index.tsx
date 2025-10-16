@@ -46,6 +46,7 @@ import { format } from "date-fns";
 import User from "@/models/user";
 import { toast } from "sonner";
 import PatientVital from "@/models/patient-vital";
+import { safeJSONParse } from "@/lib/utils";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
@@ -258,7 +259,7 @@ function RouteComponent() {
 
       // for each event form type, add a new worksheet
       eventForms.forEach((eventForm) => {
-        const worksheet = workbook.addWorksheet(eventForm.name);
+        const worksheet = workbook.addWorksheet(`${eventForm.name} (Custom)`);
         const extraColumns = {
           patient_id: "Patient ID",
           // patient_name: "Patient Name",
@@ -266,7 +267,11 @@ function RouteComponent() {
           created_at: "Created At",
           // provider_id: "Provider ID",
         };
-        const eventFormFields = eventForm.form_fields;
+        const eventFormFields = safeJSONParse(
+          eventForm.form_fields,
+          [],
+        ) as typeof eventForm.form_fields;
+        console.log({ eventFormFields });
         const headerRow = [
           "ID",
           ...eventFormFields?.map((f) => f.name),
