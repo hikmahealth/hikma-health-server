@@ -15,6 +15,7 @@ import {
   deduplicateOptions,
   getFieldOptionsValues,
   listToFieldOptions,
+  safeJSONParse,
 } from "@/lib/utils";
 import { nanoid } from "nanoid";
 import { v1 as uuidV1 } from "uuid";
@@ -802,8 +803,8 @@ namespace EventForm {
             language: form.language,
             is_editable: form.is_editable,
             is_snapshot_form: form.is_snapshot_form,
-            form_fields: sql`${JSON.stringify(form.form_fields)}::jsonb`,
-            metadata: sql`${JSON.stringify(form.metadata)}::jsonb`,
+            form_fields: sql`${JSON.stringify(safeJSONParse(form.form_fields, []))}::jsonb`,
+            metadata: sql`${JSON.stringify(safeJSONParse(form.metadata, {}))}::jsonb`,
             is_deleted: form.is_deleted,
             created_at: sql`now()`,
             updated_at: sql`now()`,
@@ -839,8 +840,8 @@ namespace EventForm {
             language: form.language,
             is_editable: form.is_editable,
             is_snapshot_form: form.is_snapshot_form,
-            form_fields: sql`${JSON.stringify(form.form_fields)}::jsonb`,
-            metadata: sql`${JSON.stringify(form.metadata)}::jsonb`,
+            form_fields: sql`${JSON.stringify(safeJSONParse(form.form_fields, []))}::jsonb`,
+            metadata: sql`${JSON.stringify(safeJSONParse(form.metadata, {}))}::jsonb`,
             updated_at: sql`now()`,
             last_modified: sql`now()`,
           })
