@@ -46,7 +46,7 @@ const DEFAULT_FORM_VALUES: Partial<DrugCatalogue.ApiDrug> = {
   is_deleted: false,
 };
 
-export const Route = createFileRoute("/app/inventory/clinic-inventory/edit/$")({
+export const Route = createFileRoute("/app/inventory/drug-catalogue/edit/$")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const drugId = params["_splat"];
