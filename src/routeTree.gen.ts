@@ -43,7 +43,7 @@ import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/pres
 import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-forms.edit.$'
 import { Route as AppClinicsEditSplatRouteImport } from './routes/app/clinics.edit.$'
 import { Route as AppAppointmentsEditSplatRouteImport } from './routes/app/appointments.edit.$'
-import { Route as AppInventoryClinicInventoryEditSplatRouteImport } from './routes/app/inventory/clinic-inventory.edit.$'
+import { Route as AppInventoryDrugCatalogueEditSplatRouteImport } from './routes/app/inventory/drug-catalogue.edit.$'
 import { Route as AppInventoryClinicInventoryDrugEditSplatRouteImport } from './routes/app/inventory/clinic-inventory.drug.edit.$'
 import { ServerRoute as ApiLoginServerRouteImport } from './routes/api/login'
 import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
@@ -223,10 +223,10 @@ const AppAppointmentsEditSplatRoute =
     path: '/appointments/edit/$',
     getParentRoute: () => AppRoute,
   } as any)
-const AppInventoryClinicInventoryEditSplatRoute =
-  AppInventoryClinicInventoryEditSplatRouteImport.update({
-    id: '/inventory/clinic-inventory/edit/$',
-    path: '/inventory/clinic-inventory/edit/$',
+const AppInventoryDrugCatalogueEditSplatRoute =
+  AppInventoryDrugCatalogueEditSplatRouteImport.update({
+    id: '/inventory/drug-catalogue/edit/$',
+    path: '/inventory/drug-catalogue/edit/$',
     getParentRoute: () => AppRoute,
   } as any)
 const AppInventoryClinicInventoryDrugEditSplatRoute =
@@ -305,7 +305,7 @@ export interface FileRoutesByFullPath {
   '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
-  '/app/inventory/clinic-inventory/edit/$': typeof AppInventoryClinicInventoryEditSplatRoute
+  '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesByTo {
@@ -340,7 +340,7 @@ export interface FileRoutesByTo {
   '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
-  '/app/inventory/clinic-inventory/edit/$': typeof AppInventoryClinicInventoryEditSplatRoute
+  '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesById {
@@ -377,7 +377,7 @@ export interface FileRoutesById {
   '/app/inventory/clinic-inventory/': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$/': typeof AppPatientsSplatIndexRoute
-  '/app/inventory/clinic-inventory/edit/$': typeof AppInventoryClinicInventoryEditSplatRoute
+  '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRouteTypes {
@@ -415,7 +415,7 @@ export interface FileRouteTypes {
     | '/app/inventory/clinic-inventory'
     | '/app/inventory/drug-catalogue'
     | '/app/patients/$'
-    | '/app/inventory/clinic-inventory/edit/$'
+    | '/app/inventory/drug-catalogue/edit/$'
     | '/app/inventory/clinic-inventory/drug/edit/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -450,7 +450,7 @@ export interface FileRouteTypes {
     | '/app/inventory/clinic-inventory'
     | '/app/inventory/drug-catalogue'
     | '/app/patients/$'
-    | '/app/inventory/clinic-inventory/edit/$'
+    | '/app/inventory/drug-catalogue/edit/$'
     | '/app/inventory/clinic-inventory/drug/edit/$'
   id:
     | '__root__'
@@ -486,7 +486,7 @@ export interface FileRouteTypes {
     | '/app/inventory/clinic-inventory/'
     | '/app/inventory/drug-catalogue/'
     | '/app/patients/$/'
-    | '/app/inventory/clinic-inventory/edit/$'
+    | '/app/inventory/drug-catalogue/edit/$'
     | '/app/inventory/clinic-inventory/drug/edit/$'
   fileRoutesById: FileRoutesById
 }
@@ -796,11 +796,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppointmentsEditSplatRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/inventory/clinic-inventory/edit/$': {
-      id: '/app/inventory/clinic-inventory/edit/$'
-      path: '/inventory/clinic-inventory/edit/$'
-      fullPath: '/app/inventory/clinic-inventory/edit/$'
-      preLoaderRoute: typeof AppInventoryClinicInventoryEditSplatRouteImport
+    '/app/inventory/drug-catalogue/edit/$': {
+      id: '/app/inventory/drug-catalogue/edit/$'
+      path: '/inventory/drug-catalogue/edit/$'
+      fullPath: '/app/inventory/drug-catalogue/edit/$'
+      preLoaderRoute: typeof AppInventoryDrugCatalogueEditSplatRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/inventory/clinic-inventory/drug/edit/$': {
@@ -889,7 +889,7 @@ interface AppRouteChildren {
   AppInventoryClinicInventoryIndexRoute: typeof AppInventoryClinicInventoryIndexRoute
   AppInventoryDrugCatalogueIndexRoute: typeof AppInventoryDrugCatalogueIndexRoute
   AppPatientsSplatIndexRoute: typeof AppPatientsSplatIndexRoute
-  AppInventoryClinicInventoryEditSplatRoute: typeof AppInventoryClinicInventoryEditSplatRoute
+  AppInventoryDrugCatalogueEditSplatRoute: typeof AppInventoryDrugCatalogueEditSplatRoute
   AppInventoryClinicInventoryDrugEditSplatRoute: typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 
@@ -917,8 +917,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppInventoryClinicInventoryIndexRoute: AppInventoryClinicInventoryIndexRoute,
   AppInventoryDrugCatalogueIndexRoute: AppInventoryDrugCatalogueIndexRoute,
   AppPatientsSplatIndexRoute: AppPatientsSplatIndexRoute,
-  AppInventoryClinicInventoryEditSplatRoute:
-    AppInventoryClinicInventoryEditSplatRoute,
+  AppInventoryDrugCatalogueEditSplatRoute:
+    AppInventoryDrugCatalogueEditSplatRoute,
   AppInventoryClinicInventoryDrugEditSplatRoute:
     AppInventoryClinicInventoryDrugEditSplatRoute,
 }

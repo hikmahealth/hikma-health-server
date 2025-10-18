@@ -29,6 +29,7 @@ import type ClinicDepartment from "@/models/clinic-department";
 import type DrugCatalogue from "@/models/drug-catalogue";
 import type ClinicInventory from "@/models/clinic-inventory";
 import type InventoryTransactions from "@/models/inventory-transactions";
+import type DispensingRecord from "@/models/dispensing-records";
 import type DrugBatches from "@/models/drug-batches";
 import type PrescriptionItems from "@/models/prescription-items";
 import { Pool } from "pg";
@@ -61,6 +62,7 @@ export type Database = {
   inventory_transactions: InventoryTransactions.Table.T;
   drug_batches: DrugBatches.Table.T;
   prescription_items: PrescriptionItems.Table.T;
+  dispensing_records: DispensingRecord.Table.T;
 };
 
 // Environment types

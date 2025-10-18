@@ -3,18 +3,22 @@ import Event from "./event";
 import Appointment from "./appointment";
 import Visit from "./visit";
 import Prescription from "./prescription";
-import Language from "./language";
-import User from "./user";
+// import Language from "./language";
+// import User from "./user";
 import Clinic from "./clinic";
 import PatientAdditionalAttribute from "./patient-additional-attribute";
 import db from "@/db";
 import EventForm from "./event-form";
 import PatientRegistrationForm from "./patient-registration-form";
-import UserClinicPermissions from "./user-clinic-permissions";
-import AppConfig from "./app-config";
+// import UserClinicPermissions from "./user-clinic-permissions";
+// import AppConfig from "./app-config";
 import PatientVital from "./patient-vital";
 import PatientProblem from "./patient-problem";
 import ClinicDepartment from "./clinic-department";
+import DrugCatalogue from "./drug-catalogue";
+import ClinicInventory from "./clinic-inventory";
+import DispensingRecord from "./dispensing-records";
+import PrescriptionItem from "./prescription-items";
 
 namespace Sync {
     /**
@@ -34,14 +38,25 @@ namespace Sync {
         Prescription,
         PatientVital,
         PatientProblem,
-        ClinicDepartment
+        ClinicDepartment,
+        DrugCatalogue,
+        ClinicInventory,
+        DispensingRecord,
+        PrescriptionItem,
         // Add more syncable entities here. Do not add any server defined entities here that do not track server_created_at or server_updated_at
-        // FIXME: Add patient vitals, patient problems
     ];
 
     /**
      * These entities are synced from mobile.
      * When adding new entities that need to be synced from mobile, add them to ENTITIES_TO_PULL_FROM_MOBILE
+     *
+     * NOTE: Not going to sync the following from mobile, they will just be ignored
+     * 1. DrugCatalogue
+     * 2. ClinicInventory
+     * 3. Clinic
+     * 4. User
+     * 5. PatientRegistrationForm
+     * 6. EventForm
      */
     const ENTITIES_TO_PULL_FROM_MOBILE = [
         Patient,
@@ -51,8 +66,9 @@ namespace Sync {
         Appointment,
         Prescription,
         PatientVital,
-        PatientProblem
-        // FIXME add vitals, and problems
+        PatientProblem,
+        DispensingRecord,
+        PrescriptionItem,
     ];
 
 
@@ -184,7 +200,7 @@ namespace Sync {
             const deltaData = createDeltaData(
                 newRecords,
                 updatedRecords,
-                deletedRecords.map((record) => record.id)
+                deletedRecords.map((record: {id: string}) => record.id)
             );
 
             // Add records to result

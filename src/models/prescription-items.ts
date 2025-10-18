@@ -152,6 +152,14 @@ namespace PrescriptionItem {
       refills_used: "refills_used",
       item_status: "item_status",
       notes: "notes",
+      recorded_by_user_id: "recorded_by_user_id",
+      metadata: "metadata",
+      is_deleted: "is_deleted",
+      created_at: "created_at",
+      updated_at: "updated_at",
+      last_modified: "last_modified",
+      server_created_at: "server_created_at",
+      deleted_at: "deleted_at",
     };
 
     export interface T {
@@ -167,6 +175,26 @@ namespace PrescriptionItem {
       refills_used: Generated<number>;
       item_status: Generated<string>;
       notes: string | null;
+      recorded_by_user_id: string | null;
+      metadata: Generated<
+        ColumnType<
+          Record<string, any>,
+          Record<string, any> | undefined,
+          Record<string, any>
+        >
+      >;
+      is_deleted: Generated<boolean>;
+      created_at: Generated<ColumnType<Date, string | undefined, never>>;
+      updated_at: Generated<
+        ColumnType<Date, string | undefined, string | undefined>
+      >;
+      last_modified: Generated<ColumnType<Date, string | undefined, never>>;
+      server_created_at: Generated<ColumnType<Date, string | undefined, never>>;
+      deleted_at: ColumnType<
+        Date | null,
+        string | null | undefined,
+        string | null
+      >;
     }
 
     export type PrescriptionItem = Selectable<T>;
