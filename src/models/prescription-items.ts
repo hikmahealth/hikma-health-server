@@ -1,97 +1,70 @@
 import db from "@/db";
 import {
   DatabaseError,
-  executeQuery,
-  executeQueryTakeFirst,
-  executeQueryTakeFirstOrThrow,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
   type DomainError,
 } from "@/db/helpers";
 import { serverOnly } from "@tanstack/react-start";
-import { flow, Option, pipe, Effect } from "effect";
 import {
   type ColumnType,
   type Generated,
   type Selectable,
   type Insertable,
   type Updateable,
-  type JSONColumnType,
   sql,
   Transaction,
 } from "kysely";
-import { isValidUUID, safeJSONParse, toSafeDateString } from "@/lib/utils";
+import { isValidUUID } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import { v1 as uuidV1 } from "uuid";
-import type Clinic from "./clinic";
-import type Patient from "./patient";
-import User from "./user";
 
 // ============ VALIDATION HELPERS ============
 
-const validateItemId = (id: unknown): Effect.Effect<string, ValidationError> =>
-  pipe(
-    Effect.succeed(id),
-    Effect.filterOrFail(
-      (val): val is string => typeof val === "string" && isValidUUID(val),
-      () => new ValidationError("Invalid prescription item ID format"),
-    ),
-  );
+const validateItemId = (id: unknown): string => {
+  if (typeof id !== "string" || !isValidUUID(id)) {
+    throw new ValidationError("Invalid prescription item ID format");
+  }
+  return id;
+};
 
-const validatePrescriptionId = (
-  id: unknown,
-): Effect.Effect<string, ValidationError> =>
-  pipe(
-    Effect.succeed(id),
-    Effect.filterOrFail(
-      (val): val is string => typeof val === "string" && isValidUUID(val),
-      () => new ValidationError("Invalid prescription ID format"),
-    ),
-  );
+const validatePrescriptionId = (id: unknown): string => {
+  if (typeof id !== "string" || !isValidUUID(id)) {
+    throw new ValidationError("Invalid prescription ID format");
+  }
+  return id;
+};
 
-const validatePatientId = (
-  id: unknown,
-): Effect.Effect<string, ValidationError> =>
-  pipe(
-    Effect.succeed(id),
-    Effect.filterOrFail(
-      (val): val is string => typeof val === "string" && isValidUUID(val),
-      () => new ValidationError("Invalid patient ID format"),
-    ),
-  );
+const validatePatientId = (id: unknown): string => {
+  if (typeof id !== "string" || !isValidUUID(id)) {
+    throw new ValidationError("Invalid patient ID format");
+  }
+  return id;
+};
 
-const validateDrugId = (id: unknown): Effect.Effect<string, ValidationError> =>
-  pipe(
-    Effect.succeed(id),
-    Effect.filterOrFail(
-      (val): val is string => typeof val === "string" && isValidUUID(val),
-      () => new ValidationError("Invalid drug ID format"),
-    ),
-  );
+const validateDrugId = (id: unknown): string => {
+  if (typeof id !== "string" || !isValidUUID(id)) {
+    throw new ValidationError("Invalid drug ID format");
+  }
+  return id;
+};
 
-const validateClinicId = (
-  id: unknown,
-): Effect.Effect<string, ValidationError> =>
-  pipe(
-    Effect.succeed(id),
-    Effect.filterOrFail(
-      (val): val is string => typeof val === "string" && isValidUUID(val),
-      () => new ValidationError("Invalid clinic ID format"),
-    ),
-  );
+const validateClinicId = (id: unknown): string => {
+  if (typeof id !== "string" || !isValidUUID(id)) {
+    throw new ValidationError("Invalid clinic ID format");
+  }
+  return id;
+};
 
-const validateQuantity = (
-  quantity: unknown,
-): Effect.Effect<number, ValidationError> =>
-  pipe(
-    Effect.succeed(quantity),
-    Effect.filterOrFail(
-      (val): val is number => typeof val === "number" && val >= 0,
-      () =>
-        new ValidationError("Invalid quantity - must be a non-negative number"),
-    ),
-  );
+const validateQuantity = (quantity: unknown): number => {
+  if (typeof quantity !== "number" || quantity < 0) {
+    throw new ValidationError(
+      "Invalid quantity - must be a non-negative number",
+    );
+  }
+  return quantity;
+};
 
 const validatePagination = ({
   limit = 50,
@@ -99,15 +72,12 @@ const validatePagination = ({
 }: {
   limit?: number;
   offset?: number;
-}): Effect.Effect<{ limit: number; offset: number }, ValidationError> =>
-  pipe(
-    Effect.succeed({ limit, offset }),
-    Effect.filterOrFail(
-      ({ limit, offset }) =>
-        limit > 0 && limit <= 1000 && offset >= 0 && offset < 1000000,
-      () => new ValidationError("Invalid pagination parameters"),
-    ),
-  );
+}): { limit: number; offset: number } => {
+  if (!(limit > 0 && limit <= 1000 && offset >= 0 && offset < 1000000)) {
+    throw new ValidationError("Invalid pagination parameters");
+  }
+  return { limit, offset };
+};
 
 namespace PrescriptionItem {
   export type Item = Selectable<Table.T>;
@@ -131,13 +101,8 @@ namespace PrescriptionItem {
   };
 
   export namespace Table {
-    /**
-     * If set to true, this table is always pushed regardless of the the last sync date times. All sync events push to mobile the latest table.
-     * IMPORTANT: If ALWAYS_PUSH_TO_MOBILE is true, content of the table should never be edited on the client or pushed to the server from mobile. its one way only.
-     * */
     export const ALWAYS_PUSH_TO_MOBILE = true;
     export const name = "prescription_items";
-    /** The name of the table in the mobile database */
     export const mobileName = "prescription_items";
     export const columns = {
       id: "id",
@@ -206,147 +171,122 @@ namespace PrescriptionItem {
 
   const baseQuery = () => db.selectFrom(Table.name);
 
-  const withStatus =
-    (status: string) =>
-    <QB extends { where: any }>(query: QB) =>
-      query.where("item_status", "=", status);
+  // ============ PERMISSION CHECKING ============
 
-  const withPagination =
-    ({ limit = 50, offset = 0 }: { limit?: number; offset?: number }) =>
-    <QB extends { limit: any; offset: any }>(query: QB) =>
-      query.limit(limit).offset(offset);
-
-  const withOrdering =
-    (column: string, order: "asc" | "desc" = "asc") =>
-    <QB extends { orderBy: any }>(query: QB) =>
-      query.orderBy(column, order);
-
-  // ============ PERMISSION CHECKING (Effect-based) ============
-
-  const checkPrescriptionPermission = (
+  const checkPrescriptionPermission = async (
     clinicId: string,
-  ): Effect.Effect<void, DomainError> =>
-    Effect.tryPromise({
-      try: async () => {
-        const clinicIds =
-          await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
-            "is_clinic_admin",
-          );
-        if (!clinicIds.includes(clinicId)) {
-          throw new UnauthorizedError("No permission for this clinic");
-        }
-      },
-      catch: (error) => {
-        if (error instanceof UnauthorizedError) return error;
-        return new DatabaseError("Failed to check permissions", error);
-      },
-    });
+  ): Promise<void> => {
+    try {
+      const clinicIds =
+        await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+          "is_clinic_admin",
+        );
+      if (!clinicIds.includes(clinicId)) {
+        throw new UnauthorizedError("No permission for this clinic");
+      }
+    } catch (error) {
+      if (error instanceof UnauthorizedError) throw error;
+      throw new DatabaseError("Failed to check permissions", error);
+    }
+  };
 
   export namespace API {
     export const getById = serverOnly(
-      (
-        id: string,
-      ): Effect.Effect<ApiPrescriptionItem | undefined, DomainError> =>
-        pipe(
-          validateItemId(id),
-          Effect.flatMap((validId) =>
-            executeQueryTakeFirst(
-              baseQuery().selectAll().where("id", "=", validId),
-            ),
-          ),
-          Effect.map((result) => result as ApiPrescriptionItem | undefined),
-        ),
+      async (id: string): Promise<ApiPrescriptionItem | undefined> => {
+        const validId = validateItemId(id);
+        const result = await baseQuery()
+          .selectAll()
+          .where("id", "=", validId)
+          .executeTakeFirst();
+        return result as ApiPrescriptionItem | undefined;
+      },
     );
 
     export const getByPrescriptionId = serverOnly(
-      (
+      async (
         prescriptionId: string,
         params: { limit?: number; offset?: number } = {},
-      ): Effect.Effect<ApiPrescriptionItem[], DomainError> =>
-        pipe(
-          Effect.all({
-            prescriptionId: validatePrescriptionId(prescriptionId),
-            pagination: validatePagination(params),
-          }),
-          Effect.flatMap(({ prescriptionId, pagination }) => {
-            const { limit, offset } = pagination;
-            const query = flow(
-              () => baseQuery().selectAll(),
-              (q) => q.where("prescription_id", "=", prescriptionId),
-              withOrdering("id"),
-              withPagination({ limit, offset }),
-            )();
-            return executeQuery(query);
-          }),
-          Effect.map((results) => results as ApiPrescriptionItem[]),
-        ),
+      ): Promise<ApiPrescriptionItem[]> => {
+        const validPrescriptionId = validatePrescriptionId(prescriptionId);
+        const { limit, offset } = validatePagination(params);
+
+        const results = await baseQuery()
+          .selectAll()
+          .where("prescription_id", "=", validPrescriptionId)
+          .orderBy("id", "asc")
+          .limit(limit)
+          .offset(offset)
+          .execute();
+
+        return results as ApiPrescriptionItem[];
+      },
     );
 
     export const getByPatientId = serverOnly(
-      (
+      async (
         patientId: string,
         params: { status?: string; limit?: number; offset?: number } = {},
-      ): Effect.Effect<ApiPrescriptionItem[], DomainError> =>
-        pipe(
-          Effect.all({
-            patientId: validatePatientId(patientId),
-            pagination: validatePagination(params),
-          }),
-          Effect.flatMap(({ patientId, pagination }) => {
-            const { limit, offset } = pagination;
-            const query = flow(
-              () => baseQuery().selectAll(),
-              (q) => q.where("patient_id", "=", patientId),
-              params.status ? withStatus(params.status) : (x: any) => x,
-              withOrdering("id", "desc"),
-              withPagination({ limit, offset }),
-            )();
-            return executeQuery(query);
-          }),
-          Effect.map((results) => results as ApiPrescriptionItem[]),
-        ),
+      ): Promise<ApiPrescriptionItem[]> => {
+        const validPatientId = validatePatientId(patientId);
+        const { limit, offset } = validatePagination(params);
+
+        let query = baseQuery()
+          .selectAll()
+          .where("patient_id", "=", validPatientId);
+
+        if (params.status) {
+          query = query.where("item_status", "=", params.status);
+        }
+
+        const results = await query
+          .orderBy("id", "desc")
+          .limit(limit)
+          .offset(offset)
+          .execute();
+
+        return results as ApiPrescriptionItem[];
+      },
     );
 
     export const getByClinicId = serverOnly(
-      (
+      async (
         clinicId: string,
         params: { status?: string; limit?: number; offset?: number } = {},
-      ): Effect.Effect<ApiPrescriptionItem[], DomainError> =>
-        pipe(
-          Effect.all({
-            clinicId: validateClinicId(clinicId),
-            pagination: validatePagination(params),
-          }),
-          Effect.flatMap(({ clinicId, pagination }) => {
-            const { limit, offset } = pagination;
-            const query = flow(
-              () => baseQuery().selectAll(),
-              (q) => q.where("clinic_id", "=", clinicId),
-              params.status ? withStatus(params.status) : (x: any) => x,
-              withOrdering("id", "desc"),
-              withPagination({ limit, offset }),
-            )();
-            return executeQuery(query);
-          }),
-          Effect.map((results) => results as ApiPrescriptionItem[]),
-        ),
+      ): Promise<ApiPrescriptionItem[]> => {
+        const validClinicId = validateClinicId(clinicId);
+        const { limit, offset } = validatePagination(params);
+
+        let query = baseQuery()
+          .selectAll()
+          .where("clinic_id", "=", validClinicId);
+
+        if (params.status) {
+          query = query.where("item_status", "=", params.status);
+        }
+
+        const results = await query
+          .orderBy("id", "desc")
+          .limit(limit)
+          .offset(offset)
+          .execute();
+
+        return results as ApiPrescriptionItem[];
+      },
     );
 
     export const getActiveItemsForPatient = serverOnly(
-      (patientId: string): Effect.Effect<ApiPrescriptionItem[], DomainError> =>
-        pipe(
-          validatePatientId(patientId),
-          Effect.flatMap((validPatientId) =>
-            executeQuery(
-              baseQuery()
-                .selectAll()
-                .where("patient_id", "=", validPatientId)
-                .where("item_status", "=", "active")
-                .orderBy("id", "desc"),
-            ),
-          ),
-          Effect.map((results) => results as ApiPrescriptionItem[]),
-        ),
+      async (patientId: string): Promise<ApiPrescriptionItem[]> => {
+        const validPatientId = validatePatientId(patientId);
+
+        const results = await baseQuery()
+          .selectAll()
+          .where("patient_id", "=", validPatientId)
+          .where("item_status", "=", "active")
+          .orderBy("id", "desc")
+          .execute();
+
+        return results as ApiPrescriptionItem[];
+      },
     );
 
     const buildUpsertValues = (
@@ -367,15 +307,15 @@ namespace PrescriptionItem {
       notes: item.notes ?? null,
     });
 
-    const executeCoreUpsert = (
+    const executeCoreUpsert = async (
       item: Partial<ApiPrescriptionItem>,
       trx: Transaction<any>,
-    ): Effect.Effect<{ id: string }, DatabaseError> => {
+    ): Promise<{ id: string }> => {
       const id = item.id || uuidV1();
       const values = buildUpsertValues(item, id);
 
-      return executeQueryTakeFirstOrThrow(
-        trx
+      try {
+        const result = await trx
           .insertInto(Table.name)
           .values(values)
           .onConflict((oc) =>
@@ -393,204 +333,204 @@ namespace PrescriptionItem {
               notes: eb.ref("excluded.notes"),
             })),
           )
-          .returning("id"),
-      );
+          .returning("id")
+          .executeTakeFirstOrThrow();
+
+        return result;
+      } catch (error) {
+        console.error("Error: ", error);
+        throw new DatabaseError("Upsert failed", error);
+      }
     };
 
-    const withTransaction = <T>(
-      effect: (trx: Transaction<any>) => Effect.Effect<T, DomainError>,
-    ): Effect.Effect<T, DomainError> =>
-      Effect.tryPromise({
-        try: () =>
-          db.transaction().execute(async (trx) => {
-            const result = await Effect.runPromise(effect(trx));
-            return result;
-          }),
-        catch: (error) => new DatabaseError("Transaction failed", error),
-      });
-
     export const upsert = serverOnly(
-      (
-        item: Partial<ApiPrescriptionItem>,
-      ): Effect.Effect<{ id: string }, DomainError> =>
-        pipe(
-          item.clinic_id
-            ? checkPrescriptionPermission(item.clinic_id)
-            : Effect.succeed(undefined),
-          Effect.flatMap(() =>
-            withTransaction((trx) => executeCoreUpsert(item, trx)),
-          ),
-        ),
+      async (item: Partial<ApiPrescriptionItem>): Promise<{ id: string }> => {
+        if (item.clinic_id) {
+          await checkPrescriptionPermission(item.clinic_id);
+        }
+
+        try {
+          return await db.transaction().execute(async (trx) => {
+            return await executeCoreUpsert(item, trx);
+          });
+        } catch (error) {
+          throw new DatabaseError("Transaction failed", error);
+        }
+      },
     );
 
     export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
-      (
-        item: Partial<ApiPrescriptionItem>,
-      ): Effect.Effect<{ id: string }, DomainError> =>
-        withTransaction((trx) => executeCoreUpsert(item, trx)),
+      async (item: Partial<ApiPrescriptionItem>): Promise<{ id: string }> => {
+        try {
+          return await db.transaction().execute(async (trx) => {
+            return await executeCoreUpsert(item, trx);
+          });
+        } catch (error) {
+          throw new DatabaseError("Transaction failed", error);
+        }
+      },
     );
 
     export const updateQuantityDispensed = serverOnly(
-      (
+      async (
         id: string,
         quantityToAdd: number,
-      ): Effect.Effect<ApiPrescriptionItem, DomainError> =>
-        pipe(
-          Effect.all({
-            validId: validateItemId(id),
-            validQuantity: validateQuantity(quantityToAdd),
-          }),
-          Effect.flatMap(({ validId, validQuantity }) =>
-            withTransaction(async (trx) => {
-              // Get current item
-              const current = await Effect.runPromise(
-                executeQueryTakeFirstOrThrow(
-                  trx
-                    .selectFrom(Table.name)
-                    .selectAll()
-                    .where("id", "=", validId),
-                ),
-              );
+      ): Promise<ApiPrescriptionItem> => {
+        const validId = validateItemId(id);
+        const validQuantity = validateQuantity(quantityToAdd);
 
-              const newQuantityDispensed =
-                (current as ApiPrescriptionItem).quantity_dispensed +
-                validQuantity;
-              const newRefillsUsed = Math.floor(
-                newQuantityDispensed /
-                  (current as ApiPrescriptionItem).quantity_prescribed,
-              );
+        try {
+          return await db.transaction().execute(async (trx) => {
+            // Get current item
+            const current = await trx
+              .selectFrom(Table.name)
+              .selectAll()
+              .where("id", "=", validId)
+              .executeTakeFirstOrThrow();
 
-              // Update the item
-              return executeQueryTakeFirstOrThrow(
-                trx
-                  .updateTable(Table.name)
-                  .set({
-                    quantity_dispensed: newQuantityDispensed,
-                    refills_used: newRefillsUsed,
-                    item_status:
-                      newQuantityDispensed >=
-                      (current as ApiPrescriptionItem).quantity_prescribed *
-                        ((current as ApiPrescriptionItem).refills_authorized +
-                          1)
-                        ? "completed"
-                        : "active",
-                  })
-                  .where("id", "=", validId)
-                  .returningAll(),
-              );
-            }),
-          ),
-          Effect.map((result) => result as ApiPrescriptionItem),
-        ),
+            const typedCurrent = current as ApiPrescriptionItem;
+            const newQuantityDispensed =
+              typedCurrent.quantity_dispensed + validQuantity;
+            const newRefillsUsed = Math.floor(
+              newQuantityDispensed / typedCurrent.quantity_prescribed,
+            );
+
+            // Update the item
+            const result = await trx
+              .updateTable(Table.name)
+              .set({
+                quantity_dispensed: newQuantityDispensed,
+                refills_used: newRefillsUsed,
+                item_status:
+                  newQuantityDispensed >=
+                  typedCurrent.quantity_prescribed *
+                    (typedCurrent.refills_authorized + 1)
+                    ? "completed"
+                    : "active",
+              })
+              .where("id", "=", validId)
+              .returningAll()
+              .executeTakeFirstOrThrow();
+
+            return result as ApiPrescriptionItem;
+          });
+        } catch (error) {
+          throw new DatabaseError("Update quantity dispensed failed", error);
+        }
+      },
     );
 
     export const updateStatus = serverOnly(
-      (
+      async (
         id: string,
         status: "active" | "completed" | "cancelled" | "partially_dispensed",
-      ): Effect.Effect<ApiPrescriptionItem, DomainError> =>
-        pipe(
-          validateItemId(id),
-          Effect.flatMap((validId) =>
-            executeQueryTakeFirstOrThrow(
-              db
-                .updateTable(Table.name)
-                .set({ item_status: status })
-                .where("id", "=", validId)
-                .returningAll(),
-            ),
-          ),
-          Effect.map((result) => result as ApiPrescriptionItem),
-        ),
+      ): Promise<ApiPrescriptionItem> => {
+        const validId = validateItemId(id);
+
+        try {
+          const result = await db
+            .updateTable(Table.name)
+            .set({ item_status: status })
+            .where("id", "=", validId)
+            .returningAll()
+            .executeTakeFirstOrThrow();
+
+          return result as ApiPrescriptionItem;
+        } catch (error) {
+          throw new DatabaseError("Update status failed", error);
+        }
+      },
     );
 
     export const batchGetByIds = serverOnly(
-      (ids: string[]): Effect.Effect<ApiPrescriptionItem[], DomainError> => {
-        if (ids.length === 0) return Effect.succeed([]);
+      async (ids: string[]): Promise<ApiPrescriptionItem[]> => {
+        if (ids.length === 0) return [];
         if (ids.length > 100) {
-          return Effect.fail(
-            new ValidationError("Cannot batch get more than 100 items at once"),
+          throw new ValidationError(
+            "Cannot batch get more than 100 items at once",
           );
         }
 
-        return pipe(
-          Effect.all(ids.map(validateItemId)),
-          Effect.flatMap((validIds) =>
-            executeQuery(baseQuery().selectAll().where("id", "in", validIds)),
-          ),
-          Effect.map((results) => results as ApiPrescriptionItem[]),
-        );
+        const validIds = ids.map(validateItemId);
+
+        try {
+          const results = await baseQuery()
+            .selectAll()
+            .where("id", "in", validIds)
+            .execute();
+
+          return results as ApiPrescriptionItem[];
+        } catch (error) {
+          throw new DatabaseError("Batch get failed", error);
+        }
       },
     );
 
     export const getStats = serverOnly(
-      (
+      async (
         clinicId: string,
-      ): Effect.Effect<
-        {
-          totalItems: number;
-          activeItems: number;
-          completedItems: number;
-          totalQuantityPrescribed: number;
-          totalQuantityDispensed: number;
-        },
-        DomainError
-      > =>
-        pipe(
-          validateClinicId(clinicId),
-          Effect.flatMap((validClinicId) =>
-            executeQueryTakeFirstOrThrow(
-              db
-                .selectFrom(Table.name)
-                .select([
-                  sql<number>`COUNT(*)`.as("totalItems"),
-                  sql<number>`COUNT(*) FILTER (WHERE item_status = 'active')`.as(
-                    "activeItems",
-                  ),
-                  sql<number>`COUNT(*) FILTER (WHERE item_status = 'completed')`.as(
-                    "completedItems",
-                  ),
-                  sql<number>`COALESCE(SUM(quantity_prescribed), 0)`.as(
-                    "totalQuantityPrescribed",
-                  ),
-                  sql<number>`COALESCE(SUM(quantity_dispensed), 0)`.as(
-                    "totalQuantityDispensed",
-                  ),
-                ])
-                .where("clinic_id", "=", validClinicId),
-            ),
-          ),
-          Effect.map((result) => ({
+      ): Promise<{
+        totalItems: number;
+        activeItems: number;
+        completedItems: number;
+        totalQuantityPrescribed: number;
+        totalQuantityDispensed: number;
+      }> => {
+        const validClinicId = validateClinicId(clinicId);
+
+        try {
+          const result = await db
+            .selectFrom(Table.name)
+            .select([
+              sql<number>`COUNT(*)`.as("totalItems"),
+              sql<number>`COUNT(*) FILTER (WHERE item_status = 'active')`.as(
+                "activeItems",
+              ),
+              sql<number>`COUNT(*) FILTER (WHERE item_status = 'completed')`.as(
+                "completedItems",
+              ),
+              sql<number>`COALESCE(SUM(quantity_prescribed), 0)`.as(
+                "totalQuantityPrescribed",
+              ),
+              sql<number>`COALESCE(SUM(quantity_dispensed), 0)`.as(
+                "totalQuantityDispensed",
+              ),
+            ])
+            .where("clinic_id", "=", validClinicId)
+            .executeTakeFirstOrThrow();
+
+          return {
             totalItems: Number(result.totalItems) || 0,
             activeItems: Number(result.activeItems) || 0,
             completedItems: Number(result.completedItems) || 0,
             totalQuantityPrescribed:
               Number(result.totalQuantityPrescribed) || 0,
             totalQuantityDispensed: Number(result.totalQuantityDispensed) || 0,
-          })),
-        ),
+          };
+        } catch (error) {
+          throw new DatabaseError("Get stats failed", error);
+        }
+      },
     );
   }
 
   export namespace Sync {
     export const upsertFromDelta = serverOnly(
-      (
-        items: Partial<ApiPrescriptionItem>[],
-      ): Effect.Effect<{ ids: string[] }, DomainError> =>
-        Effect.all(
-          items.map((item) => API.DANGEROUS_SYNC_ONLY_upsert(item)),
-        ).pipe(Effect.map((results) => ({ ids: results.map((r) => r.id) }))),
+      async (item: Partial<ApiPrescriptionItem>): Promise<{ id: string }> => {
+        return API.DANGEROUS_SYNC_ONLY_upsert(item);
+      },
     );
 
     export const deleteFromDelta = serverOnly(
-      (ids: string[]): Effect.Effect<void, DomainError> =>
-        pipe(
-          Effect.all(ids.map(validateItemId)),
-          Effect.flatMap((validIds) =>
-            executeQuery(db.deleteFrom(Table.name).where("id", "in", validIds)),
-          ),
-          Effect.map(() => undefined),
-        ),
+      async (id: string): Promise<void> => {
+        const validId = validateItemId(id);
+
+        try {
+          await db.deleteFrom(Table.name).where("id", "=", validId).execute();
+        } catch (error) {
+          throw new DatabaseError("Delete failed", error);
+        }
+      },
     );
   }
 }
