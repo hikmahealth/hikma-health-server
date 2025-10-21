@@ -16,7 +16,7 @@ export const ServerRoute = createServerFileRoute("/api/v2/sync").methods({
 
       const url = new URL(request.url);
       const last_synced_at = Number(
-        url.searchParams.get("last_pulled_at") || 0
+        url.searchParams.get("last_pulled_at") || 0,
       );
       const schemaVersion = url.searchParams.get("schemaVersion");
       const migration = url.searchParams.get("migration");
@@ -36,7 +36,7 @@ export const ServerRoute = createServerFileRoute("/api/v2/sync").methods({
         {
           headers: { "Content-Type": "application/json" },
           status: 200,
-        }
+        },
       );
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
@@ -57,7 +57,7 @@ export const ServerRoute = createServerFileRoute("/api/v2/sync").methods({
 
       const url = new URL(request.url);
       const last_synced_at = Number(
-        url.searchParams.get("last_pulled_at") || 0
+        url.searchParams.get("last_pulled_at") || 0,
       );
       const schemaVersion = url.searchParams.get("schemaVersion");
       const migration = url.searchParams.get("migration");
@@ -65,7 +65,6 @@ export const ServerRoute = createServerFileRoute("/api/v2/sync").methods({
       // expected body structure
       // { [s in 'events' | 'patients' | ....]: { "created": Array<dict[str, any]>, "updated": Array<dict[str, any]>, deleted: []str }}
       const body = (await request.json()) as Sync.PushRequest;
-      console.log(body);
       await Sync.persistClientChanges(body);
 
       return new Response(JSON.stringify({ success: true }), {
@@ -73,6 +72,7 @@ export const ServerRoute = createServerFileRoute("/api/v2/sync").methods({
         status: 200,
       });
     } catch (error) {
+      console.error(error);
       return new Response(JSON.stringify({ error: error.message }), {
         headers: { "Content-Type": "application/json" },
         status: 401,
@@ -90,7 +90,7 @@ const getAuthenticatedUserFromRequest = serverOnly(async (request: Request) => {
   const encodedCredentials = authHeader.split(" ")[1];
   const decodedCredentials = Buffer.from(
     encodedCredentials,
-    "base64"
+    "base64",
   ).toString();
 
   const [email, password] = decodedCredentials.split(":");

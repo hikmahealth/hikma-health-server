@@ -254,6 +254,10 @@ namespace Sync {
         // Process the delta data from the client
         for (const [tableName, newDeltaJson] of Object.entries(data) as [PostTableName, Sync.DeltaData][]) {
             console.log(`Processing table: ${tableName}`);
+          if (!pushTableNameModelMap[tableName]) {
+            console.log(`Table ${tableName} not found in pushTableNameModelMap - ignoring`);
+            continue;
+          }
             // Get the entity delta values with defaults
             const deltaData = {
                 created: newDeltaJson?.created || [],
@@ -273,7 +277,7 @@ namespace Sync {
                 await pushTableNameModelMap[tableName].Sync.deleteFromDelta(id);
             }
         }
-        // console.log("Finished persisting client changes");
+        console.log("Finished persisting client changes");
     };
 }
 

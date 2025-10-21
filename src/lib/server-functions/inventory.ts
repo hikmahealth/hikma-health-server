@@ -90,6 +90,8 @@ export const saveClinicInventory = createServerFn({ method: "POST" })
       id: string | null;
       clinicId: string;
       drugId: string;
+      batchNumber: string;
+      batchExpiryDate: Date;
       batchId: string;
       quantityAvailable: number;
       metadata?: Record<string, any>;
@@ -108,6 +110,8 @@ export const saveClinicInventory = createServerFn({ method: "POST" })
               clinicId: data.clinicId,
               drugId: data.drugId,
               batchId: data.batchId,
+              batchNumber: data.batchNumber,
+              batchExpiryDate: data.batchExpiryDate,
               quantityChange: data.quantityAvailable,
               transactionType: "receiving",
               reason: "Initial stock",
@@ -130,6 +134,8 @@ export const saveClinicInventory = createServerFn({ method: "POST" })
               clinicId: data.clinicId,
               drugId: data.drugId,
               batchId: data.batchId,
+              batchNumber: data.batchNumber,
+              batchExpiryDate: data.batchExpiryDate,
               quantityChange: quantityChange,
               transactionType: transactionType,
               reason: "Stock update",
@@ -193,6 +199,8 @@ export const createDrugBatch = createServerFn({ method: "POST" })
             clinicId: data.clinicId,
             drugId: data.drugId,
             batchId: batchResult.id,
+            batchNumber: data.batchNumber,
+            batchExpiryDate: new Date(data.expiryDate),
             quantityChange: data.quantityReceived,
             transactionType: "receiving",
             reason: `New batch received - Batch #${data.batchNumber}${data.notes ? ` - ${data.notes}` : ""}`,

@@ -31,6 +31,9 @@ namespace ClinicInventory {
     last_modified: Date;
     server_created_at: Date;
     deleted_at: Option.Option<Date>;
+
+    batch_number: string;
+    batch_expiry_date: Date;
   };
 
   export type EncodedT = {
@@ -49,6 +52,9 @@ namespace ClinicInventory {
     last_modified: Date;
     server_created_at: Date;
     deleted_at: Date | null;
+
+    batch_number: string;
+    batch_expiry_date: Date;
   };
 
   /**
@@ -102,6 +108,9 @@ namespace ClinicInventory {
       last_modified: "last_modified",
       server_created_at: "server_created_at",
       deleted_at: "deleted_at",
+
+      batch_number: "batch_number",
+      batch_expiry_date: "batch_expiry_date",
     };
 
     export interface T {
@@ -130,6 +139,9 @@ namespace ClinicInventory {
         string | null | undefined,
         string | null
       >;
+
+      batch_number: string;
+      batch_expiry_date: Date;
     }
 
     export type ClinicInventory = Selectable<T>;
@@ -359,6 +371,8 @@ namespace ClinicInventory {
         clinicId,
         drugId,
         batchId,
+        batchNumber,
+        batchExpiryDate,
         quantityChange,
         transactionType,
         referenceId,
@@ -369,6 +383,8 @@ namespace ClinicInventory {
         clinicId: string;
         drugId: string;
         batchId: string;
+        batchNumber: string;
+        batchExpiryDate: Date;
         quantityChange: number; // Positive for additions, negative for reductions
         transactionType: string; // received, dispensed, transferred_in, transferred_out, expired, damaged, adjustment, returned
         referenceId?: string;
@@ -448,6 +464,9 @@ namespace ClinicInventory {
                 last_modified: sql`now()::timestamp with time zone`,
                 server_created_at: sql`now()::timestamp with time zone`,
                 deleted_at: null,
+
+                batch_number: batchNumber,
+                batch_expiry_date: batchExpiryDate,
               })
               .execute();
           }
@@ -559,75 +578,11 @@ namespace ClinicInventory {
       },
     );
 
-    /**
-     * Perform stock count/adjustment
-     */
-    export const performStockCount = serverOnly(
-      async ({
-        clinicId,
-        drugId,
-        batchId,
-        actualQuantity,
-        performedBy,
-        reason,
-      }: {
-        clinicId: string;
-        drugId: string;
-        batchId: string;
-        actualQuantity: number;
-        performedBy: string;
-        reason?: string;
-      }): Promise<void> => {
-        const inventory = await getByClinicAndDrug(clinicId, drugId, batchId);
-
-        if (!inventory) {
-          // Create new inventory entry if doesn't exist
-          await updateQuantity({
-            clinicId,
-            drugId,
-            batchId,
-            quantityChange: actualQuantity,
-            transactionType: "adjustment",
-            reason: reason || "Initial stock count",
-            performedBy,
-          });
-        } else {
-          const quantityDifference =
-            actualQuantity - inventory.quantity_available;
-
-          if (quantityDifference !== 0) {
-            await updateQuantity({
-              clinicId,
-              drugId,
-              batchId,
-              quantityChange: quantityDifference,
-              transactionType: "adjustment",
-              reason:
-                reason ||
-                `Stock count adjustment: ${quantityDifference > 0 ? "+" : ""}${quantityDifference}`,
-              performedBy,
-            });
-          } else {
-            // Just update the last_counted_at timestamp
-            await db
-              .updateTable(Table.name)
-              .set({
-                last_counted_at: sql`now()::timestamp with time zone`,
-                updated_at: sql`now()::timestamp with time zone`,
-                last_modified: sql`now()::timestamp with time zone`,
-              })
-              .where("id", "=", inventory.id)
-              .execute();
-          }
-        }
-      },
-    );
-
     export const softDelete = serverOnly(async (id: string) => {
       // Permissions check
       const clinicIds =
         await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
-          "can_manage_inventory",
+          "is_clinic_admin",
         );
 
       const inventory = await getById(id);
