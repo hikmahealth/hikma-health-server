@@ -1,6 +1,9 @@
-import { getPatientById } from "@/lib/server-functions/patients";
+import {
+  getPatientById,
+  softDeletePatientById,
+} from "@/lib/server-functions/patients";
 import { getPatientVitals } from "@/lib/server-functions/vitals";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
   Card,
@@ -106,6 +109,7 @@ function RouteComponent() {
   } = Route.useLoaderData();
   const params = Route.useParams();
   const navigate = Route.useNavigate();
+  const router = useRouter();
   const patientId = params._splat;
   const isEditing = !!patientId && patientId !== "new";
   const [mostRecentVital, setMostRecentVital] = useState<
@@ -163,6 +167,22 @@ function RouteComponent() {
     });
   };
 
+  const handleDeletePatient = async (patientId: string) => {
+    if (confirm("Are you sure you want to delete this patient?")) {
+      const { error, success } = await softDeletePatientById({
+        data: { id: patientId },
+      });
+
+      if (!error && success) {
+        toast.success("Patient deleted successfully");
+        window.history.back();
+        router.invalidate({ sync: true });
+      } else {
+        toast.error("Failed to delete patient");
+      }
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Patient Header */}
@@ -190,7 +210,10 @@ function RouteComponent() {
                   </Badge>
                   <Badge variant="outline" className="font-normal">
                     <Calendar className="mr-1 h-3 w-3" />
-                    Age: {calculateAge(patient.date_of_birth)}
+                    Age:{" "}
+                    {patient.date_of_birth
+                      ? calculateAge(patient.date_of_birth)
+                      : "Unknown"}
                   </Badge>
                 </div>
               </div>
@@ -586,6 +609,27 @@ function RouteComponent() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Danger Section */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg text-red-700">
+              Danger Section
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <h3 className="text-md font-semibold">Delete Patient</h3>
+          <Button
+            variant="outline"
+            onClick={() => handleDeletePatient(patient.id)}
+            className=""
+          >
+            I am sure I want to delete this Patient.
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

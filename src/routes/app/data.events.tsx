@@ -63,12 +63,12 @@ function RouteComponent() {
 
   const pageSize = Option.getOrElse(
     Option.fromNullable(paginationResults.pagination.limit),
-    () => 10
+    () => 10,
   );
 
   const totalItems = Option.getOrElse(
     Option.fromNullable(paginationResults.pagination.total),
-    () => 0
+    () => 0,
   );
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -115,23 +115,24 @@ function RouteComponent() {
     // Include pages around current page
     const nearbyPages = Array.from(
       { length: 3 },
-      (_, i) => Math.max(2, currentPage - 1) + i
+      (_, i) => Math.max(2, currentPage - 1) + i,
     ).filter((page) => page > firstPage && page < lastPage);
 
     // Combine and sort pages
     return Array.from(new Set([firstPage, ...nearbyPages, lastPage])).sort(
-      (a, b) => a - b
+      (a, b) => a - b,
     );
   };
 
   const pageNumbers = getPageNumbers();
 
-  console.log({ eventsList, paginationResults });
+  console.log({ eventsList, paginationResults, forms, selectedForm });
 
   // Table column names are present in the event form
-  const tableColumns = forms.find(
-    (form) => form.id === selectedForm
-  )?.form_fields;
+  const tableColumns =
+    forms.find((form) => form.id === selectedForm)?.form_fields || [];
+
+  console.log({ tableColumns });
 
   return (
     <div className="container py-6">
@@ -173,7 +174,7 @@ function RouteComponent() {
                   </TableCell>
                   {tableColumns?.map((column) => {
                     const field = event.form_data.find(
-                      (c) => c.fieldId === column.id
+                      (c) => c.fieldId === column.id,
                     );
                     console.log({
                       field,
