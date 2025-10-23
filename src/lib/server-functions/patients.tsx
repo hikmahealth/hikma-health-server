@@ -4,6 +4,7 @@ import { userRoleTokenHasCapability } from "../auth/request";
 import User from "@/models/user";
 import * as Sentry from "@sentry/tanstackstart-react";
 import z from "zod";
+import { permissionsMiddleware } from "@/middleware/auth";
 
 type Pagination = {
   offset: number;
@@ -140,6 +141,38 @@ export const getPatientById = createServerFn({
 
       return {
         patient,
+        error: null,
+      };
+    },
+  );
+
+/**
+ * Soft delete a patient by ID.
+ */
+export const softDeletePatientById = createServerFn({
+  method: "POST",
+})
+  .validator((data: { id: string }) => data)
+  .middleware([permissionsMiddleware])
+  .handler(
+    async ({
+      data,
+      context,
+    }): Promise<{
+      success: boolean;
+      error: { message: string } | null;
+    }> => {
+      if (!context.userId || context.role !== User.ROLES.SUPER_ADMIN) {
+        return Promise.reject({
+          message: "Unauthorized: Isufficient permissions.",
+          source: "deleteDepartment",
+        });
+      }
+
+      await Patient.API.softDelete(data.id);
+
+      return {
+        success: true,
         error: null,
       };
     },

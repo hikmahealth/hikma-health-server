@@ -72,7 +72,7 @@ const getFormById = createServerFn({ method: "GET" })
       return data;
     })();
 
-    console.log({ formFields });
+    // console.log({ formFields });
 
     return {
       ...res,

@@ -32,6 +32,7 @@ import type InventoryTransactions from "@/models/inventory-transactions";
 import type DispensingRecord from "@/models/dispensing-records";
 import type DrugBatches from "@/models/drug-batches";
 import type PrescriptionItems from "@/models/prescription-items";
+import type PatientObservation from "@/models/patient-observation";
 import { Pool } from "pg";
 import type { StringId, StringContent } from "@/models/string-content";
 import "dotenv/config";
@@ -63,7 +64,11 @@ export type Database = {
   drug_batches: DrugBatches.Table.T;
   prescription_items: PrescriptionItems.Table.T;
   dispensing_records: DispensingRecord.Table.T;
+  patient_observations: PatientObservation.Table.T;
 };
+
+// The table names in the database
+export type TableName = keyof Database;
 
 // Environment types
 enum EnvironmentType {

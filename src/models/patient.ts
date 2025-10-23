@@ -1,4 +1,5 @@
 import { Either, Option, Schema } from "effect";
+import { forEach } from "ramda";
 import type {
   ColumnType,
   Generated,
@@ -7,8 +8,10 @@ import type {
   Updateable,
   JSONColumnType,
   CompiledQuery,
+  Transaction,
 } from "kysely";
 import db from "@/db";
+import type { TableName, Database } from "@/db";
 import { sql } from "kysely";
 import { serverOnly } from "@tanstack/react-start";
 import { v1 as uuidv1 } from "uuid";
@@ -19,6 +22,10 @@ import Visit from "./visit";
 import Event from "./event";
 import { safeJSONParse, safeStringify, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
+import PrescriptionItem from "./prescription-items";
+import PatientVital from "./patient-vital";
+import PatientProblem from "./patient-problem";
+import PatientObservation from "./patient-observation";
 
 namespace Patient {
   // export type T = {
@@ -842,74 +849,49 @@ namespace Patient {
       // NOTE: Could easily call something like Appointment.API.softDelete(id, trx) - but we
       // still dont know how the tanstackstart api calling convention for "server only" will
       // evolve with respect to transactions.
+      // Patient, Patient Additional Attributes, Appointments, Events, Visits, Prescriptions, PrescriptionItems, Patient Vitals, Patient tobacco history, Diagnoses, Observations, Allergies
       try {
         await db.transaction().execute(async (trx) => {
-          // Soft delete the patient
-          await trx
-            .updateTable(Patient.Table.name)
-            .set({
-              is_deleted: true,
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            })
-            .where("id", "=", id)
-            .execute();
+          async function softDeleteMatching(
+            trx: Transaction<Database>,
+            table: TableName,
+            id: string,
+            columnName: string = "patient_id",
+          ) {
+            console.log(`Soft deleting ${table} for patient ${id}`);
+            await trx
+              .updateTable(table)
+              // @ts-ignore
+              .set({
+                is_deleted: true,
+                updated_at: sql`now()::timestamp with time zone`,
+                last_modified: sql`now()::timestamp with time zone`,
+              })
+              .where(columnName, "=", id)
+              .execute();
+          }
 
-          // Soft delete the patient additional attributes
-          await trx
-            .updateTable(PatientAdditionalAttribute.Table.name)
-            .set({
-              is_deleted: true,
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            })
-            .where("patient_id", "=", id)
-            .execute();
+          const dependentTables: TableName[] = [
+            PatientAdditionalAttribute.Table.name,
+            Appointment.Table.name,
+            Prescription.Table.name,
+            Event.Table.name,
+            Visit.Table.name,
+            PrescriptionItem.Table.name,
+            PatientVital.Table.name,
+            PatientProblem.Table.name,
+            PatientObservation.Table.name,
+            // PatientTobaccoHistory.Table.name,
+            // Diagnosis.Table.name,
+            // Observation.Table.name,
+          ];
 
-          // Soft delete the appointments
-          await trx
-            .updateTable(Appointment.Table.name)
-            .set({
-              is_deleted: true,
-              deleted_at: sql`now()::timestamp with time zone`,
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            })
-            .where("patient_id", "=", id)
-            .execute();
+          for (const tableName of dependentTables) {
+            await softDeleteMatching(trx, tableName, id);
+          }
 
-          // Soft delete the prescriptions
-          await trx
-            .updateTable(Prescription.Table.name)
-            .set({
-              is_deleted: true,
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            })
-            .where("patient_id", "=", id)
-            .execute();
-
-          // Soft delete the visits
-          await trx
-            .updateTable(Visit.Table.name)
-            .set({
-              is_deleted: true,
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            })
-            .where("id", "=", id)
-            .execute();
-
-          // Soft delete the events
-          await trx
-            .updateTable(Event.Table.name)
-            .set({
-              is_deleted: true,
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            })
-            .where("id", "=", id)
-            .execute();
+          // Finally delete the patient record
+          await softDeleteMatching(trx, Patient.Table.name, id, "id");
         });
       } catch (error) {
         console.error("Patient soft delete operation failed:", {
