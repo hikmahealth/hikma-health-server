@@ -317,7 +317,9 @@ function RouteComponent() {
         const worksheet = workbook.addWorksheet(`${eventForm.name} (Custom)`);
         const extraColumns = {
           patient_id: "Patient ID",
-          // patient_name: "Patient Name",
+          patient_name: "Patient Name",
+          patient_sex: "Patient Sex",
+          patient_date_of_birth: "Patient Date of Birth",
           visit_id: "Visit ID",
           created_at: "Created At",
           // provider_id: "Provider ID",
@@ -347,6 +349,10 @@ function RouteComponent() {
             });
 
             rowData.push(event.patient_id);
+            rowData.push(event?.patient?.given_name || "");
+            rowData.push(event?.patient?.surname || "");
+            rowData.push(event?.patient?.sex || "");
+            rowData.push(String(event?.patient?.date_of_birth || ""));
             rowData.push(event.visit_id || "");
             rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
             // rowData.push(event.provider_id || "");
