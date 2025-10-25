@@ -16,8 +16,10 @@ import {
   type JSONColumnType,
   sql,
 } from "kysely";
+import { jsonObjectFrom } from "kysely/helpers/postgres";
 import { v1 as uuidV1 } from "uuid";
 import Visit from "./visit";
+import Patient from "./patient";
 
 namespace Event {
   export type T = {
@@ -176,17 +178,17 @@ namespace Event {
               event_type: event.event_type,
               visit_id: visitId,
               form_data: sql`${JSON.stringify(
-                safeJSONParse(event.form_data, [])
+                safeJSONParse(event.form_data, []),
               )}::jsonb`,
               metadata: sql`${JSON.stringify(
-                safeJSONParse(event.metadata, {})
+                safeJSONParse(event.metadata, {}),
               )}::jsonb`,
               is_deleted: false,
               created_at: sql`${toSafeDateString(
-                event.created_at
+                event.created_at,
               )}::timestamp with time zone`,
               updated_at: sql`${toSafeDateString(
-                event.updated_at
+                event.updated_at,
               )}::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
               server_created_at: sql`now()::timestamp with time zone`,
@@ -221,7 +223,7 @@ namespace Event {
           });
           throw error;
         }
-      }
+      },
     );
 
     export const softDelete = serverOnly(async (id: string) => {
@@ -243,7 +245,7 @@ namespace Event {
           limit = 50,
           offset = 0,
           includeCount = false,
-        }: { limit?: number; offset?: number; includeCount?: boolean }
+        }: { limit?: number; offset?: number; includeCount?: boolean },
       ): Promise<Event.EncodedT[]> => {
         const res = await db
           .selectFrom(Table.name)
@@ -255,19 +257,39 @@ namespace Event {
           .offset(offset)
           .execute();
         return res as unknown as Event.EncodedT[];
-      }
+      },
     );
 
     export const getAllForExport = serverOnly(
-      async (): Promise<Event.EncodedT[]> => {
-        const res = await db
+      async (): Promise<
+        (Event.EncodedT & { patient?: Partial<Patient.EncodedT> })[]
+      > => {
+        const query = db
           .selectFrom(Table.name)
           .selectAll()
-          .where("is_deleted", "=", false)
-          .orderBy("created_at", "desc")
-          .execute();
+          .where(`${Table.name}.is_deleted`, "=", false)
+          .orderBy(`${Table.name}.created_at`, "desc")
+          .select((eb) => [
+            jsonObjectFrom(
+              eb
+                .selectFrom(Patient.Table.name)
+                .select([
+                  `${Patient.Table.name}.given_name`,
+                  `${Patient.Table.name}.surname`,
+                  `${Patient.Table.name}.date_of_birth`,
+                  `${Patient.Table.name}.sex`,
+                ])
+                .whereRef(
+                  `${Patient.Table.name}.id`,
+                  "=",
+                  `${Table.name}.patient_id`,
+                ),
+            ).as("patient"),
+          ]);
+
+        const res = await query.execute();
         return res as unknown as Event.EncodedT[];
-      }
+      },
     );
   }
 
