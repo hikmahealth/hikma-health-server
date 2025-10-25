@@ -319,6 +319,8 @@ function RouteComponent() {
           patient_id: "Patient ID",
           patient_name: "Patient Name",
           patient_sex: "Patient Sex",
+          patient_phone_number: "Patient Phone",
+          patient_citizenship: "Patient Citizenship",
           patient_date_of_birth: "Patient Date of Birth",
           visit_id: "Visit ID",
           created_at: "Created At",
@@ -349,9 +351,12 @@ function RouteComponent() {
             });
 
             rowData.push(event.patient_id);
-            rowData.push(event?.patient?.given_name || "");
-            rowData.push(event?.patient?.surname || "");
+            rowData.push(
+              `${event?.patient?.given_name || ""} ${event?.patient?.surname || ""}`.trim(),
+            );
             rowData.push(event?.patient?.sex || "");
+            rowData.push(event?.patient?.phone || "");
+            rowData.push(event?.patient?.citizenship || "");
             rowData.push(String(event?.patient?.date_of_birth || ""));
             rowData.push(event.visit_id || "");
             rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
