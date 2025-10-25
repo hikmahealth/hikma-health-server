@@ -291,6 +291,10 @@ namespace Event {
         return res as unknown as Event.EncodedT[];
       },
     );
+
+    export const getAllWithPatientForExport = serverOnly(
+      async (): Promise<(Event.EncodedT & { patient?: Patient.T })[]> => {},
+    );
   }
 
   export namespace Sync {
