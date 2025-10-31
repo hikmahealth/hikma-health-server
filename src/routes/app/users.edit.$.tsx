@@ -36,8 +36,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { currentUserHasRole, getUserById } from "@/lib/server-functions/users";
+import {
+  currentUserHasRole,
+  getUserById,
+  resetUserPassword,
+} from "@/lib/server-functions/users";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
+import If from "@/components/if";
+import { useImmerReducer } from "use-immer";
 
 const updateUser = createServerFn({ method: "POST" })
   .validator(
@@ -94,8 +100,9 @@ const registerUser = createServerFn({ method: "POST" })
     );
 
     // If the user is not super admin, they cannot create a super admin user
+    // this if says: if the current user (in context) does not have the role of super admin, and they are trying to register a user with the role super admin, reject.
     if (
-      data.user.role !== User.ROLES.SUPER_ADMIN &&
+      context.role !== User.ROLES.SUPER_ADMIN &&
       data.user.role === User.ROLES.SUPER_ADMIN
     ) {
       return Promise.reject({
@@ -406,6 +413,117 @@ function RouteComponent() {
             </div>
           </form>
         </Form>
+        <hr className="my-8" />
+      </div>
+
+      <If show={isEditMode && isSuperAdmin && user !== null}>
+        <UserPasswordResetForm userId={user?.id || ""} />
+      </If>
+    </div>
+  );
+}
+
+type PasswordForm = {
+  password: string;
+  confirmPassword: string;
+};
+
+type PasswordFieldAction =
+  | {
+      type: "SET_PASSWORD" | "SET_CONFIRM_PASSWORD";
+      payload: string;
+    }
+  | {
+      type: "RESET";
+    };
+
+function reducer(state: PasswordForm, action: PasswordFieldAction) {
+  switch (action.type) {
+    case "SET_PASSWORD":
+      return { ...state, password: action.payload };
+    case "SET_CONFIRM_PASSWORD":
+      return { ...state, confirmPassword: action.payload };
+    case "RESET":
+      return { password: "", confirmPassword: "" };
+    default:
+      return state;
+  }
+}
+
+function UserPasswordResetForm({ userId }: { userId: string }) {
+  const [passwordFields, dispatch] = useImmerReducer(reducer, {
+    password: "",
+    confirmPassword: "",
+  } as PasswordForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSave = () => {
+    if (passwordFields.password !== passwordFields.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    if (!passwordFields.password) {
+      toast.error("Password cannot be empty");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Are you sure you want to reset the password?",
+    );
+
+    if (confirmed) {
+      setIsSubmitting(true);
+      resetUserPassword({
+        data: { password: passwordFields.password, userId },
+      })
+        .then(() => {
+          toast.success("Password reset successfully");
+          dispatch({ type: "RESET" });
+        })
+        .catch((error) => {
+          console.error("Failed to reset password:", error);
+          toast.error("Failed to reset password");
+        })
+        .finally(() => {
+          setIsSubmitting(false);
+        });
+    }
+  };
+
+  if (!userId) {
+    return null;
+  }
+
+  return (
+    <div className="max-w-xl pt-4 space-y-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-xl">Change Password</h1>
+      </div>
+
+      <Input
+        label="New Password"
+        type="password"
+        placeholder="Enter new password"
+        value={passwordFields.password}
+        onChange={(e) =>
+          dispatch({ type: "SET_PASSWORD", payload: e.target.value })
+        }
+      />
+      <Input
+        label="Confirm Password"
+        type="password"
+        placeholder="Confirm new password"
+        value={passwordFields.confirmPassword}
+        onChange={(e) =>
+          dispatch({ type: "SET_CONFIRM_PASSWORD", payload: e.target.value })
+        }
+      />
+
+      <div className="flex justify-end gap-4">
+        <Button type="button" onClick={handleSave} disabled={isSubmitting}>
+          {isSubmitting ? "Updating..." : "Update Password"}
+        </Button>
       </div>
     </div>
   );

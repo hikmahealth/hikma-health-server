@@ -278,6 +278,8 @@ namespace Event {
                   `${Patient.Table.name}.surname`,
                   `${Patient.Table.name}.date_of_birth`,
                   `${Patient.Table.name}.sex`,
+                  `${Patient.Table.name}.phone`,
+                  `${Patient.Table.name}.citizenship`,
                 ])
                 .whereRef(
                   `${Patient.Table.name}.id`,

@@ -115,3 +115,25 @@ export const getUserClinicPermissions = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     return await UserClinicPermissions.API.getByUser(data.userId);
   });
+
+/**
+ * Resets a user's password
+ * @param data.userId - The ID of the user whose password should be reset
+ * @param data.password - The new password to set
+ * @returns Updated user object
+ * @throws {Object} Rejection object with message and source if user lacks SUPER_ADMIN role
+ * @requires SUPER_ADMIN role for access
+ */
+export const resetUserPassword = createServerFn({ method: "POST" })
+  .validator((data: { userId: string; password: string }) => data)
+  .middleware([permissionsMiddleware])
+  .handler(async ({ data, context }) => {
+    if (context.role !== User.ROLES.SUPER_ADMIN) {
+      return Promise.reject({
+        message: "Unauthorized: SUPER_ADMIN role required",
+        source: "resetUserPassword",
+      });
+    }
+
+    return await User.API.updatePassword(data.userId, data.password);
+  });

@@ -520,10 +520,14 @@ namespace User {
     // Specific methods to update passwords
     export const updatePassword = serverOnly(
       async (id: string, password: string): Promise<User.EncodedT["id"]> => {
+        const saltRounds = 10;
+        const salt = bcrypt.genSaltSync(saltRounds);
+        const hashed_password = bcrypt.hashSync(password, salt);
+
         await db
           .updateTable(Table.name)
           .set({
-            hashed_password: password,
+            hashed_password,
             updated_at: sql`now()`,
             last_modified: sql`now()`,
           })
