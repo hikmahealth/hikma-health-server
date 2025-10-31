@@ -16,7 +16,8 @@ Deploy the project quickly by clicking on one of these services:
 
 ---
 
-## ⚠️ Migrating from Python Version
+<details>
+<summary><strong>Migrating from Python Version</strong></summary>
 
 **This repository is the next evolution of the Hikma Health platform**, combining what used to be two separate repositories:
 
@@ -47,6 +48,8 @@ Migration is straightforward and takes just a few minutes:
    - This will free up resources and simplify your infrastructure
 
 **Note**: Your database remains untouched during migration. The new system uses the same PostgreSQL database and automatically updates the schema through migrations.
+
+</details>
 
 ---
 
