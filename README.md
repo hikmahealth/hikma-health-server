@@ -1,4 +1,4 @@
-<p align="center">
+<p align="centr">
 <img src="https://images.squarespace-cdn.com/content/5cc0e57236f8e70001651ea6/1599789508819-NGZXYWJDQRCULLU94QEJ/hikma-hb.png?format=300w&content-type=image/png" alt="Hikma Health" />
 </p>
 
@@ -12,7 +12,41 @@ Deploy the project quickly by clicking on one of these services:
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/hikmahealth/hikma-health-backend/tree/master)
+[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/hikmahealth/hikma-health-server/tree/master)
+
+---
+
+## ⚠️ Migrating from Python Version
+
+**This repository is the next evolution of the Hikma Health platform**, combining what used to be two separate repositories:
+
+- `hikma-health-backend` (Python & Flask)
+- `hikma-health-admin` (JavaScript/TypeScript & Next.js)
+
+Now unified into a single, modern full-stack application built with **TypeScript and TanStack Start**, featuring many new capabilities and improvements.
+
+### Migration Steps
+
+Migration is straightforward and takes just a few minutes:
+
+1. **Deploy the new version**
+   - If you previously deployed to Render (as recommended), simply click the "Deploy to Render" button above
+   - Render will automatically copy over your existing database configuration
+   - The new deployment will use your existing PostgreSQL database
+   - Your mobile app users will need to signout and re-scan the QR code
+
+2. **Monitor the deployment**
+   - Verify the application runs correctly
+   - Test key workflows to ensure everything works as expected
+   - The system will automatically run database migrations on startup
+
+3. **Clean up old deployments**
+   - After confirming the new system works properly, you can safely delete or archive:
+     - Your old `hikma-health-backend` service
+     - Your old `hikma-health-admin` service
+   - This will free up resources and simplify your infrastructure
+
+**Note**: Your database remains untouched during migration. The new system uses the same PostgreSQL database and automatically updates the schema through migrations.
 
 ---
 
@@ -51,8 +85,8 @@ Before you begin, ensure you have the following installed on your system:
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/hikmahealth/hikma-health-backend.git
-   cd hikma-health-backend
+   git clone git@github.com:hikmahealth/hikma-health-server.git
+   cd hikma-health-server
    ```
 
 2. **Install dependencies**
