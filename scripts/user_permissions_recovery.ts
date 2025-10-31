@@ -158,16 +158,32 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
 
     // Check each clinic
     for (const clinic of clinics) {
-      if (!existingClinicIds.has(clinic.id)) {
-        // Missing permission entry - create with role defaults
-        console.log(
-          `${isDryRun ? "Would create" : "Creating"} permissions for user ${user.email} (${userRole}) in clinic ${clinic.name || clinic.id}`,
-        );
+      const isPrimaryClinic = user.clinic_id === clinic.id;
 
-        if (isDryRun) {
+      if (!existingClinicIds.has(clinic.id)) {
+        // Missing permission entry
+        if (isPrimaryClinic) {
+          // For primary clinic: create with role defaults
           console.log(
-            `Permissions: register=${rolePermissions.can_register_patients}, view=${rolePermissions.can_view_history}, edit=${rolePermissions.can_edit_records}, delete=${rolePermissions.can_delete_records}, admin=${rolePermissions.is_clinic_admin}`,
+            `${isDryRun ? "Would create" : "Creating"} permissions for user ${user.email} (${userRole}) in their primary clinic ${clinic.name || clinic.id}`,
           );
+
+          if (isDryRun) {
+            console.log(
+              `Permissions: register=${rolePermissions.can_register_patients}, view=${rolePermissions.can_view_history}, edit=${rolePermissions.can_edit_records}, delete=${rolePermissions.can_delete_records}, admin=${rolePermissions.is_clinic_admin}`,
+            );
+          }
+        } else {
+          // For non-primary clinic: create with all false permissions
+          console.log(
+            `${isDryRun ? "Would create" : "Creating"} no-access permissions for user ${user.email} in non-primary clinic ${clinic.name || clinic.id}`,
+          );
+
+          if (isDryRun) {
+            console.log(
+              `Permissions: register=false, view=false, edit=false, delete=false, admin=false`,
+            );
+          }
         }
 
         if (!isDryRun) {
@@ -177,11 +193,21 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
               .values({
                 user_id: user.id,
                 clinic_id: clinic.id,
-                can_register_patients: rolePermissions.can_register_patients,
-                can_view_history: rolePermissions.can_view_history,
-                can_edit_records: rolePermissions.can_edit_records,
-                can_delete_records: rolePermissions.can_delete_records,
-                is_clinic_admin: rolePermissions.is_clinic_admin,
+                can_register_patients: isPrimaryClinic
+                  ? rolePermissions.can_register_patients
+                  : false,
+                can_view_history: isPrimaryClinic
+                  ? rolePermissions.can_view_history
+                  : false,
+                can_edit_records: isPrimaryClinic
+                  ? rolePermissions.can_edit_records
+                  : false,
+                can_delete_records: isPrimaryClinic
+                  ? rolePermissions.can_delete_records
+                  : false,
+                is_clinic_admin: isPrimaryClinic
+                  ? rolePermissions.is_clinic_admin
+                  : false,
                 created_by: null, // System generated
                 last_modified_by: null, // System generated
                 created_at: sql`now()`,
