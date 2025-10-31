@@ -1,100 +1,205 @@
+<p align="center">
+<img src="https://images.squarespace-cdn.com/content/5cc0e57236f8e70001651ea6/1599789508819-NGZXYWJDQRCULLU94QEJ/hikma-hb.png?format=300w&content-type=image/png" alt="Hikma Health" />
+</p>
+
 # Hikma Health Server
 
-### THIS IS A WORK IN PROGRESS - DO NOT USE IN PRODUCTION YET
+A full-stack health management system designed for offline-first operation in low-resource settings. Built with modern web technologies and optimized for reliability and performance.
 
-### Deploy the project quicly by clicking on one of these services:
+## Quick Deploy
+
+Deploy the project quickly by clicking on one of these services:
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 [![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/hikmahealth/hikma-health-backend/tree/master)
 
-## Running commands
+---
 
-### Environment Variables (.env file)
+## Quick Start Guide
 
-```
-DATABASE_URL=postgresql://username:password@host:port/database
-```
+### Prerequisites
 
-### Install dependencies
+Before you begin, ensure you have the following installed on your system:
 
-```bash
-pnpm install
-```
+- **Node.js 22.14 or higher** - [Download here](https://nodejs.org/)
+- **pnpm** - Fast, disk space efficient package manager
+  ```bash
+  npm install -g pnpm
+  ```
+- **PostgreSQL** (one of the following):
+  - Local installation - [Download here](https://www.postgresql.org/download/)
+  - Remote database (Render, DigitalOcean, Supabase, etc.)
+  - Docker container
+- **Git** - For cloning the repository
 
-### Run development server
+### Tech Stack
+
+- **Framework**: TanStack Start (React-based full-stack framework)
+- **Language**: TypeScript
+- **Database**: PostgreSQL with Kysely query builder
+- **Styling**: Tailwind CSS 4.0
+- **UI Components**: Radix UI + shadcn/ui
+- **State Management**: TanStack Store, XState
+- **Forms**: TanStack Form with React Hook Form
+- **Testing**: Vitest (unit tests) + Playwright (E2E tests)
+- **Monitoring**: Sentry
+- **Build Tool**: Vite
+
+### Installation
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/hikmahealth/hikma-health-backend.git
+   cd hikma-health-backend
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   pnpm install
+   ```
+
+3. **Set up environment variables**
+
+   Create a `.env` file in the root directory:
+
+   ```bash
+   DATABASE_URL=postgresql://username:password@host:port/database
+   ```
+
+   Replace the connection string with your PostgreSQL credentials.
+
+4. **Run database migrations**
+
+   ```bash
+   pnpm run migrate:latest
+   ```
+
+### Running the Project
+
+**Development mode** (with hot reload):
 
 ```bash
 pnpm dev
 ```
 
+The application will be available at `http://localhost:3000`
+
+**Production build**:
+
+```bash
+pnpm build
+pnpm start
+```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development server on port 3000 |
+| `pnpm build` | Build for production |
+| `pnpm start` | Run production server (with migrations) |
+| `pnpm test` | Run unit tests |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:e2e` | Run end-to-end tests |
+| `pnpm test:e2e:ui` | Run E2E tests with UI |
+| `pnpm db:migrate` | Run database migrations |
+| `pnpm migrate:latest` | Migrate to latest schema |
+| `pnpm format` | Format code with Biome |
+| `pnpm lint` | Lint code with Biome |
+| `pnpm check` | Run Biome checks (format + lint) |
+
 ---
 
-### TODO:
+## Project Structure
 
-- [ ] Go through the migrations with a fine tooth comb
-- [ ]
+```
+hikma-health-server/
+├── .github/              # GitHub Actions workflows and configurations
+├── db/                   # Database migrations and schemas
+├── docs/                 # Project documentation
+├── e2e/                  # End-to-end test files
+├── public/               # Static assets
+├── scripts/              # Utility scripts (user permissions recovery, etc.)
+├── src/
+│   ├── app/             # Application-level components and layouts
+│   ├── components/      # Reusable UI components (shadcn/ui)
+│   ├── data/            # Data fetching and caching logic
+│   ├── db/              # Database connection and utilities
+│   ├── hooks/           # Custom React hooks
+│   ├── integrations/    # Third-party service integrations
+│   ├── lib/             # Utility functions and helpers
+│   ├── middleware/      # Server middleware
+│   ├── models/          # Data models and types
+│   ├── routes/          # Application routes (TanStack Router)
+│   ├── stores/          # State management stores
+│   ├── env.ts           # Environment variable validation
+│   ├── router.tsx       # Router configuration
+│   └── styles.css       # Global styles
+├── tests/               # Unit test files
+├── .env                 # Environment variables (DO NOT COMMIT)
+├── package.json         # Dependencies and scripts
+├── tsconfig.json        # TypeScript configuration
+├── vite.config.ts       # Vite bundler configuration
+└── vitest.config.ts     # Vitest test configuration
+```
 
-# Pharmacy Module Design
+### Key Directories Explained
 
-## Overview
+- **`src/routes/`** - File-based routing powered by TanStack Router. Each file represents a route in the application.
+- **`src/components/`** - Reusable UI components built with Radix UI and styled with Tailwind CSS.
+- **`src/db/`** - Database connection setup, query builders, and Kysely configuration.
+- **`db/`** - SQL migration files that define the database schema evolution.
+- **`src/models/`** - TypeScript types and interfaces for data structures.
+- **`src/stores/`** - Client and server state management using TanStack Store and XState.
 
-Built-in pharmacy functionality for prescribing, dispensing, and inventory management. Designed for offline-first operation in low-resource settings.
+---
 
-## Data Model
+## Security Best Practices
 
-### Medications Table
+### Environment Variables
 
-- `medication_id` (primary key)
-- `name` (string) - includes strength/formulation (e.g., "Paracetamol 500mg tablets")
+- **NEVER commit the `.env` file** to version control
+- The `.env` file is already included in `.gitignore`
+- Store sensitive credentials (database passwords, API keys) only in `.env`
+- Use different `.env` files for development, staging, and production
+- In production, use environment variables provided by your hosting platform
 
-### Prescriptions Table (enhanced)
+### Database Credentials
 
-- Existing fields: `name`, `dosage`, `dosage_units`, `duration`, `duration_units`, `frequency`, `route`
-- **New fields**: `medication_id`, `quantity_prescribed`, `refills`, `instructions`, `prescriber_id`
+- Use strong passwords for database accounts
+- Restrict database access to specific IP addresses when possible
+- Use SSL/TLS connections for remote databases
+- Regularly rotate credentials
 
-### Inventory Table
+### General Security
 
-- `medication_id` (foreign key)
-- `location_id` (foreign key)
-- `quantity` (current stock)
-- `price_per_unit`
-- `reorder_level` (optional)
+- Keep dependencies up to date: `pnpm update`
+- Review security advisories: `pnpm audit`
+- Never log sensitive information (passwords, tokens, personal health data)
+- Follow HIPAA and local healthcare data regulations
+- Use HTTPS in production environments
 
-### Stock Transactions Table
 
-- `medication_id`, `location_id`, `quantity_change`, `transaction_type`, `timestamp`, `user_id`
-- Logs all stock changes (dispense, restock, adjustments)
+## Contributing
 
-### Prescription Fulfillments Table
+We welcome contributions! Please ensure:
 
-- `prescription_id`, `quantity_dispensed`, `dispensed_by`, `timestamp`
-- Tracks actual dispensing over time
+Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.
 
-## Key Features
+- Code follows the project style (run `pnpm check`)
+- All tests pass (`pnpm test`)
+- E2E tests pass for critical flows (`pnpm test:e2e`)
+- Commit messages are clear and descriptive
 
-### Prescription Workflow
 
-- Prescribe → reference medication by name (auto-creates in medications table if needed)
-- Dispense → requires medication to exist in inventory at location
-- Allow negative stock (physical constraint prevents over-dispensing)
+## License
 
-### Inventory Management
+[MIT](https://choosealicense.com/licenses/mit/)
 
-- Per-location stock tracking
-- Manual restocking (staff enters new stock quantities)
-- Transaction logging for all stock changes
-- Offline-first design with sync conflict resolution
 
-### Autocomplete
+## Support
 
-- Medication names pulled from existing medications table
-- Helps maintain naming consistency across locations
-
-## Future Enhancements
-
-- Batch/lot tracking (via purchase orders)
-- Expiration date management
-- Drug interaction checking
-- Automated reorder alerts
-- Advanced restocking workflows
+For questions or issues, please open an issue on GitHub or contact the Hikma Health team.
