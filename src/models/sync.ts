@@ -148,6 +148,7 @@ namespace Sync {
 
     /**
      * Get the delta records for the last synced at time
+     * TODO: if lastSyncedAt is 0, no deleted records should be returned
      * @param lastSyncedAt
      * @returns
      */
@@ -190,7 +191,7 @@ namespace Sync {
                 .execute();
 
             // Query for records deleted since last sync
-            const deletedRecords = await db
+            const deletedRecords = lastSyncedAt === 0 ? [] : await db
                 .selectFrom(server_table_name)
                 .where("deleted_at", ">", lastSyncDate)
                 .where("is_deleted", "=", true)
