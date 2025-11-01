@@ -145,6 +145,29 @@ namespace Sync {
 
     type DBChangeSet = PullResponse["changes"];
 
+    /**
+     * Validates and retrieves the MAX_HISTORY_DAYS_SYNC environment variable
+     * @returns The number of days to limit history sync, or null if not set
+     * @throws Error if the value is present but not a valid positive number
+     */
+    const getMaxHistoryDaysSync = (): number | null => {
+        const envValue = process.env.MAX_HISTORY_DAYS_SYNC;
+
+        if (!envValue) {
+            return null;
+        }
+
+        const days = Number(envValue);
+
+        if (isNaN(days) || days <= 0 || !Number.isInteger(days)) {
+            console.error(
+                `MAX_HISTORY_DAYS_SYNC must be a valid positive integer, got: ${envValue}. Ignoring and using no limit.`
+            );
+            return null;
+        }
+
+        return days;
+    };
 
     /**
      * Get the delta records for the last synced at time
@@ -160,6 +183,16 @@ namespace Sync {
       const clientLastSyncDate = new Date(lastSyncedAt);
       const now = new Date();
 
+      // Apply history limit if MAX_HISTORY_DAYS_SYNC is set
+      const maxHistoryDays = getMaxHistoryDaysSync();
+      let effectiveLastSyncDate = clientLastSyncDate;
+
+      if (maxHistoryDays !== null) {
+          const cutoffDate = new Date(now.getTime() - (maxHistoryDays * 24 * 60 * 60 * 1000));
+          // Use the more recent date between client's last sync and the cutoff
+          effectiveLastSyncDate = clientLastSyncDate < cutoffDate ? cutoffDate : clientLastSyncDate;
+      }
+
         for (const entity of ENTITIES_TO_PUSH_TO_MOBILE) {
             // It can happen that the server table name is different from the mobile table name
             // This just ensures we do the correct mapping. Often the name is the same.
@@ -168,8 +201,8 @@ namespace Sync {
             const always_push_to_mobile = entity.Table?.ALWAYS_PUSH_TO_MOBILE || false;
 
             // TODO: Implementation logic for always_push_to_mobile needs to be thought out first.
-            // let lastSyncDate = always_push_to_mobile ? now : clientLastSyncDate;
-            let lastSyncDate = clientLastSyncDate;
+            // let lastSyncDate = always_push_to_mobile ? now : effectiveLastSyncDate;
+            let lastSyncDate = effectiveLastSyncDate;
 
             // Query for new records created after last sync
             const newRecords = await db
@@ -213,13 +246,13 @@ namespace Sync {
         result["user_clinic_permissions"] = {
           created:  await db
               .selectFrom("user_clinic_permissions")
-              .where("created_at", ">", clientLastSyncDate)
+              .where("created_at", ">", effectiveLastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
               .selectFrom("user_clinic_permissions")
-              .where("created_at", "<", clientLastSyncDate)
-              .where("updated_at", ">", clientLastSyncDate)
+              .where("created_at", "<", effectiveLastSyncDate)
+              .where("updated_at", ">", effectiveLastSyncDate)
               .selectAll()
               .execute(),
           deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
@@ -229,13 +262,13 @@ namespace Sync {
         result["app_config"] = {
           created:  await db
               .selectFrom("app_config")
-              .where("created_at", ">", clientLastSyncDate)
+              .where("created_at", ">", effectiveLastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
               .selectFrom("app_config")
-              .where("created_at", "<", clientLastSyncDate)
-              .where("updated_at", ">", clientLastSyncDate)
+              .where("created_at", "<", effectiveLastSyncDate)
+              .where("updated_at", ">", effectiveLastSyncDate)
               .selectAll()
               .execute(),
           deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
