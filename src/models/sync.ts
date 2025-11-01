@@ -193,6 +193,16 @@ namespace Sync {
           effectiveLastSyncDate = clientLastSyncDate < cutoffDate ? cutoffDate : clientLastSyncDate;
       }
 
+      // Configuration entities that should always sync full history (exempt from MAX_HISTORY_DAYS_SYNC)
+      const EXEMPT_FROM_HISTORY_LIMIT = [
+          'clinics',
+          'patient_registration_forms',
+          'event_forms',
+          'drug_catalogue',
+          'clinic_departments',
+          'clinic_inventory' // this should synced for just the signed in clinic??
+      ];
+
         for (const entity of ENTITIES_TO_PUSH_TO_MOBILE) {
             // It can happen that the server table name is different from the mobile table name
             // This just ensures we do the correct mapping. Often the name is the same.
@@ -200,9 +210,13 @@ namespace Sync {
             const mobile_table_name = entity.Table.mobileName;
             const always_push_to_mobile = entity.Table?.ALWAYS_PUSH_TO_MOBILE || false;
 
+
+            // Configuration entities should always sync full history, not limited by MAX_HISTORY_DAYS_SYNC
+            const isExemptFromHistoryLimit = EXEMPT_FROM_HISTORY_LIMIT.includes(mobile_table_name);
+
             // TODO: Implementation logic for always_push_to_mobile needs to be thought out first.
             // let lastSyncDate = always_push_to_mobile ? now : effectiveLastSyncDate;
-            let lastSyncDate = effectiveLastSyncDate;
+            let lastSyncDate = isExemptFromHistoryLimit ? clientLastSyncDate : effectiveLastSyncDate;
 
             // Query for new records created after last sync
             const newRecords = await db
@@ -246,13 +260,13 @@ namespace Sync {
         result["user_clinic_permissions"] = {
           created:  await db
               .selectFrom("user_clinic_permissions")
-              .where("created_at", ">", effectiveLastSyncDate)
+              .where("created_at", ">", clientLastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
               .selectFrom("user_clinic_permissions")
-              .where("created_at", "<", effectiveLastSyncDate)
-              .where("updated_at", ">", effectiveLastSyncDate)
+              .where("created_at", "<", clientLastSyncDate)
+              .where("updated_at", ">", clientLastSyncDate)
               .selectAll()
               .execute(),
           deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
@@ -262,13 +276,13 @@ namespace Sync {
         result["app_config"] = {
           created:  await db
               .selectFrom("app_config")
-              .where("created_at", ">", effectiveLastSyncDate)
+              .where("created_at", ">", clientLastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
               .selectFrom("app_config")
-              .where("created_at", "<", effectiveLastSyncDate)
-              .where("updated_at", ">", effectiveLastSyncDate)
+              .where("created_at", "<", clientLastSyncDate)
+              .where("updated_at", ">", clientLastSyncDate)
               .selectAll()
               .execute(),
           deleted: [] // THERE are no deleted records. Any record that is gone, is just gone.
