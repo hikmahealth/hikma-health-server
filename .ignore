@@ -4,12 +4,19 @@ dist
 dist-ssr
 *.local
 count.txt
-.env
+# .env
 .output
 .vinxi
 count.txt
 
-.env.*
+# .env.*
 
 
 .tanstack/*
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
