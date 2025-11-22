@@ -1,6 +1,7 @@
 {
   "name": "hikma-health-server",
   "private": true,
+  "version": "2025.11.22",
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
