@@ -66,7 +66,7 @@ const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
     const { patients } = await Patient.API.getAllWithAttributes({
       includeCount: false,
     });
-    const eventForms = await EventForm.API.getAll();
+    const eventForms = await EventForm.API.getAll({ includeDeleted: true });
     const exportEvents = await Event.API.getAllForExport();
     const vitals = await PatientVital.API.getAll();
     return { patients, exportEvents, eventForms, vitals };
@@ -290,6 +290,13 @@ function RouteComponent() {
 
   const handleExport = async () => {
     try {
+      toast(
+        "⏳ Export started. Please be patient as this could take some time.",
+        {
+          dismissible: true,
+          duration: 2000,
+        },
+      );
       // Create a new workbook
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Patients List");
@@ -314,7 +321,14 @@ function RouteComponent() {
 
       // for each event form type, add a new worksheet
       eventForms.forEach((eventForm) => {
-        const worksheet = workbook.addWorksheet(`${eventForm.name} (Custom)`);
+        const isDeletedPrefix = eventForm.is_deleted ? "DEL - " : "";
+        const worksheetIdSuffix = `${eventForm.id.substring(0, 6)}`;
+        const worksheetName = `${isDeletedPrefix}${truncate(eventForm.name, {
+          length: 18,
+          omission: "..",
+        })}(#${worksheetIdSuffix})`;
+
+        const worksheet = workbook.addWorksheet(worksheetName);
         const extraColumns = {
           patient_id: "Patient ID",
           patient_name: "Patient Name",

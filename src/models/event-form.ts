@@ -762,16 +762,24 @@ namespace EventForm {
     /**
      * Get a list of all the event forms
      */
-    export const getAll = serverOnly(async (): Promise<EncodedT[]> => {
-      const result = await db
-        .selectFrom(EventForm.Table.name)
-        .where("is_deleted", "=", false)
-        .orderBy("created_at", "desc")
-        .selectAll()
-        .execute();
+    export const getAll = serverOnly(
+      async (options?: { includeDeleted?: boolean }): Promise<EncodedT[]> => {
+        const includeDeleted = options?.includeDeleted ?? false;
 
-      return result;
-    });
+        let query = db
+          .selectFrom(EventForm.Table.name)
+          .orderBy("name", "asc")
+          .selectAll();
+
+        if (!includeDeleted) {
+          query = query.where("is_deleted", "=", false);
+        }
+
+        const result = await query.execute();
+
+        return result;
+      },
+    );
 
     /**
      * Get a form by an id

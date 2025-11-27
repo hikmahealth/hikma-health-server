@@ -51,6 +51,7 @@ export interface SelectInputProps {
   rightSectionPointerEvents?: "none" | "auto";
   // Layout
   className?: string;
+  labelClassName?: string;
   wrapperProps?: React.HTMLAttributes<HTMLDivElement>;
   // Accessibility
   name?: string;
@@ -83,6 +84,7 @@ const SelectInput = React.forwardRef<
       leftSectionPointerEvents = "none",
       rightSectionPointerEvents = "none",
       className,
+      labelClassName = "",
       wrapperProps,
       name,
       id,
@@ -258,7 +260,9 @@ const SelectInput = React.forwardRef<
               // Render group
               return (
                 <SelectGroup key={index}>
-                  <SelectLabel>{item.label}</SelectLabel>
+                  <SelectLabel className={labelClassName}>
+                    {item.label}
+                  </SelectLabel>
                   {item.options.map((option) => (
                     <SelectItem
                       key={option.key || option.label}

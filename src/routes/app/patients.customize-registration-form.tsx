@@ -3,7 +3,7 @@ import { Language } from "@/models/language";
 import sortBy from "lodash/sortBy";
 import { useEffect, useMemo, useState } from "react";
 import { useImmer, useImmerReducer } from "use-immer";
-import { Option } from "effect";
+
 import PatientRegistrationForm from "@/models/patient-registration-form";
 import { v1 as uuidv1 } from "uuid";
 import { baseFields } from "@/data/registration-form-base-fields";
@@ -23,13 +23,13 @@ import { z } from "zod";
 import { getPatientRegistrationForm } from "@/lib/server-functions/patient-registration-forms";
 
 export const saveForm = createServerFn({ method: "POST" })
-  .validator((data: PatientRegistrationForm.T) => data)
+  .validator((data: PatientRegistrationForm.EncodedT) => data)
   .handler(async ({ data }) => {
     return PatientRegistrationForm.upsertPatientRegistrationForm(data);
   });
 
 export const Route = createFileRoute(
-  "/app/patients/customize-registration-form"
+  "/app/patients/customize-registration-form",
 )({
   component: RouteComponent,
   loader: async () => {
@@ -56,8 +56,8 @@ const registrationFormFieldSchema = z.object({
 
 const registrationFormSchema = z.object({
   id: z.string().min(10),
-  clinic_id: z.custom<Option.Option<string>>(),
-  name: z.custom<Option.Option<string>>(),
+  clinic_id: z.string().nullable(),
+  name: z.string(),
   fields: z.array(registrationFormFieldSchema),
   metadata: z.record(z.any()),
   is_deleted: z.boolean(),
@@ -65,10 +65,10 @@ const registrationFormSchema = z.object({
   updated_at: z.date(),
   last_modified: z.date(),
   server_created_at: z.date(),
-  deleted_at: z.custom<Option.Option<Date>>(),
+  deleted_at: z.date().nullable(),
 });
 
-type State = PatientRegistrationForm.T;
+type State = PatientRegistrationForm.EncodedT;
 type Action =
   | { type: "set-form-state"; payload: { form: State } } // sets the entire form to a specific value. usefull for initial states and setting values to what is in the database.
   | { type: "add-field" } // generates a fieldID by default
@@ -377,19 +377,19 @@ function reducer(state: State, action: Action) {
   }
 }
 
-const defaultEmptyForm: PatientRegistrationForm.T = {
+const defaultEmptyForm: PatientRegistrationForm.EncodedT = {
   id: uuidv1(),
   // Remove when the migrating to multiple forms support
-  name: Option.some("Patient Registration Form"),
+  name: "Patient Registration Form",
   fields: baseFields,
   metadata: {},
   created_at: new Date(),
   updated_at: new Date(),
-  clinic_id: Option.none(),
+  clinic_id: null,
   is_deleted: false,
   last_modified: new Date(),
   server_created_at: new Date(),
-  deleted_at: Option.none(),
+  deleted_at: null,
 };
 
 function RouteComponent() {
@@ -397,7 +397,8 @@ function RouteComponent() {
   // initial state is either loaded from the DB or on first deployment its loaded from a local state
 
   const initialState =
-    (patientRegistrationForm as PatientRegistrationForm.T) ?? defaultEmptyForm;
+    (patientRegistrationForm as PatientRegistrationForm.EncodedT) ??
+    defaultEmptyForm;
 
   const [formLanguage, setFormLanguage] = useState<Language.LanguageKey>("en");
   const [state, dispatch] = useImmerReducer(reducer, initialState);
@@ -409,7 +410,7 @@ function RouteComponent() {
   const [loading, setLoading] = useState(false);
   const deletedFields = useMemo(
     () => fields.filter((f) => f.deleted),
-    [fields, fields.length]
+    [fields, fields.length],
   );
 
   useEffect(() => {
@@ -438,11 +439,11 @@ function RouteComponent() {
       if (result.error.errors.find((err) => err.path.includes("options"))) {
         // ther eis an error with one of the options supported for a select field
         return alert(
-          "Please make sure all select fields have at least one option"
+          "Please make sure all select fields have at least one option",
         );
       } else {
         ignoreErrors = window.confirm(
-          "Some fields of the form are incomplete or empty. Are you sure you want to continue?"
+          "Some fields of the form are incomplete or empty. Are you sure you want to continue?",
         );
       }
     }
@@ -533,7 +534,7 @@ function RouteComponent() {
                             >
                               {option.label}
                             </SelectItem>
-                          )
+                          ),
                         )}
                       </SelectContent>
                     </Select>
@@ -817,7 +818,7 @@ function RouteComponent() {
                                               <label className="text-sm font-medium leading-none">{`Option ${
                                                 idx + 1
                                               } (${friendlyLang(
-                                                languageKey
+                                                languageKey,
                                               )})`}</label>
                                               <input
                                                 type="text"
@@ -1089,7 +1090,7 @@ Given a translation object, create options for a dropdown
 */
 export function translationObjectOptions(
   translations: Language.TranslationObject[],
-  language: Language.LanguageKey
+  language: Language.LanguageKey,
 ): Array<{ label: string; value: string }> {
   return translations
     .map((t) => Language.getTranslation(t, language))
