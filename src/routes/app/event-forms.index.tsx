@@ -52,7 +52,7 @@ export const Route = createFileRoute("/app/event-forms/")({
   component: RouteComponent,
   loader: async () => {
     return {
-      forms: await getEventForms(),
+      forms: await getEventForms({ data: { includeDeleted: false } }),
     };
   },
 });

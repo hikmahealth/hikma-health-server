@@ -54,15 +54,13 @@ export const Route = createFileRoute("/app/data/events")({
   component: RouteComponent,
   loader: async () => {
     return {
-      forms: await getEventForms(),
+      forms: await getEventForms({ data: { includeDeleted: true } }),
     };
   },
 });
 
 function RouteComponent() {
   const { forms } = Route.useLoaderData();
-
-  console.log({ forms });
 
   const [eventsList, setEventsList] = useState<Event.EncodedT[]>([]);
   const [paginationResults, setPaginationResults] = useState<{
@@ -159,13 +157,13 @@ function RouteComponent() {
 
   const pageNumbers = getPageNumbers();
 
-  console.log({ eventsList, paginationResults, forms, selectedForm });
+  // console.log({ eventsList, paginationResults, forms, selectedForm });
 
   // Table column names are present in the event form
   const tableColumns =
     forms.find((form) => form.id === selectedForm)?.form_fields || [];
 
-  console.log({ tableColumns });
+  // console.log({ tableColumns });
 
   return (
     <div className="container py-6">
@@ -179,10 +177,27 @@ function RouteComponent() {
             className="w-full"
             defaultValue={selectedForm}
             onChange={(value) => setSelectedForm(value)}
-            data={forms.map((form) => ({
-              label: form.name,
-              value: form.id,
-            }))}
+            labelClassName="text-[14px] font-semibold nth-2:mt-8"
+            data={[
+              {
+                label: "Active Forms",
+                options: forms
+                  .filter((form) => !form.is_deleted)
+                  .map((form) => ({
+                    label: form.name,
+                    value: form.id,
+                  })),
+              },
+              {
+                label: "Deleted Forms",
+                options: forms
+                  .filter((form) => form.is_deleted)
+                  .map((form) => ({
+                    label: form.name,
+                    value: form.id,
+                  })),
+              },
+            ]}
           />
         </div>
       </div>
