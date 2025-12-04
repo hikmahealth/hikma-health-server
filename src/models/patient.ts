@@ -364,10 +364,12 @@ namespace Patient {
           .returning("id")
           .executeTakeFirstOrThrow();
 
-        return await trx
+        await trx
           .insertInto(PatientAdditionalAttribute.Table.name)
           .values(patientAttributes)
           .executeTakeFirst();
+
+        return { patientId };
       });
     },
   );
@@ -802,31 +804,36 @@ namespace Patient {
     });
 
     /**
-     * Soft Delete a patient record without the additional patient attributes
+     * Soft Delete a patient record or multiple patient records without the additional patient attributes
      * DO NOT EXPORT OR USE THIS FUNCTION DIRECTLY
      */
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = serverOnly(async (id: string | string[]) => {
       // permissions check
       const clinicIds =
         await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
           "can_delete_records",
         );
 
-      const patient = await db
-        .selectFrom("patients")
-        .where("id", "=", id)
-        .select("primary_clinic_id")
-        .executeTakeFirst();
+      const idArray = Array.isArray(id) ? id : [id];
 
-      if (!patient) {
-        throw new Error("Patient not found");
+      const patients = await db
+        .selectFrom("patients")
+        .where("id", "in", idArray)
+        .select(["id", "primary_clinic_id"])
+        .execute();
+
+      if (patients.length === 0) {
+        throw new Error("Patient(s) not found");
       }
 
-      if (
-        patient.primary_clinic_id &&
-        !clinicIds.includes(patient.primary_clinic_id)
-      ) {
-        throw new Error("Unauthorized");
+      // Check authorization for all patients
+      for (const patient of patients) {
+        if (
+          patient.primary_clinic_id &&
+          !clinicIds.includes(patient.primary_clinic_id)
+        ) {
+          throw new Error(`Unauthorized to delete patient ${patient.id}`);
+        }
       }
 
       return await softDelete_core(id);
@@ -840,12 +847,11 @@ namespace Patient {
         return softDelete_core(id);
       },
     );
-
     /**
      * Soft Delete a patient record without the additional patient attributes
      * DO NOT EXPORT OR USE THIS FUNCTION DIRECTLY
      */
-    const softDelete_core = serverOnly(async (id: string) => {
+    const softDelete_core = serverOnly(async (id: string | string[]) => {
       // NOTE: Could easily call something like Appointment.API.softDelete(id, trx) - but we
       // still dont know how the tanstackstart api calling convention for "server only" will
       // evolve with respect to transactions.
@@ -855,10 +861,13 @@ namespace Patient {
           async function softDeleteMatching(
             trx: Transaction<Database>,
             table: TableName,
-            id: string,
+            ids: string | string[],
             columnName: string = "patient_id",
           ) {
-            console.log(`Soft deleting ${table} for patient ${id}`);
+            const idArray = Array.isArray(ids) ? ids : [ids];
+            console.log(
+              `Soft deleting ${table} for patient(s) ${idArray.join(", ")}`,
+            );
             await trx
               .updateTable(table)
               // @ts-ignore
@@ -867,7 +876,7 @@ namespace Patient {
                 updated_at: sql`now()::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
               })
-              .where(columnName, "=", id)
+              .where(columnName, "in", idArray)
               .execute();
           }
 
@@ -894,6 +903,7 @@ namespace Patient {
           await softDeleteMatching(trx, Patient.Table.name, id, "id");
         });
       } catch (error) {
+        const idArray = Array.isArray(id) ? id : [id];
         console.error("Patient soft delete operation failed:", {
           operation: "patient_soft_delete",
           error: {
@@ -902,7 +912,7 @@ namespace Patient {
             stack: error instanceof Error ? error.stack : undefined,
           },
           context: {
-            patientId: id,
+            patientId: idArray,
           },
           timestamp: new Date().toISOString(),
         });

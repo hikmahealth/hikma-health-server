@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useLoaderData } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -55,6 +55,7 @@ export const Route = createFileRoute("/app/patients/register")({
 
 function RouteComponent() {
   const { patientRegistrationForm, clinicsList } = Route.useLoaderData();
+  const navigate = Route.useNavigate();
 
   const { formState, handleSubmit, register, watch, setValue } = useForm({
     mode: "all",
@@ -88,6 +89,8 @@ function RouteComponent() {
       photo_url: Option.fromNullable(data.photo_url),
       government_id: Option.fromNullable(data.government_id),
       external_patient_id: Option.fromNullable(data.external_patient_id),
+      primary_clinic_id: Option.fromNullable(data.primary_clinic_id),
+      last_modified_by: Option.fromNullable(data.last_modified_by),
     };
 
     const patientBaseData: Record<string, any> = {};
@@ -134,10 +137,10 @@ function RouteComponent() {
       });
 
     try {
-      await createPatient({
+      const result = await createPatient({
         data: { baseFields: patient, additionalAttributes },
       });
-      alert("Patient registered successfully!");
+      navigate({ to: `/app/patients/${result.patientId}` });
     } catch (error) {
       console.error("Failed to register patient:", error);
       alert("Failed to register patient. Please try again.");
