@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import Patient from "@/models/patient";
 import * as React from "react";
 import {
@@ -26,7 +26,7 @@ import { getPatientRegistrationForm } from "@/lib/server-functions/patient-regis
 import {
   getAllPatients,
   searchPatients,
-  softDeletePatientById,
+  softDeletePatientsByIds,
 } from "@/lib/server-functions/patients";
 import PatientRegistrationForm from "@/models/patient-registration-form";
 import { createServerFn } from "@tanstack/react-start";
@@ -54,6 +54,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useMap } from "usehooks-ts";
 import If from "@/components/if";
 import { forEach } from "ramda";
+import { useEffect } from "react";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
@@ -106,11 +107,17 @@ function RouteComponent() {
     pagination,
   });
   const navigate = Route.useNavigate();
+  const route = useRouter();
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
   const [selectedPatients, actions] = useMap<string, string>(); // [patientId, patientName]
+
+  // on mount page, invalidate the data
+  useEffect(() => {
+    route.invalidate({ sync: true });
+  }, []);
 
   const fields = patientRegistrationForm?.fields.filter((f) => !f.deleted);
   const headers = fields?.map((f) => f.label.en) || [];
@@ -195,30 +202,32 @@ function RouteComponent() {
     actions.reset();
   };
 
-  const handleDeleteSelectedPatients = () => {
+  const handleDeleteSelectedPatients = async () => {
     const confirmPrompt = `Delete ${selectedPatients.size} patients`;
     if (
       prompt(`Type the phrase "${confirmPrompt}" to confirm`, "") ===
       confirmPrompt
     ) {
       const selectedPatientIds = Array.from(selectedPatients.keys());
-      forEach(
-        (id) =>
-          softDeletePatientById({ data: { id } })
-            .then(() => {
-              setPatientsList(
-                patientsList.filter((patient) => patient.id !== id),
-              );
-              toast.success(
-                `Patient ${selectedPatients.get(id)} deleted successfully`,
-              );
-            })
-            .catch((err) => {
-              console.error(`Error deleting patient ${id}: ${err}`);
-              toast.error(`Error deleting patient ${selectedPatients.get(id)}`);
-            }),
-        selectedPatientIds,
-      );
+      const { error, success } = await softDeletePatientsByIds({
+        data: { ids: selectedPatientIds },
+      });
+      if (success) {
+        setPatientsList(
+          patientsList.filter(
+            (patient) => !selectedPatientIds.includes(patient.id),
+          ),
+        );
+        toast.success(
+          `Successfully deleted ${selectedPatientIds.length} patient(s)`,
+        );
+      }
+      if (error) {
+        console.error(
+          `Error deleting patients ${selectedPatientIds}: ${error}`,
+        );
+        toast.error(`Error deleting patient(s)`);
+      }
       actions.reset();
     } else {
       toast.info("Invalid confirmation phrase. Not deleting patients");

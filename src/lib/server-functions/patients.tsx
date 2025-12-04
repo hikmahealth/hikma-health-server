@@ -147,12 +147,12 @@ export const getPatientById = createServerFn({
   );
 
 /**
- * Soft delete a patient by ID.
+ * Soft delete a list of patients by their IDs.
  */
-export const softDeletePatientById = createServerFn({
+export const softDeletePatientsByIds = createServerFn({
   method: "POST",
 })
-  .validator((data: { id: string }) => data)
+  .validator((data: { ids: string[] }) => data)
   .middleware([permissionsMiddleware])
   .handler(
     async ({
@@ -164,12 +164,13 @@ export const softDeletePatientById = createServerFn({
     }> => {
       if (!context.userId || context.role !== User.ROLES.SUPER_ADMIN) {
         return Promise.reject({
-          message: "Unauthorized: Isufficient permissions.",
-          source: "deleteDepartment",
+          message: "Unauthorized: Insufficient permissions.",
+          source: "softDeletePatientsByIds",
         });
       }
 
-      await Patient.API.softDelete(data.id);
+      // Soft delete each patient by ID
+      await Patient.API.softDelete(data.ids);
 
       return {
         success: true,
