@@ -1,8 +1,22 @@
 {
-  "extends": "@repo/typescript-config/react-library.json",
+  "extends": "@hh/typescript-config/react-library.json",
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "module": "ES2015",
+    "moduleDetection": "auto",
+    "moduleResolution": "Bundler",
+    "strict": false,
+    "resolveJsonModule": false,
+    "allowJs": true,
+    "baseUrl": "./src",
+    "rootDir": "./src",
+    "paths": {
+      "@/*": ["./*"],
+      "@hh/ui/lib/*": ["./lib/*"],
+      "@hh/ui/hooks/*": ["./hooks/*"],
+      "@hh/ui/components/*": ["./components/ui/*"],
+    },
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["./src"],
+  "exclude": ["node_modules", "dist"],
 }
