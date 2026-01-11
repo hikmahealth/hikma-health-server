@@ -278,7 +278,7 @@ const SelectInput = React.forwardRef<
               // Render individual option
               return (
                 <SelectItem
-                  key={item.key || item.label}
+                  key={item.key || item.value}
                   value={item.value}
                   disabled={item.disabled}
                 >

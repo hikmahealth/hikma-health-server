@@ -101,7 +101,6 @@ function RouteComponent() {
     ) || false;
 
   const handleSaveOrganizationName = () => {
-    console.log("handleSaveOrganizationName");
     // TODO: send to sign in page if there is no user
     if (!currentUser) return;
 
@@ -165,7 +164,6 @@ function RouteComponent() {
       confirmationText: overrideMobilePermissionsConfirmation,
       userInputText: "",
       onConfirm: (userInputText: string) => {
-        console.log({ userInputText });
         if (userInputText === overrideMobilePermissionsConfirmation) {
           saveConfiguration({
             data: {
@@ -195,8 +193,6 @@ function RouteComponent() {
       },
     });
   };
-
-  console.log({ organizationName });
 
   return (
     <div className="container py-6">

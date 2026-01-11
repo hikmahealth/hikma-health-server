@@ -1,6 +1,5 @@
 import CreatableSelect from "react-select/creatable";
 import { Button } from "@hh/ui/components/button";
-import { useSelector } from "@xstate/store/react";
 import eventFormStore from "@/stores/event-form-builder";
 import { Input } from "@hh/ui/components/input";
 import { Checkbox } from "@hh/ui/components/checkbox";
@@ -25,7 +24,7 @@ import upperFirst from "lodash/upperFirst";
 import uniq from "lodash/uniq";
 import If from "@/components/if";
 import EventForm from "@/models/event-form";
-import { Textarea } from "../ui/textarea";
+import { Textarea } from "@hh/ui/components/textarea";
 
 let YesNoOptions: { value: string; label: string }[] = [
   { value: "yes", label: "Yes" },

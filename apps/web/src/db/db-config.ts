@@ -41,7 +41,11 @@ export const getDatabaseConfig = (): Record<string, any> => {
     pgPassword = dburl.password;
 
     for (let [k, v] of dburl.searchParams.entries()) {
-      opts[k] = JSON.parse(v);
+      try {
+        opts[k] = JSON.parse(v);
+      } catch {
+        opts[k] = v;
+      }
     }
   } else if (databaseUrlAzure) {
     // Extract connection details from Azure connection string

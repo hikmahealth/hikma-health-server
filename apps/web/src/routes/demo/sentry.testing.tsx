@@ -6,18 +6,18 @@
  * @ai_context: Demonstrates Sentry features through interactive examples with educational context
  */
 
-import * as fs from 'node:fs/promises'
-import { createFileRoute } from '@tanstack/react-router'
-import { createServerFn } from '@tanstack/react-start'
-import * as Sentry from '@sentry/tanstackstart-react'
-import { useState, useEffect } from 'react'
+import * as fs from "node:fs/promises";
+import { createFileRoute } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import * as Sentry from "@sentry/tanstackstart-react";
+import { useState, useEffect } from "react";
 
-export const Route = createFileRoute('/demo/sentry/testing')({
+export const Route = createFileRoute("/demo/sentry/testing")({
   component: RouteComponent,
   errorComponent: ({ error }) => {
     useEffect(() => {
-      Sentry.captureException(error)
-    }, [error])
+      Sentry.captureException(error);
+    }, [error]);
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#181423]">
         <div className="text-center p-8">
@@ -28,9 +28,9 @@ export const Route = createFileRoute('/demo/sentry/testing')({
           <p className="text-[#A49FB5]">{error.message}</p>
         </div>
       </div>
-    )
+    );
   },
-})
+});
 
 // Sentry Logo Component
 function SentryLogo({ size = 48 }: { size?: number }) {
@@ -47,62 +47,62 @@ function SentryLogo({ size = 48 }: { size?: number }) {
         fill="currentColor"
       />
     </svg>
-  )
+  );
 }
 
 // Server function that will error
 const badServerFunc = createServerFn({
-  method: 'GET',
+  method: "GET",
 }).handler(async () => {
   return await Sentry.startSpan(
     {
-      name: 'Reading non-existent file',
-      op: 'file.read',
+      name: "Reading non-existent file",
+      op: "file.read",
     },
     async () => {
       try {
-        await fs.readFile('./doesnt-exist', 'utf-8')
-        return true
+        await fs.readFile("./doesnt-exist", "utf-8");
+        return true;
       } catch (error) {
-        Sentry.captureException(error)
-        throw error
+        Sentry.captureException(error);
+        throw error;
       }
     },
-  )
-})
+  );
+});
 
 // Server function that will succeed but be traced
 const goodServerFunc = createServerFn({
-  method: 'GET',
+  method: "GET",
 }).handler(async () => {
   return await Sentry.startSpan(
     {
-      name: 'Successful server operation',
-      op: 'demo.success',
+      name: "Successful server operation",
+      op: "demo.success",
     },
     async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      return { success: true }
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      return { success: true };
     },
-  )
-})
+  );
+});
 
 // 3D Button Component inspired by Sentry wizard
 function SentryButton({
   children,
   onClick,
-  variant = 'primary',
+  variant = "primary",
   disabled = false,
   loading = false,
 }: {
-  children: React.ReactNode
-  onClick: () => void
-  variant?: 'primary' | 'error'
-  disabled?: boolean
-  loading?: boolean
+  children: React.ReactNode;
+  onClick: () => void;
+  variant?: "primary" | "error";
+  disabled?: boolean;
+  loading?: boolean;
 }) {
-  const baseColor = variant === 'error' ? '#E50045' : '#553DB8'
-  const topColor = variant === 'error' ? '#FF1A5C' : '#7553FF'
+  const baseColor = variant === "error" ? "#E50045" : "#553DB8";
+  const topColor = variant === "error" ? "#FF1A5C" : "#7553FF";
 
   return (
     <button
@@ -144,7 +144,7 @@ function SentryButton({
         {children}
       </span>
     </button>
-  )
+  );
 }
 
 // Feature Card Component
@@ -153,9 +153,9 @@ function FeatureCard({
   title,
   description,
 }: {
-  icon: React.ReactNode
-  title: string
-  description: string
+  icon: React.ReactNode;
+  title: string;
+  description: string;
 }) {
   return (
     <div className="bg-[#1C1825] rounded-xl p-4 border border-[#2D2640] hover:border-[#7553FF]/50 transition-all group">
@@ -167,7 +167,7 @@ function FeatureCard({
       </div>
       <p className="text-sm text-[#A49FB5] pl-9">{description}</p>
     </div>
-  )
+  );
 }
 
 // Result Badge Component
@@ -176,22 +176,22 @@ function ResultBadge({
   spanOp,
   onCopy,
 }: {
-  type: 'success' | 'error'
-  spanOp: string
-  onCopy: () => void
+  type: "success" | "error";
+  spanOp: string;
+  onCopy: () => void;
 }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(spanOp)
-    setCopied(true)
-    onCopy()
-    setTimeout(() => setCopied(false), 2000)
-  }
+    navigator.clipboard.writeText(spanOp);
+    setCopied(true);
+    onCopy();
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div className="mt-4 space-y-3">
-      {type === 'error' && (
+      {type === "error" && (
         <div className="flex items-center gap-2 bg-[#E50045]/10 border border-[#E50045]/30 rounded-lg px-4 py-3">
           <svg
             className="w-5 h-5 text-[#FF1A5C]"
@@ -211,7 +211,7 @@ function ResultBadge({
         </div>
       )}
 
-      {type === 'success' && (
+      {type === "success" && (
         <div className="flex items-center gap-2 bg-[#00F261]/10 border border-[#00BF4D]/30 rounded-lg px-4 py-3">
           <svg
             className="w-5 h-5 text-[#00F261]"
@@ -257,7 +257,7 @@ function ResultBadge({
         )}
       </button>
     </div>
-  )
+  );
 }
 
 // Progress Bar Component
@@ -265,107 +265,107 @@ function ProgressBar({ loading }: { loading: boolean }) {
   return (
     <div className="mt-4 flex items-center gap-3">
       <div
-        className={`w-3 h-3 rounded-full transition-all ${loading ? 'bg-[#7553FF] animate-pulse' : 'bg-[#00F261]'}`}
+        className={`w-3 h-3 rounded-full transition-all ${loading ? "bg-[#7553FF] animate-pulse" : "bg-[#00F261]"}`}
       />
       <div className="flex-1 h-2 bg-[#2D2640] rounded-full overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-[#7553FF] to-[#B3A1FF] rounded-full transition-all duration-500"
-          style={{ width: loading ? '60%' : '100%' }}
+          style={{ width: loading ? "60%" : "100%" }}
         />
       </div>
       <span className="text-xs text-[#A49FB5] w-16 text-right">
-        {loading ? 'Running...' : 'Complete'}
+        {loading ? "Running..." : "Complete"}
       </span>
     </div>
-  )
+  );
 }
 
 function RouteComponent() {
-  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({})
+  const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [results, setResults] = useState<
-    Record<string, { type: 'success' | 'error'; spanOp: string }>
-  >({})
+    Record<string, { type: "success" | "error"; spanOp: string }>
+  >({});
 
   const handleClientError = async () => {
-    setIsLoading((prev) => ({ ...prev, clientError: true }))
+    setIsLoading((prev) => ({ ...prev, clientError: true }));
     try {
       await Sentry.startSpan(
-        { name: 'Client Error Flow Demo', op: 'demo.client-error' },
+        { name: "Client Error Flow Demo", op: "demo.client-error" },
         async () => {
-          Sentry.setContext('demo', {
-            feature: 'client-error-demo',
+          Sentry.setContext("demo", {
+            feature: "client-error-demo",
             triggered_at: new Date().toISOString(),
-          })
-          throw new Error('Client-side error demonstration')
+          });
+          throw new Error("Client-side error demonstration");
         },
-      )
+      );
     } catch (error) {
-      Sentry.captureException(error)
+      Sentry.captureException(error);
       setResults((prev) => ({
         ...prev,
-        clientError: { type: 'error', spanOp: 'demo.client-error' },
-      }))
+        clientError: { type: "error", spanOp: "demo.client-error" },
+      }));
     } finally {
-      setIsLoading((prev) => ({ ...prev, clientError: false }))
+      setIsLoading((prev) => ({ ...prev, clientError: false }));
     }
-  }
+  };
 
   const handleServerError = async () => {
-    setIsLoading((prev) => ({ ...prev, serverError: true }))
+    setIsLoading((prev) => ({ ...prev, serverError: true }));
     try {
       await Sentry.startSpan(
-        { name: 'Server Error Flow Demo', op: 'demo.server-error' },
+        { name: "Server Error Flow Demo", op: "demo.server-error" },
         async () => {
-          Sentry.setContext('demo', {
-            feature: 'server-error-demo',
+          Sentry.setContext("demo", {
+            feature: "server-error-demo",
             triggered_at: new Date().toISOString(),
-          })
-          await badServerFunc()
+          });
+          await badServerFunc();
         },
-      )
+      );
     } catch (error) {
-      Sentry.captureException(error)
+      Sentry.captureException(error);
       setResults((prev) => ({
         ...prev,
-        serverError: { type: 'error', spanOp: 'demo.server-error' },
-      }))
+        serverError: { type: "error", spanOp: "demo.server-error" },
+      }));
     } finally {
-      setIsLoading((prev) => ({ ...prev, serverError: false }))
+      setIsLoading((prev) => ({ ...prev, serverError: false }));
     }
-  }
+  };
 
   const handleClientTrace = async () => {
-    setIsLoading((prev) => ({ ...prev, clientTrace: true }))
+    setIsLoading((prev) => ({ ...prev, clientTrace: true }));
     await Sentry.startSpan(
-      { name: 'Client Operation', op: 'demo.client-trace' },
+      { name: "Client Operation", op: "demo.client-trace" },
       async () => {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       },
-    )
+    );
     setResults((prev) => ({
       ...prev,
-      clientTrace: { type: 'success', spanOp: 'demo.client-trace' },
-    }))
-    setIsLoading((prev) => ({ ...prev, clientTrace: false }))
-  }
+      clientTrace: { type: "success", spanOp: "demo.client-trace" },
+    }));
+    setIsLoading((prev) => ({ ...prev, clientTrace: false }));
+  };
 
   const handleServerTrace = async () => {
-    setIsLoading((prev) => ({ ...prev, serverTrace: true }))
+    setIsLoading((prev) => ({ ...prev, serverTrace: true }));
     try {
       await Sentry.startSpan(
-        { name: 'Server Operation', op: 'demo.server-trace' },
+        { name: "Server Operation", op: "demo.server-trace" },
         async () => {
-          await goodServerFunc()
+          await goodServerFunc();
         },
-      )
+      );
       setResults((prev) => ({
         ...prev,
-        serverTrace: { type: 'success', spanOp: 'demo.server-trace' },
-      }))
+        serverTrace: { type: "success", spanOp: "demo.server-trace" },
+      }));
     } finally {
-      setIsLoading((prev) => ({ ...prev, serverTrace: false }))
+      setIsLoading((prev) => ({ ...prev, serverTrace: false }));
     }
-  }
+  };
 
   return (
     <div
@@ -374,7 +374,7 @@ function RouteComponent() {
         fontFamily:
           'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif',
         background:
-          'linear-gradient(180deg, #181423 0%, #1C1825 50%, #181423 100%)',
+          "linear-gradient(180deg, #181423 0%, #1C1825 50%, #181423 100%)",
       }}
     >
       <div className="max-w-5xl mx-auto px-6 py-16">
@@ -395,7 +395,7 @@ function RouteComponent() {
           </div>
           <p className="text-lg text-[#A49FB5] max-w-xl mx-auto leading-relaxed">
             Click the buttons below to trigger errors and traces, then view them
-            in your{' '}
+            in your{" "}
             <a
               href="https://sentry.io"
               target="_blank"
@@ -554,10 +554,10 @@ function RouteComponent() {
         {/* Footer Note */}
         <div className="mt-12 text-center">
           <p className="text-sm text-[#6E6C75]">
-            This page uses{' '}
+            This page uses{" "}
             <code className="bg-[#1C1825] px-2 py-1 rounded text-[#B3A1FF]">
               @sentry/tanstackstart-react
-            </code>{' '}
+            </code>{" "}
             for full-stack error monitoring.
             <br />
             <a
@@ -572,5 +572,5 @@ function RouteComponent() {
         </div>
       </div>
     </div>
-  )
+  );
 }

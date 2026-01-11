@@ -64,8 +64,6 @@ function RouteComponent() {
     // validate: {},
   });
 
-  console.log({ clinicsList });
-
   const onSubmit = async (data: any) => {
     const patient: Patient.T = {
       id: uuidv1(),

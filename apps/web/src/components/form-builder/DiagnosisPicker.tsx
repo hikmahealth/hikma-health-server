@@ -2,9 +2,9 @@ import { useState } from "react";
 import icd11 from "@/data/icd11-xs.js"; // Importing the extra small ICD10 JSON file
 import EventForm from "@/models/event-form";
 import { MultiSelect } from "@/components/multi-select";
-import { FormLabel, FormDescription } from "../ui/form";
+import { FormLabel, FormDescription } from "@hh/ui/components/form";
 import Select from "react-select";
-import { Label } from "../ui/label";
+import { Label } from "@hh/ui/components/label";
 import { cn } from "@/lib/utils";
 import AsyncSelect from "react-select/async";
 import { stringSimilarity } from "@/lib/utils";
@@ -50,7 +50,7 @@ export function DiagnosisSelect({
 
   const loadOptions = (
     inputValue: string,
-    callback: (options: { value: string; label: string }[]) => void
+    callback: (options: { value: string; label: string }[]) => void,
   ) => {
     callback(
       miniSearch
@@ -60,7 +60,7 @@ export function DiagnosisSelect({
         .map((item) => ({
           value: `${item.desc} (${item.code})`,
           label: `${item.desc} (${item.code})`,
-        }))
+        })),
     );
   };
 

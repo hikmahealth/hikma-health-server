@@ -2,25 +2,16 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Button } from "@hh/ui/components/button";
 import { Input } from "@hh/ui/components/input";
 import { Label } from "@hh/ui/components/label";
-import { useState } from "react";
-import User from "@/models/user";
-import { env } from "@/env";
+import { useCallback, useState } from "react";
+import { checkIsTokenValid, signIn } from "@/platform/functions/authstate";
 
 // import { Pool } from "pg"
 // import Clinic from '@/models/clinic'
 
 export const Route = createFileRoute("/")({
-  beforeLoad: async ({ location }) => {
-    // let clinic = Clinic.Table.name;
-    const isValidToken = await fetch(`/api/auth/is-valid-token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await isValidToken.json();
-    if (data.isValid) {
+  beforeLoad: async () => {
+    const { isValid } = await checkIsTokenValid();
+    if (isValid) {
       throw redirect({ to: "/app" });
     }
   },
@@ -35,31 +26,20 @@ function Login() {
 
   const navigate = Route.useNavigate();
 
-  const handleLogin = async () => {
-    console.log({ email, password });
+  const handleLogin = useCallback(() => {
     setLoadingAuth(true);
-    const res = await fetch(`/api/auth/sign-in`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email.toLowerCase(),
-        password,
-      }),
-    });
-    const data: { user: User.T; token: string } | { error: string } =
-      await res.json();
-    console.log({ data });
-    if ("error" in data) {
-      setLoadingAuth(false);
-      console.error(data);
-      alert(data.error);
-    } else {
-      navigate({ to: "/app" });
-    }
-    setLoadingAuth(false);
-  };
+    signIn({ data: { email, password } })
+      .then(() => {
+        navigate({ to: "/app" });
+      })
+      .catch((err) => {
+        console.error(err);
+        alert(err.message);
+      })
+      .finally(() => {
+        setLoadingAuth(false);
+      });
+  }, [email, password]);
 
   return (
     <div className="container mx-auto flex flex-col items-center justify-center min-h-screen p-4">
