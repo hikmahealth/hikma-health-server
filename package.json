@@ -20,6 +20,13 @@
   "pnpm": {
     "patchedDependencies": {
       "react-native-date-picker": ".patches/react-native-date-picker+5.0.13.patch"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "@swc/core",
+      "bcrypt",
+      "esbuild",
+      "unrs-resolver"
+    ]
   }
 }
