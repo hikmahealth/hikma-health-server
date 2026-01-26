@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import PatientRegistrationForm from "@/models/patient-registration-form";
-import { Option } from "effect";
 
 export const getPatientRegistrationForm = createServerFn({
   method: "GET",

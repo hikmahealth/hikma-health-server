@@ -44,6 +44,7 @@ import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/pres
 import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-forms.edit.$'
 import { Route as AppClinicsEditSplatRouteImport } from './routes/app/clinics.edit.$'
 import { Route as AppAppointmentsEditSplatRouteImport } from './routes/app/appointments.edit.$'
+import { Route as AppOldCopyPatientsCustomizeRegistrationFormRouteImport } from './routes/app/old.copy.patients.customize-registration-form'
 import { Route as AppInventoryDrugCatalogueEditSplatRouteImport } from './routes/app/inventory/drug-catalogue.edit.$'
 import { Route as AppInventoryClinicInventoryDrugEditSplatRouteImport } from './routes/app/inventory/clinic-inventory.drug.edit.$'
 
@@ -230,6 +231,12 @@ const AppAppointmentsEditSplatRoute =
     path: '/appointments/edit/$',
     getParentRoute: () => AppRoute,
   } as any)
+const AppOldCopyPatientsCustomizeRegistrationFormRoute =
+  AppOldCopyPatientsCustomizeRegistrationFormRouteImport.update({
+    id: '/old/copy/patients/customize-registration-form',
+    path: '/old/copy/patients/customize-registration-form',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppInventoryDrugCatalogueEditSplatRoute =
   AppInventoryDrugCatalogueEditSplatRouteImport.update({
     id: '/inventory/drug-catalogue/edit/$',
@@ -280,6 +287,7 @@ export interface FileRoutesByFullPath {
   '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
+  '/app/old/copy/patients/customize-registration-form': typeof AppOldCopyPatientsCustomizeRegistrationFormRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesByTo {
@@ -318,6 +326,7 @@ export interface FileRoutesByTo {
   '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$': typeof AppPatientsSplatIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
+  '/app/old/copy/patients/customize-registration-form': typeof AppOldCopyPatientsCustomizeRegistrationFormRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesById {
@@ -358,6 +367,7 @@ export interface FileRoutesById {
   '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
   '/app/patients/$/': typeof AppPatientsSplatIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
+  '/app/old/copy/patients/customize-registration-form': typeof AppOldCopyPatientsCustomizeRegistrationFormRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRouteTypes {
@@ -399,6 +409,7 @@ export interface FileRouteTypes {
     | '/app/inventory/drug-catalogue'
     | '/app/patients/$'
     | '/app/inventory/drug-catalogue/edit/$'
+    | '/app/old/copy/patients/customize-registration-form'
     | '/app/inventory/clinic-inventory/drug/edit/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/app/inventory/drug-catalogue'
     | '/app/patients/$'
     | '/app/inventory/drug-catalogue/edit/$'
+    | '/app/old/copy/patients/customize-registration-form'
     | '/app/inventory/clinic-inventory/drug/edit/$'
   id:
     | '__root__'
@@ -476,6 +488,7 @@ export interface FileRouteTypes {
     | '/app/inventory/drug-catalogue/'
     | '/app/patients/$/'
     | '/app/inventory/drug-catalogue/edit/$'
+    | '/app/old/copy/patients/customize-registration-form'
     | '/app/inventory/clinic-inventory/drug/edit/$'
   fileRoutesById: FileRoutesById
 }
@@ -742,6 +755,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppointmentsEditSplatRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/old/copy/patients/customize-registration-form': {
+      id: '/app/old/copy/patients/customize-registration-form'
+      path: '/old/copy/patients/customize-registration-form'
+      fullPath: '/app/old/copy/patients/customize-registration-form'
+      preLoaderRoute: typeof AppOldCopyPatientsCustomizeRegistrationFormRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/inventory/drug-catalogue/edit/$': {
       id: '/app/inventory/drug-catalogue/edit/$'
       path: '/inventory/drug-catalogue/edit/$'
@@ -783,6 +803,7 @@ interface AppRouteChildren {
   AppInventoryDrugCatalogueIndexRoute: typeof AppInventoryDrugCatalogueIndexRoute
   AppPatientsSplatIndexRoute: typeof AppPatientsSplatIndexRoute
   AppInventoryDrugCatalogueEditSplatRoute: typeof AppInventoryDrugCatalogueEditSplatRoute
+  AppOldCopyPatientsCustomizeRegistrationFormRoute: typeof AppOldCopyPatientsCustomizeRegistrationFormRoute
   AppInventoryClinicInventoryDrugEditSplatRoute: typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 
@@ -812,6 +833,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppPatientsSplatIndexRoute: AppPatientsSplatIndexRoute,
   AppInventoryDrugCatalogueEditSplatRoute:
     AppInventoryDrugCatalogueEditSplatRoute,
+  AppOldCopyPatientsCustomizeRegistrationFormRoute:
+    AppOldCopyPatientsCustomizeRegistrationFormRoute,
   AppInventoryClinicInventoryDrugEditSplatRoute:
     AppInventoryClinicInventoryDrugEditSplatRoute,
 }

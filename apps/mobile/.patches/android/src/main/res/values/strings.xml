@@ -1,0 +1,13 @@
+<resources>
+    <string name="overlay">Date Picker Overlay</string>
+    <string name="year_description">Select Year</string>
+    <string name="month_description">Select Month</string>
+    <string name="date_description">Select Date</string>
+    <string name="day_description">Select Day</string>
+    <string name="hour_description">Select Hour</string>
+    <string name="minutes_description">Select Minutes</string>
+    <string name="ampm_description">Select AM/PM</string>
+    <string name="time_tag">Time is</string>
+    <string name="hour_tag">Hour :</string>
+    <string name="minutes_tag">Minutes </string>
+</resources>

@@ -4,11 +4,9 @@ export const langauges = {
   es: "Spanish",
 };
 
-export type DefaultLanguages = typeof langauges;
-
-export type TranslationObject = DefaultLanguages & {
-  [lang: string]: string;
-};
+export const SUPPORTED_LANGUAGES = Object.keys(langauges) as Array<
+  keyof typeof langauges
+>;
 
 export type LanguageKey = string;
 
@@ -39,13 +37,15 @@ export function friendlyLang(language: LanguageKey): string {
  * Given a translation object and a language key to, return that language label, or default to the english version.
  * If the english version does not exist, return the first available translation.
  *
- * @param {TranslationObject} translations
- * @param {string} language
  * @return {string} translation
  */
-export function getTranslation(
-  translations: TranslationObject,
-  language: string,
+export function getTranslation<
+  TranslationMap extends Record<string, string>,
+  TranslationKey extends keyof TranslationMap = keyof TranslationMap,
+>(
+  translations: TranslationMap,
+  language: TranslationKey,
+  fallbackLanugage: string = "en",
 ): string {
   const translationKeys = Object.keys(translations);
 
@@ -55,8 +55,8 @@ export function getTranslation(
   }
   if (language in translations) {
     return translations[language];
-  } else if (translations.en) {
-    return translations.en;
+  } else if (translations[fallbackLanugage]) {
+    return translations[fallbackLanugage];
   } else {
     return translations[translationKeys[0]];
   }
