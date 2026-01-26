@@ -2,7 +2,10 @@ import * as React from "react";
 import { cn } from "@hh/ui/lib/utils";
 import { Label } from "@hh/ui/components/label";
 
-export interface InputProps extends React.ComponentProps<"input"> {
+export interface InputProps extends Omit<
+  React.ComponentProps<"input">,
+  "size"
+> {
   // Size variants
   size?: "sm" | "md" | "lg";
   // Visual variants
@@ -66,6 +69,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       full: "rounded-full",
     };
 
+    //@ts-ignore
     const hasError = error && error !== false;
     const inputId =
       props.id || `input-${Math.random().toString(36).substr(2, 9)}`;
