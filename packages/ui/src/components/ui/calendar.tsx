@@ -156,7 +156,7 @@ function Calendar({
         DayButton: CalendarDayButton,
         WeekNumber: ({ children, ...props }) => {
           return (
-            //@ts-expect-error
+            //@ts-ignore
             <td {...props}>
               <div className="flex size-(--cell-size) items-center justify-center text-center">
                 {children}
@@ -185,7 +185,7 @@ function CalendarDayButton({
   }, [modifiers.focused]);
 
   return (
-    //@ts-expect-error
+    //@ts-ignore
     <Button
       ref={ref}
       variant="ghost"
