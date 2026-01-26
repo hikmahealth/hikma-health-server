@@ -2,7 +2,7 @@
   "name": "hhmammoth",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
+    "build:web": "turbo run build --filter=web",
     "dev:web": "turbo dev --filter='./packages/*' --filter=web",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
