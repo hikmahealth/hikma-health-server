@@ -1,0 +1,23 @@
+{
+  "name": "aiproxy",
+  "type": "module",
+  "scripts": {
+    "dev": "dotenv -e ../../.env -e .env -- tsx watch src/process.ts",
+    "build": "tsc",
+    "start:http": "node dist/server.js",
+    "start:process": "node dist/process.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "@hono/zod-validator": "^0.7.6",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "hono": "^4.11.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.17",
+    "dotenv-cli": "^11.0.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.8.3"
+  }
+}
