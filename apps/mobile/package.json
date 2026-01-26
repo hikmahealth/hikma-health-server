@@ -15,7 +15,6 @@
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
     "align-deps": "npx expo install --fix",
-    "postinstall": "./patch-packages.sh",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:maestro": "maestro test -e MAESTRO_APP_ID=com.hikmahealth .maestro/flows @.env.maestro",

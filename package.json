@@ -16,5 +16,10 @@
   "packageManager": "pnpm@10.28.1",
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "react-native-date-picker": ".patches/react-native-date-picker+5.0.13.patch"
+    }
   }
 }
