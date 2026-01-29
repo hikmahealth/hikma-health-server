@@ -5,14 +5,19 @@
     "dev": "dotenv -e ../../.env -e .env -- tsx watch src/process.ts",
     "build": "tsc",
     "start:http": "node dist/server.js",
-    "start:process": "node dist/process.js"
+    "start:process": "dotenv -e ../../.env -e .env -- node dist/process.js"
   },
   "dependencies": {
+    "database": "workspace:*",
+    "@google/genai": "^1.38.0",
     "@hono/node-server": "^1.19.9",
     "@hono/zod-validator": "^0.7.6",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "hono": "^4.11.5",
-    "zod": "^4.3.6"
+    "kysely": "^0.28.9",
+    "pg": "^8.16.3",
+    "zod": "^4.3.6",
+    "zod-to-json-schema": "^3.25.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.17",

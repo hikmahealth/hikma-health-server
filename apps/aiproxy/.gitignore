@@ -13,6 +13,7 @@ node_modules/
 
 # env
 .env
+.env.*
 .env.production
 
 # logs
@@ -26,3 +27,5 @@ lerna-debug.log*
 
 # misc
 .DS_Store
+
+.examples
