@@ -38,3 +38,6 @@ yarn-error.log*
 *.pem
 
 old.*
+
+.env.*
+.examples
