@@ -19,6 +19,7 @@ async function main() {
     reportFilePath,
     JSON.stringify(reportTemplateSchema, null, 2),
   );
+
   server.registerResource(
     "report-template",
     reportFilePath,

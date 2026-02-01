@@ -1,0 +1,138 @@
+{
+  "type": "object",
+  "properties": {
+    "formKey": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fromDate": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "format": "date-time"
+        }
+      ],
+      "description": "represent the start date, used in filtering the records. date is inclusive and uses RFC3339"
+    },
+    "toDate": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "format": "date-time"
+        }
+      ],
+      "description": "represent the end date, used in filtering the records. date is inclusive and uses RFC3339"
+    },
+    "eventType": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "lhs": {
+                "type": "string",
+                "enum": [
+                  "inputType"
+                ]
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "="
+                ]
+              },
+              "rhs": {
+                "type": "string",
+                "enum": [
+                  "free-text",
+                  "number",
+                  "date",
+                  "select"
+                ]
+              }
+            },
+            "required": [
+              "lhs",
+              "op",
+              "rhs"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lhs": {
+                "type": "string",
+                "enum": [
+                  "fieldId",
+                  "name"
+                ]
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "="
+                ]
+              },
+              "rhs": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "lhs",
+              "op",
+              "rhs"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lhs": {
+                "type": "string",
+                "enum": [
+                  "value"
+                ]
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "=",
+                  ">=",
+                  "<=",
+                  ">",
+                  "<",
+                  "<>",
+                  "in",
+                  "@>"
+                ]
+              },
+              "rhs": {}
+            },
+            "required": [
+              "lhs",
+              "op"
+            ]
+          }
+        ]
+      },
+      "description": "AND joined expressions that are used in describing the data to filter"
+    }
+  },
+  "required": [
+    "conditions"
+  ]
+}

@@ -13,7 +13,7 @@ const schemaLineChart = z
   )
   .describe("Array of tuples of numbers to plot the graph");
 
-const schemaBlock = z.discriminatedUnion("type", [
+const schemaBlock = z.union([
   z.object({
     type: z.literal("text"),
     value: z

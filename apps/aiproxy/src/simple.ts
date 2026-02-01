@@ -69,7 +69,7 @@ app.post(
 
     // making the first API request and telling the model what we have
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: "gemini-2.5-flash",
       contents: prompt, // NOTE: might want to use this to include meta information like: Make sure the date string are RFC3339 formats only
       config: {
         tools: [

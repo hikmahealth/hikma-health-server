@@ -201,10 +201,10 @@ export const abcTools = {
       let subwhereclause = ["is_deleted = false"];
       if (input.formKey && input.formKey.length > 0) {
         if (input.formKey.length == 1) {
-          subwhereclause.push(`e.form_id = '${input.formKey[0]}'::uuid`);
+          subwhereclause.push(`ef.id = '${input.formKey[0]}'::uuid`);
         } else {
           subwhereclause.push(
-            `e.form_id = ANY(ARRAY[${input.formKey.map((d) => `'${d}'::uuid`).join(", ")}])`,
+            `ef.id = ANY(ARRAY[${input.formKey.map((d) => `'${d}'::uuid`).join(", ")}])`,
           );
         }
       }
@@ -212,17 +212,18 @@ export const abcTools = {
       if (input.eventType && input.eventType.length > 0) {
         if (input.eventType.length == 1) {
           subwhereclause.push(
-            `LOWER(e.event_type) = '${input.eventType[0].toLowerCase()}'::text`,
+            `LOWER(ef.event_type) = '${input.eventType[0].toLowerCase()}'::text`,
           );
         } else {
           subwhereclause.push(
-            `LOWER(e.event_type) = ANY(ARRAY[${input.eventType.map((d) => `'${d.toLowerCase()}'::text`).join(", ")}])`,
+            `LOWER(ef.event_type) = ANY(ARRAY[${input.eventType.map((d) => `'${d.toLowerCase()}'::text`).join(", ")}])`,
           );
         }
       }
+
       if (input.name) {
         subwhereclause.push(
-          `LOWER(ef.id) = ANY(['${input.name.map((s) => s.trim().toLowerCase())}'])`,
+          `LOWER(ef.name) = ANY([${input.name.map((s) => `'${s.trim().toLowerCase()}'`)}])`,
         );
       }
 
@@ -453,7 +454,7 @@ export const abcTools = {
           );
         } else {
           subwhereclause.push(
-            `LOWER(e.event_type) = ANY(ARRAY[${input.eventType.map((d) => `'${d.toLowerCase()}'::text`).join(", ")}])`,
+            `LOWER(e.event_type) = ANY(ARRAY[${input.eventType.map((d) => `'${d.toLowerCase()}`).join(", ")}])`,
           );
         }
       }
@@ -509,26 +510,63 @@ export const abcTools = {
   ),
 };
 
+import * as fs from "fs";
+import path from "path";
+
 const tools: FunctionDeclaration[] = Object.entries(abcTools).map(
   ([id, o]: [string, any]) => {
     const v: FunctionDeclaration = {
-      name: id,
+      name: id as string,
       description: o.description,
     };
 
     if (o.input) {
-      v["parametersJsonSchema"] = zodToJsonSchema(z.object(o.input));
+      const inputSchema = zodToJsonSchema(z.object(o.input), {
+        $refStrategy: "none",
+        target: "openApi3",
+        allowedAdditionalProperties: undefined,
+        rejectedAdditionalProperties: undefined,
+      });
+
+      const p = path.join(
+        import.meta.dirname,
+        `../../resources/tool.${id}.input.schema.json`,
+      );
+      fs.writeFile(p, JSON.stringify(inputSchema, null, 2), (err) => {
+        if (err) console.error(err);
+      });
+
+      // @ts-ignore
+      v["parametersJsonSchema"] = inputSchema;
     }
 
     if (o.output) {
-      v["responseJsonSchema"] = zodToJsonSchema(z.object(o.output));
+      const outputSchema = zodToJsonSchema(z.object(o.output), {
+        $refStrategy: "none",
+        target: "openApi3",
+        allowedAdditionalProperties: undefined,
+        rejectedAdditionalProperties: undefined,
+      });
+
+      const p = path.join(
+        import.meta.dirname,
+        `../../resources/tool.${id}.output.schema.json`,
+      );
+      fs.writeFile(p, JSON.stringify(outputSchema, null, 2), (err) => {
+        if (err) console.error(err);
+      });
+
+      // @ts-ignore
+      v["responseJsonSchema"] = outputSchema;
     }
 
     return v;
   },
 );
 
-export function getTool<T extends string>(name: T) {
+export function getTool<T extends string>(
+  name: T,
+): null | Values<typeof abcTools> {
   //@ts-ignore
   const fn = abcTools[name];
   if (!fn) {
@@ -540,3 +578,5 @@ export function getTool<T extends string>(name: T) {
 
 export type ToolName = (typeof tools)[number]["name"];
 export default tools;
+
+type Values<T> = T extends Record<string, infer V> ? V : never;

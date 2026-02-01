@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "properties": {
+    "size": {
+      "type": "number",
+      "description": "number of patients that match the filter"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "formKey": {
+            "type": "string"
+          },
+          "fieldId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "inputType": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "formKey",
+          "fieldId",
+          "name",
+          "inputType"
+        ]
+      }
+    }
+  },
+  "required": [
+    "size",
+    "fields"
+  ]
+}

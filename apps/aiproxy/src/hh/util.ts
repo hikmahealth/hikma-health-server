@@ -1,30 +1,38 @@
 import z from "zod/v3";
 
-export const schemaFilterConditions = z.array(
-  z.union([
-    z.tuple([
-      z.enum([
-        "fieldId",
-        "name",
-        "inputType", // please note. this is only used to filter the query. might change later
-      ]),
-      z.literal("="),
-      z.string(),
+export const schemaFilterConditions = z
+  .array(
+    z.union([
+      z.object({
+        lhs: z.literal("inputType"),
+        op: z.literal("="),
+        rhs: z.enum(["free-text", "number", "date", "select"]),
+      }),
+      z.object({
+        lhs: z.enum([
+          "fieldId",
+          "name", // please note. this is only used to filter the query. might change later
+        ]),
+        op: z.literal("="),
+        rhs: z.string(),
+      }),
+      z.object({
+        lhs: z.literal("value"),
+        op: z.enum(["=", ">=", "<=", ">", "<", "<>", "in", "@>"]),
+        rhs: z.any(),
+      }),
     ]),
-    z.tuple([
-      z.literal("value"),
-      z.enum(["=", ">=", "<=", ">", "<", "<>", "in", "@>"]),
-      z.any(),
-    ]),
-  ]),
-);
+  )
+  .describe(
+    "AND joined expressions that are used in describing the data to filter",
+  );
 
 export function convertConditionToWhereClause(
   conditions: z.infer<typeof schemaFilterConditions>,
 ) {
   let andclauses = [];
   for (let cond of conditions) {
-    const [lhs, op, rhs] = cond;
+    const { lhs, op, rhs } = cond;
 
     if (lhs === "value") {
       let _lhs = `k.elem ->> '${lhs}'`;

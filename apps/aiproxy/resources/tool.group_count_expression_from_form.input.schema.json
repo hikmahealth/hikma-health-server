@@ -1,0 +1,247 @@
+{
+  "type": "object",
+  "properties": {
+    "formKey": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fromDate": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "format": "date-time"
+        }
+      ]
+    },
+    "toDate": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string",
+          "format": "date-time"
+        }
+      ]
+    },
+    "eventType": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "this is the key that's returned with the corresponding count value in the resulting record. preferably format is in snake_case"
+          },
+          "filter": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "lhs": {
+                      "type": "string",
+                      "enum": [
+                        "inputType"
+                      ]
+                    },
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "="
+                      ]
+                    },
+                    "rhs": {
+                      "type": "string",
+                      "enum": [
+                        "free-text",
+                        "number",
+                        "date",
+                        "select"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "lhs",
+                    "op",
+                    "rhs"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "lhs": {
+                      "type": "string",
+                      "enum": [
+                        "fieldId",
+                        "name"
+                      ]
+                    },
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "="
+                      ]
+                    },
+                    "rhs": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "lhs",
+                    "op",
+                    "rhs"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "lhs": {
+                      "type": "string",
+                      "enum": [
+                        "value"
+                      ]
+                    },
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "=",
+                        ">=",
+                        "<=",
+                        ">",
+                        "<",
+                        "<>",
+                        "in",
+                        "@>"
+                      ]
+                    },
+                    "rhs": {}
+                  },
+                  "required": [
+                    "lhs",
+                    "op"
+                  ]
+                }
+              ]
+            },
+            "minItems": 1,
+            "description": "AND joined expressions that are used in describing the data to filter"
+          }
+        },
+        "required": [
+          "name",
+          "filter"
+        ]
+      }
+    },
+    "conditions": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "lhs": {
+                "type": "string",
+                "enum": [
+                  "inputType"
+                ]
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "="
+                ]
+              },
+              "rhs": {
+                "type": "string",
+                "enum": [
+                  "free-text",
+                  "number",
+                  "date",
+                  "select"
+                ]
+              }
+            },
+            "required": [
+              "lhs",
+              "op",
+              "rhs"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lhs": {
+                "type": "string",
+                "enum": [
+                  "fieldId",
+                  "name"
+                ]
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "="
+                ]
+              },
+              "rhs": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "lhs",
+              "op",
+              "rhs"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lhs": {
+                "type": "string",
+                "enum": [
+                  "value"
+                ]
+              },
+              "op": {
+                "type": "string",
+                "enum": [
+                  "=",
+                  ">=",
+                  "<=",
+                  ">",
+                  "<",
+                  "<>",
+                  "in",
+                  "@>"
+                ]
+              },
+              "rhs": {}
+            },
+            "required": [
+              "lhs",
+              "op"
+            ]
+          }
+        ]
+      },
+      "description": "AND joined expressions that are used in describing the data to filter"
+    }
+  },
+  "required": [
+    "groups"
+  ]
+}

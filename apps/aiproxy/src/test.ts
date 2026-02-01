@@ -7,8 +7,8 @@ async function main() {
     input: {
       formKey: ["b972d000-a3db-11f0-82bb-816e1f4626f7"],
       conditions: [
-        ["name", "=", "Medicine Input"],
-        ["value", "@>", { dose: 100 }],
+        { lhs: "name", op: "=", rhs: "Medicine Input" },
+        { lhs: "value", op: "@>", rhs: { dose: 100 } },
       ],
     },
   });
@@ -22,8 +22,8 @@ async function main() {
         {
           name: "patient_gave_consent",
           filter: [
-            ["name", "=", "Patient has provided consent"],
-            ["value", "=", true],
+            { lhs: "name", op: "=", rhs: "Patient has provided consent" },
+            { lhs: "value", op: "=", rhs: true },
           ],
         },
         // {

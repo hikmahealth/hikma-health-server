@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "groups": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "groups"
+  ]
+}
