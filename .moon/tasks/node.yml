@@ -1,0 +1,27 @@
+tasks:
+  build:
+    command: pnpm run build
+    deps:
+      - ^:build
+    inputs:
+      - glob: ".env*"
+        cache: true
+    outputs:
+      - ".next/**/*"
+      - "!.next/cache/**/*"
+      - dist/**/*
+  check-types:
+    command: pnpm run check-types
+    deps:
+      - ^:check-types
+  dev:
+    command: pnpm run dev
+    options:
+      cache: false
+    deps:
+      - ^:dev
+    preset: server
+  lint:
+    command: pnpm run lint
+    deps:
+      - ^:lint

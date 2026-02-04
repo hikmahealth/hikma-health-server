@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "tsc && tsc-alias",
+    "dev": "concurrently \"tsc --watch\" \"tsc-alias -w\"",
     "check-types": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0"
   },
@@ -20,6 +21,7 @@
     "@types/node": "^22.15.3",
     "@types/react": "19.2.3",
     "@types/react-dom": "19.2.3",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.1",
     "lucide-react": "^0.544.0",
     "react": "19.2.3",

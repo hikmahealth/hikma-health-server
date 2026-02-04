@@ -1,0 +1,8 @@
+$schema: "./cache/schemas/workspace.json"
+projects:
+  - apps/*
+  - packages/*
+  - database
+vcs:
+  defaultBranch: main
+  manager: git

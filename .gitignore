@@ -41,3 +41,7 @@ old.*
 
 .env.*
 .examples
+
+# moon
+.moon/cache
+.moon/docker
