@@ -2,24 +2,32 @@
   "name": "hhmammoth",
   "private": true,
   "scripts": {
-    "build": "turbo run build",
+    "build:web": "turbo run build --filter=web",
     "dev:web": "turbo dev --filter='./packages/*' --filter=web",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "@moonrepo/cli": "^1.41.7",
     "prettier": "^3.7.4",
     "turbo": "^2.7.1",
     "typescript": "5.9.2"
   },
   "packageManager": "pnpm@10.28.1",
   "engines": {
-    "node": ">=18"
+    "node": "~22.20.0"
   },
   "pnpm": {
     "patchedDependencies": {
       "react-native-date-picker": ".patches/react-native-date-picker+5.0.13.patch"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "@swc/core",
+      "bcrypt",
+      "esbuild",
+      "unrs-resolver"
+    ]
   }
 }

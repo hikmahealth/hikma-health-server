@@ -38,3 +38,10 @@ yarn-error.log*
 *.pem
 
 old.*
+
+.env.*
+.examples
+
+# moon
+.moon/cache
+.moon/docker

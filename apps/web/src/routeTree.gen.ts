@@ -270,22 +270,22 @@ export interface FileRoutesByFullPath {
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/app/appointments': typeof AppAppointmentsIndexRoute
-  '/app/clinics': typeof AppClinicsIndexRoute
-  '/app/event-forms': typeof AppEventFormsIndexRoute
-  '/app/patients': typeof AppPatientsIndexRoute
-  '/app/prescriptions': typeof AppPrescriptionsIndexRoute
-  '/app/users': typeof AppUsersIndexRoute
+  '/app/appointments/': typeof AppAppointmentsIndexRoute
+  '/app/clinics/': typeof AppClinicsIndexRoute
+  '/app/event-forms/': typeof AppEventFormsIndexRoute
+  '/app/patients/': typeof AppPatientsIndexRoute
+  '/app/prescriptions/': typeof AppPrescriptionsIndexRoute
+  '/app/users/': typeof AppUsersIndexRoute
   '/app/appointments/edit/$': typeof AppAppointmentsEditSplatRoute
   '/app/clinics/edit/$': typeof AppClinicsEditSplatRoute
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
-  '/app/clinics/$': typeof AppClinicsSplatIndexRoute
-  '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
-  '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
-  '/app/patients/$': typeof AppPatientsSplatIndexRoute
+  '/app/clinics/$/': typeof AppClinicsSplatIndexRoute
+  '/app/inventory/clinic-inventory/': typeof AppInventoryClinicInventoryIndexRoute
+  '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
+  '/app/patients/$/': typeof AppPatientsSplatIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
   '/app/old/copy/patients/customize-registration-form': typeof AppOldCopyPatientsCustomizeRegistrationFormRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
@@ -392,22 +392,22 @@ export interface FileRouteTypes {
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
-    | '/app/appointments'
-    | '/app/clinics'
-    | '/app/event-forms'
-    | '/app/patients'
-    | '/app/prescriptions'
-    | '/app/users'
+    | '/app/appointments/'
+    | '/app/clinics/'
+    | '/app/event-forms/'
+    | '/app/patients/'
+    | '/app/prescriptions/'
+    | '/app/users/'
     | '/app/appointments/edit/$'
     | '/app/clinics/edit/$'
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
-    | '/app/clinics/$'
-    | '/app/inventory/clinic-inventory'
-    | '/app/inventory/drug-catalogue'
-    | '/app/patients/$'
+    | '/app/clinics/$/'
+    | '/app/inventory/clinic-inventory/'
+    | '/app/inventory/drug-catalogue/'
+    | '/app/patients/$/'
     | '/app/inventory/drug-catalogue/edit/$'
     | '/app/old/copy/patients/customize-registration-form'
     | '/app/inventory/clinic-inventory/drug/edit/$'
@@ -555,42 +555,42 @@ declare module '@tanstack/react-router' {
     '/app/users/': {
       id: '/app/users/'
       path: '/users'
-      fullPath: '/app/users'
+      fullPath: '/app/users/'
       preLoaderRoute: typeof AppUsersIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/prescriptions/': {
       id: '/app/prescriptions/'
       path: '/prescriptions'
-      fullPath: '/app/prescriptions'
+      fullPath: '/app/prescriptions/'
       preLoaderRoute: typeof AppPrescriptionsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/patients/': {
       id: '/app/patients/'
       path: '/patients'
-      fullPath: '/app/patients'
+      fullPath: '/app/patients/'
       preLoaderRoute: typeof AppPatientsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/event-forms/': {
       id: '/app/event-forms/'
       path: '/event-forms'
-      fullPath: '/app/event-forms'
+      fullPath: '/app/event-forms/'
       preLoaderRoute: typeof AppEventFormsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/clinics/': {
       id: '/app/clinics/'
       path: '/clinics'
-      fullPath: '/app/clinics'
+      fullPath: '/app/clinics/'
       preLoaderRoute: typeof AppClinicsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/appointments/': {
       id: '/app/appointments/'
       path: '/appointments'
-      fullPath: '/app/appointments'
+      fullPath: '/app/appointments/'
       preLoaderRoute: typeof AppAppointmentsIndexRouteImport
       parentRoute: typeof AppRoute
     }
@@ -688,28 +688,28 @@ declare module '@tanstack/react-router' {
     '/app/patients/$/': {
       id: '/app/patients/$/'
       path: '/patients/$'
-      fullPath: '/app/patients/$'
+      fullPath: '/app/patients/$/'
       preLoaderRoute: typeof AppPatientsSplatIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/inventory/drug-catalogue/': {
       id: '/app/inventory/drug-catalogue/'
       path: '/inventory/drug-catalogue'
-      fullPath: '/app/inventory/drug-catalogue'
+      fullPath: '/app/inventory/drug-catalogue/'
       preLoaderRoute: typeof AppInventoryDrugCatalogueIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/inventory/clinic-inventory/': {
       id: '/app/inventory/clinic-inventory/'
       path: '/inventory/clinic-inventory'
-      fullPath: '/app/inventory/clinic-inventory'
+      fullPath: '/app/inventory/clinic-inventory/'
       preLoaderRoute: typeof AppInventoryClinicInventoryIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/clinics/$/': {
       id: '/app/clinics/$/'
       path: '/clinics/$'
-      fullPath: '/app/clinics/$'
+      fullPath: '/app/clinics/$/'
       preLoaderRoute: typeof AppClinicsSplatIndexRouteImport
       parentRoute: typeof AppRoute
     }

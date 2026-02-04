@@ -14,6 +14,7 @@ export default defineConfig({
       exclude: [
         "**/node_modules/**",
         "**/test/**",
+        "**/dist/**",
         "**/src/components/ui/**", // UI components from shadcn
       ],
     },

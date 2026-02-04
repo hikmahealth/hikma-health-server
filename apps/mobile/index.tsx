@@ -13,6 +13,7 @@ if (LaunchArguments.value().isE2E) {
 const sentryDsnDev = process.env.EXPO_PUBLIC_SENTRY_DSN_DEV
 const sentryDsnProd = process.env.EXPO_PUBLIC_SENTRY_DSN
 
+console.log("something is here")
 Sentry.init({
   dsn: __DEV__ ? sentryDsnDev : sentryDsnProd,
   // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.

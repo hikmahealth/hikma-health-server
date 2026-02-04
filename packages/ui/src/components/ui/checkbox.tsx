@@ -89,6 +89,7 @@ const Checkbox = React.forwardRef<
       full: "rounded-full",
     };
 
+    //@ts-ignore
     const hasError = error && error !== false;
     const checkboxId =
       props.id || `checkbox-${Math.random().toString(36).substr(2, 9)}`;
