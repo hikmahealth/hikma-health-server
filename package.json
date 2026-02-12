@@ -2,11 +2,8 @@
   "name": "hhmammoth",
   "private": true,
   "scripts": {
-    "build:web": "turbo run build --filter=web",
-    "dev:web": "turbo dev --filter='./packages/*' --filter=web",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "build:web": "moon web:build --dependents",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
     "@moonrepo/cli": "^1.41.7",
