@@ -1,0 +1,9 @@
+dependsOn:
+  - id: typescript-config
+    scope: peer
+  - id: eslint-config
+    scope: peer
+tasks:
+  build:
+    outputs:
+      - dist/**/*

@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build:web": "moon web:build --dependents",
+    "start:web": "moon web:start",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "devDependencies": {
@@ -13,11 +14,12 @@
   },
   "packageManager": "pnpm@10.28.1",
   "engines": {
-    "node": "~22.20.0"
+    "node": ">=22.20.0"
   },
   "pnpm": {
+    "allowUnusedPatches": true,
     "patchedDependencies": {
-      "react-native-date-picker": ".patches/react-native-date-picker+5.0.13.patch"
+      "react-native-date-picker@5.0.13": ".patches/react-native-date-picker+5.0.13.patch"
     },
     "onlyBuiltDependencies": [
       "@sentry/cli",

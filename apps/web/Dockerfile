@@ -1,26 +1,17 @@
-#### BASE STAGE
-#### Installs moon
-#
-FROM node:22.20.0-slim AS base
-# RUN apk add --no-cache libc6-compat
-# RUN apk update
+FROM node:22-alpine3.22 as base
+
+ENV MOON_TOOLCHAIN_FORCE_GLOBALS=true
+ENV MOON_DEBUG_PROCESS_ENV=true
+
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 RUN corepack prepare pnpm@10.28.1
 
-FROM base AS builder
-WORKDIR /app
-
-# building the project dependencies
-COPY . .
-# RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm install --frozen-lockfile
-
-#### SKELETON STAGE
-#### Scaffolds repository skeleton structures.
+RUN npm install -g @moonrepo/cli
 
 FROM base AS skeleton
+WORKDIR /app
 
 # Copy entire repository and scaffold
 COPY . .
@@ -30,18 +21,38 @@ RUN moon docker scaffold web
 #### Builds the project.
 
 FROM base AS build
-
-# Copy workspace configs
-COPY --from=skeleton /app/.moon/docker/workspace .
-
-# Install dependencies
-RUN moon docker setup
+WORKDIR /app
 
 # Copy project sources
+COPY --from=skeleton /app/.patches .patches
+COPY --from=skeleton /app/.moon/docker/workspace/pnpm-lock.yaml .
+COPY --from=skeleton /app/.moon/docker/workspace/pnpm-workspace.yaml .
+COPY --from=skeleton /app/.moon/docker/workspace/package.json .
+COPY --from=skeleton /app/.moon/docker/workspace/.npmrc .
+COPY --from=skeleton /app/.moon/docker/workspace/.moon .moon
+
+# install dependencies
+ENV NODE_OPTIONS=--max_old_space_size=4096
 COPY --from=skeleton /app/.moon/docker/sources .
 
+RUN pnpm install
+
 # Build the project
-RUN moon run web:build
+RUN moon web:build
 
 # Prune extraneous dependencies
 RUN moon docker prune
+
+#### START STAGE
+#### Runs the project.
+
+FROM base AS start
+
+# Copy built sources
+COPY --from=build /root/.moon /root/.moon
+COPY --from=build /app /app
+
+RUN ls -al
+RUN cat package.json
+
+CMD moon web:start

@@ -1,0 +1,5 @@
+tasks:
+  migrate:
+    # should prepare the database state before running
+    # the service
+    command: pnpm migrate

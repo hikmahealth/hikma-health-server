@@ -29,7 +29,7 @@ export const saveForm = createServerFn({ method: "POST" })
   });
 
 export const Route = createFileRoute(
-  "/app/old/copy/patients/customize-registration-form",
+  "/app/patients/customize-registration-form",
 )({
   component: RouteComponent,
   loader: async () => {

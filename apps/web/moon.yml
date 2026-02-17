@@ -1,2 +1,15 @@
 dependsOn:
   - "ui"
+  - database
+tasks:
+  build:
+    args: "run build"
+    command: pnpm
+    deps:
+      - ui:build
+    outputs:
+      - .output/**/*
+  start:
+    command: pnpm run start
+    deps:
+      - database:migrate
