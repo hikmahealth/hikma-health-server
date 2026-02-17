@@ -55,7 +55,4 @@ ENV APP_PORT 8080
 # Copy built sources
 COPY --from=build /app .
 
-RUN ls -al
-RUN cat package.json
-
 CMD moon web:start
