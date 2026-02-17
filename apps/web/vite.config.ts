@@ -11,6 +11,7 @@ const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT) : undefined;
 const config = defineConfig({
   server: {
     port,
+    host: process.env.APP_ENV === "prod" ? "0.0.0.0" : undefined,
   },
   plugins: [
     tailwindcss(),

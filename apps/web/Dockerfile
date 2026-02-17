@@ -50,7 +50,8 @@ FROM base AS start
 WORKDIR /app
 
 # port to run
-ENV APP_PORT 8080
+ENV APP_PORT ${APP_PORT:-8080}
+ENV APP_ENV ${APP_ENV:-prod}
 
 # Copy built sources
 COPY --from=build /app .
