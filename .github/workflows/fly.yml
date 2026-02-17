@@ -10,7 +10,6 @@ jobs:
     concurrency:
       group: deploy-live-${{ github.ref }}
       cancel-in-progress: false
-    needs: create-release
     steps:
       - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
