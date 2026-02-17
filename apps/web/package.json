@@ -1,6 +1,7 @@
 {
   "name": "web",
   "private": true,
+  "version": "2025.11.22",
   "type": "module",
   "scripts": {
     "dev": "dotenv -e ../../.env -- vite dev --port 3000",
