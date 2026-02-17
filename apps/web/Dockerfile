@@ -47,10 +47,13 @@ RUN moon docker prune
 #### Runs the project.
 
 FROM base AS start
+WORKDIR /app
+
+# port to run
+ENV APP_PORT 8080
 
 # Copy built sources
-COPY --from=build /root/.moon /root/.moon
-COPY --from=build /app /app
+COPY --from=build /app .
 
 RUN ls -al
 RUN cat package.json

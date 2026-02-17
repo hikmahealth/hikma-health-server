@@ -2,7 +2,7 @@
   "name": "hhmammoth",
   "private": true,
   "scripts": {
-    "build:web": "moon web:build --dependents",
+    "build:web": "moon web:build",
     "start:web": "moon web:start",
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },

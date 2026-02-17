@@ -5,7 +5,13 @@ import viteTsConfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 
+// will use default port
+const port = process.env.APP_PORT ? parseInt(process.env.APP_PORT) : undefined;
+
 const config = defineConfig({
+  server: {
+    port,
+  },
   plugins: [
     tailwindcss(),
     // this is the plugin that enables path aliases
