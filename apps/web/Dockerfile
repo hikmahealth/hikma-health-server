@@ -1,4 +1,4 @@
-FROM node:22-alpine3.22 as base
+FROM node:22-alpine3.22 AS base
 
 ENV MOON_TOOLCHAIN_FORCE_GLOBALS=true
 ENV MOON_DEBUG_PROCESS_ENV=true
