@@ -79,6 +79,5 @@ export const getDatabaseConfig = (): Record<string, any> => {
     database: pgDb,
     user: pgUser,
     password: pgPassword,
-    ssl: getDatabaseSSLConfig() ? opts?.ssl : false,
   };
 };

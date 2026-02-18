@@ -10,8 +10,8 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "migrate": "dotenv -e ../.env -- npx kysely migrate latest",
-    "build": "pnpm run migrate",
+    "migrate:dev": "dotenv -e ../.env -- npx kysely migrate latest",
+    "migrate:prod": "npx kysely migrate latest",
     "create:schema": "dotenv -e ../.env -- kysely-codegen --config-file=pg.kysely-codegen.json"
   },
   "devDependencies": {
