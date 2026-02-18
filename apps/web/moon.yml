@@ -1,8 +1,6 @@
 dependsOn:
-  - id: "ui"
-    scope: peer
-  - id: database
-    scope: root
+  - ui
+  - database
 
 tasks:
   build:
