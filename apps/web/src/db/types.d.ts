@@ -25,6 +25,10 @@ export type Numeric = ColumnType<string, number | string, number | string>;
 
 export type Timestamp = ColumnType<Date, Date | string, Date | string>;
 
+export interface AlembicVersion {
+  version_num: string;
+}
+
 export interface AppConfig {
   created_at: Generated<Timestamp | null>;
   data_type: Generated<string>;
@@ -40,25 +44,25 @@ export interface AppConfig {
 
 export interface Appointments {
   clinic_id: string;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
   current_visit_id: string;
   deleted_at: Timestamp | null;
   departments: Generated<Json>;
-  duration: Generated<number>;
+  duration: number;
   fulfilled_visit_id: string | null;
   id: string;
-  is_deleted: Generated<boolean>;
+  is_deleted: boolean;
   is_walk_in: Generated<boolean>;
-  last_modified: Generated<Timestamp>;
+  last_modified: Timestamp;
   metadata: Generated<Json>;
-  notes: Generated<string>;
+  notes: string;
   patient_id: string;
   provider_id: string | null;
-  reason: Generated<string>;
-  server_created_at: Generated<Timestamp>;
-  status: Generated<string>;
+  reason: string;
+  server_created_at: Timestamp;
+  status: string;
   timestamp: Timestamp;
-  updated_at: Generated<Timestamp>;
+  updated_at: Timestamp;
   user_id: string;
 }
 
@@ -115,50 +119,6 @@ export interface Clinics {
   name: string | null;
   server_created_at: Generated<Timestamp | null>;
   updated_at: Generated<Timestamp | null>;
-}
-
-export interface DevicePinCodes {
-  created_at: Generated<Timestamp>;
-  deleted_at: Timestamp | null;
-  device_id: string;
-  expires_at: Timestamp | null;
-  id: Generated<string>;
-  is_deleted: Generated<boolean>;
-  issued_by_user_id: string | null;
-  issued_to_user_id: string | null;
-  label: string | null;
-  last_modified: Generated<Timestamp>;
-  last_used_at: Timestamp | null;
-  metadata: Generated<Json>;
-  pin_hash: string;
-  server_created_at: Generated<Timestamp>;
-  status: Generated<string>;
-  updated_at: Generated<Timestamp>;
-}
-
-export interface Devices {
-  api_key_hash: string;
-  app_version: string | null;
-  clinic_ids: Generated<string[]>;
-  created_at: Generated<Timestamp>;
-  deleted_at: Timestamp | null;
-  device_type: string;
-  failed_pin_attempts: Generated<number>;
-  hardware_id: string | null;
-  hardware_id_type: string | null;
-  id: Generated<string>;
-  is_deleted: Generated<boolean>;
-  last_modified: Generated<Timestamp>;
-  last_seen_at: Timestamp | null;
-  max_pin_attempts: Generated<number>;
-  metadata: Generated<Json>;
-  name: string;
-  os_type: string | null;
-  recorded_by_user_id: string | null;
-  server_created_at: Generated<Timestamp>;
-  specifications: Generated<Json>;
-  status: Generated<string>;
-  updated_at: Generated<Timestamp>;
 }
 
 export interface DispensingRecords {
@@ -235,7 +195,6 @@ export interface DrugCatalogue {
 }
 
 export interface EventForms {
-  clinic_ids: Generated<Json | null>;
   created_at: Generated<Timestamp | null>;
   deleted_at: Timestamp | null;
   description: string | null;
@@ -249,30 +208,7 @@ export interface EventForms {
   metadata: Generated<Json>;
   name: string | null;
   server_created_at: Generated<Timestamp | null>;
-  translations: Generated<Json | null>;
   updated_at: Generated<Timestamp | null>;
-}
-
-export interface EventLogs {
-  action_type: string;
-  app_id: string;
-  changes: Json;
-  created_at: Generated<Timestamp>;
-  deleted_at: Timestamp | null;
-  device_id: string;
-  hash: string;
-  hash_verified: Generated<boolean | null>;
-  id: string;
-  ip_address: string | null;
-  is_deleted: Generated<boolean>;
-  last_modified: Generated<Timestamp>;
-  metadata: Generated<Json>;
-  row_id: string;
-  server_created_at: Generated<Timestamp>;
-  table_name: string;
-  transaction_id: string;
-  updated_at: Generated<Timestamp>;
-  user_id: string;
 }
 
 export interface Events {
@@ -286,7 +222,6 @@ export interface Events {
   last_modified: Generated<Timestamp | null>;
   metadata: Generated<Json>;
   patient_id: string | null;
-  recorded_by_user_id: string | null;
   server_created_at: Generated<Timestamp | null>;
   updated_at: Generated<Timestamp | null>;
   visit_id: string | null;
@@ -310,21 +245,21 @@ export interface InventoryTransactions {
 }
 
 export interface PatientAdditionalAttributes {
-  attribute: Generated<string>;
+  attribute: string;
   attribute_id: string;
   boolean_value: boolean | null;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
   date_value: Timestamp | null;
   deleted_at: Timestamp | null;
   id: string;
-  is_deleted: Generated<boolean>;
-  last_modified: Generated<Timestamp>;
+  is_deleted: boolean;
+  last_modified: Timestamp;
   metadata: Generated<Json>;
   number_value: number | null;
   patient_id: string;
-  server_created_at: Generated<Timestamp>;
+  server_created_at: Timestamp;
   string_value: string | null;
-  updated_at: Generated<Timestamp>;
+  updated_at: Timestamp;
 }
 
 export interface PatientAllergies {
@@ -567,14 +502,14 @@ export interface ServerVariables {
   key: string;
   updated_at: Generated<Timestamp | null>;
   value_data: Buffer | null;
-  value_hash: string | null;
+  value_hash: Generated<string | null>;
   value_type: string;
 }
 
 export interface StringContent {
   content: string | null;
   deleted_at: Timestamp | null;
-  id: string | null;
+  id: string;
   is_deleted: Generated<boolean | null>;
   language: string | null;
   last_modified: Generated<Timestamp | null>;
@@ -597,14 +532,8 @@ export interface Tokens {
 }
 
 export interface UserClinicPermissions {
-  can_delete_patient_records: Generated<boolean | null>;
-  can_delete_patient_visits: Generated<boolean | null>;
   can_delete_records: Generated<boolean | null>;
-  can_dispense_medications: Generated<boolean | null>;
-  can_download_patient_reports: Generated<boolean | null>;
-  can_edit_other_provider_event: Generated<boolean | null>;
   can_edit_records: Generated<boolean | null>;
-  can_prescribe_medications: Generated<boolean | null>;
   can_register_patients: Generated<boolean | null>;
   can_view_history: Generated<boolean | null>;
   clinic_id: string;
@@ -650,18 +579,16 @@ export interface Visits {
 }
 
 export interface DB {
+  alembic_version: AlembicVersion;
   app_config: AppConfig;
   appointments: Appointments;
   clinic_departments: ClinicDepartments;
   clinic_inventory: ClinicInventory;
   clinics: Clinics;
-  device_pin_codes: DevicePinCodes;
-  devices: Devices;
   dispensing_records: DispensingRecords;
   drug_batches: DrugBatches;
   drug_catalogue: DrugCatalogue;
   event_forms: EventForms;
-  event_logs: EventLogs;
   events: Events;
   inventory_transactions: InventoryTransactions;
   patient_additional_attributes: PatientAdditionalAttributes;
