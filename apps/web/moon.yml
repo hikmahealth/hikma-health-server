@@ -15,7 +15,8 @@ tasks:
     deps:
       - database:dev
     preset: server
-  start:
-    command: pnpm run start
-    deps:
-      - database:migrate
+  # # should ensure the migration runs successfully before starting the service
+  # start:
+  #   command: pnpm run start
+  #   deps:
+  #     - database:migrate
