@@ -86,6 +86,6 @@ export const getDatabaseConfig = (): Record<string, any> => {
     database: pgDb,
     user: pgUser,
     password: pgPassword,
-    ssl: migration_mode ? undefined : { rejectUnauthorized: false },
+    ssl: migration_mode ? { rejectUnauthorized: false } : opts.ssl,
   };
 };
