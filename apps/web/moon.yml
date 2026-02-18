@@ -1,6 +1,9 @@
 dependsOn:
-  - "ui"
-  - database
+  - id: "ui"
+    scope: peer
+  - id: database
+    scope: root
+
 tasks:
   build:
     args: "run build"
@@ -9,6 +12,11 @@ tasks:
       - ui:build
     outputs:
       - .output/**/*
+  dev:
+    command: pnpm run dev
+    deps:
+      - database:dev
+    preset: server
   start:
     command: pnpm run start
     deps:

@@ -1,0 +1,6 @@
+{
+  "outFile": "../apps/web/src/db/types.d.ts",
+  "dialect": "postgres",
+  "url": "env(MIGRATION_DATABASE_URL)",
+  "defaultSchemas": ["public"]
+}

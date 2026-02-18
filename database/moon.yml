@@ -5,3 +5,5 @@ tasks:
     command: pnpm migrate:prod
     options:
       cache: false
+  dev:
+    command: pnpm create_schema

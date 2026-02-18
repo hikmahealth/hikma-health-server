@@ -1,3 +1,6 @@
+layer: library
+language: typescript
+stack: frontend
 dependsOn:
   - id: typescript-config
     scope: peer

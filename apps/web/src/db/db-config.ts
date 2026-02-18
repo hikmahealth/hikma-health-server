@@ -1,18 +1,3 @@
-// Add SSL configuration based on environment
-export const getDatabaseSSLConfig = () => {
-  // If we're using DATABASE_URL (production/staging), enable SSL
-  // if (process.env.DATABASE_URL) {
-  //   return true;
-  // }
-
-  // For local development
-  // Require that SSL is explicitly disabled
-  const sslDisabled =
-    process.env.DB_SSL === "false" || process.env.DB_SSL === "0";
-
-  return { ssl: !sslDisabled };
-};
-
 // Extract database configuration from environment variables
 export const getDatabaseConfig = (): Record<string, any> => {
   const databaseUrl = process.env.DATABASE_URL;
@@ -74,6 +59,26 @@ export const getDatabaseConfig = (): Record<string, any> => {
     }
   }
 
+  let migration_mode = false;
+  let dbmigration = process.env.DB_MIGRATION;
+  if (dbmigration) {
+    switch (dbmigration.toString()) {
+      case "0":
+      case "false": {
+        migration_mode = false;
+        break;
+      }
+      case "1":
+      case "true": {
+        migration_mode = true;
+        break;
+      }
+      default: {
+        throw new Error("unknown value in DB_MIGRATION either 0,1,true,false");
+      }
+    }
+  }
+
   return {
     ...opts,
     host: pgHost,
@@ -81,6 +86,6 @@ export const getDatabaseConfig = (): Record<string, any> => {
     database: pgDb,
     user: pgUser,
     password: pgPassword,
-    ssl: getDatabaseSSLConfig().ssl ? opts?.ssl : false,
+    ssl: migration_mode ? undefined : opts.ssl,
   };
 };

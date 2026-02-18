@@ -12,7 +12,7 @@
   "scripts": {
     "migrate:dev": "dotenv -e ../.env -- npx kysely migrate latest",
     "migrate:prod": "npx kysely migrate latest",
-    "create:schema": "dotenv -e ../.env -- kysely-codegen --config-file=pg.kysely-codegen.json"
+    "create_schema": "dotenv -e ../.env -e .env -- npx kysely-codegen --dialect postgres --config-file=web.kysely-codegen.json"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.9",
