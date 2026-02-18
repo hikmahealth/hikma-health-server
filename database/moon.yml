@@ -7,3 +7,5 @@ tasks:
       cache: false
   dev:
     command: pnpm create_schema
+    outputs:
+      - /apps/web/src/db/types.d.ts
