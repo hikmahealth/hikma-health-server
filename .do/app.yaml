@@ -1,0 +1,26 @@
+name: hikma-health-server
+services:
+  - name: web
+    environment_slug: node-js
+    github:
+      repo: hikmahealth/hikma-health-server
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+    build_command: pnpm install && pnpm run build
+    run_command: pnpm run start
+    envs:
+      - key: DATABASE_URL
+        value: ${db.DATABASE_URL}
+        scope: RUN_AND_BUILD_TIME
+      - key: NODE_ENV
+        value: production
+        scope: RUN_AND_BUILD_TIME
+      - key: NODE_VERSION
+        value: "22.14.0"
+        scope: RUN_AND_BUILD_TIME
+databases:
+  - name: db
+    engine: PG
+    production: false
+    version: "17"

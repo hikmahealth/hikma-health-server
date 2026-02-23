@@ -1,0 +1,27 @@
+spec:
+  name: hikma-health-server
+  services:
+    - name: web
+      environment_slug: node-js
+      build_command: pnpm install && pnpm run build
+      run_command: pnpm run start
+      instance_count: 1
+      instance_size_slug: apps-s-1vcpu-0.5gb
+      envs:
+        - key: DATABASE_URL
+          value: ${db.DATABASE_URL}
+          scope: RUN_AND_BUILD_TIME
+        - key: NODE_ENV
+          value: production
+          scope: RUN_AND_BUILD_TIME
+        - key: NODE_VERSION
+          value: "22.14.0"
+          scope: RUN_AND_BUILD_TIME
+      git:
+        repo_clone_url: https://github.com/tareko/hikma-health-server.git
+        branch: fix/digitalocean-template
+  databases:
+    - name: db
+      engine: PG
+      production: false
+      version: "17"

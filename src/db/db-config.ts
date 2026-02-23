@@ -22,23 +22,20 @@ export const getDatabaseConfig = (): Record<string, any> => {
   let pgPassword: string;
 
   if (databaseUrl) {
-    // Extract connection details from DATABASE_URL
-    const [dbProto, connectionParams] = databaseUrl.split("//");
+    // Extract connection details from DATABASE_URL using URL parser
+    const parsed = new URL(databaseUrl);
 
-    if (dbProto !== "postgresql:") {
+    if (parsed.protocol !== "postgresql:" && parsed.protocol !== "postgres:") {
       throw new Error(
         "Using a non postgresql database. HH only supports PostgreSQL.",
       );
     }
 
-    const [credentials, url] = connectionParams.split("@");
-    const values = url.split("/")[0].split(":");
-
-    pgHost = values[0];
-    pgPort = values.length > 1 ? values[1] : "5432";
-    pgDb = url.split("/")[1];
-    pgUser = credentials.split(":")[0];
-    pgPassword = credentials.split(":")[1];
+    pgHost = parsed.hostname;
+    pgPort = parsed.port || "5432";
+    pgDb = parsed.pathname.replace(/^\//, "");
+    pgUser = decodeURIComponent(parsed.username);
+    pgPassword = decodeURIComponent(parsed.password);
   } else if (databaseUrlAzure) {
     // Extract connection details from Azure connection string
     const connStrParams = Object.fromEntries(
