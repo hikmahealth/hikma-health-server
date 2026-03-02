@@ -7,7 +7,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 export const getPatientVitals = createServerFn({
   method: "GET",
 })
-  .validator((data: { patientId: string }) => data)
+  .inputValidator((data: { patientId: string }) => data)
   .handler(async ({ data }): Promise<PatientVital.EncodedT[]> => {
     return Sentry.startSpan({ name: "getPatientVitals" }, async () => {
       const authorized = await userRoleTokenHasCapability([
@@ -36,7 +36,7 @@ export const getPatientVitals = createServerFn({
 export const getMostRecentVital = createServerFn({
   method: "GET",
 })
-  .validator((data: { patientId: string }) => data)
+  .inputValidator((data: { patientId: string }) => data)
   .handler(async ({ data }) => {
     return Sentry.startSpan({ name: "getMostRecentVital" }, async () => {
       const authorized = await userRoleTokenHasCapability([
@@ -65,7 +65,7 @@ export const getMostRecentVital = createServerFn({
 export const getVitalsByDateRange = createServerFn({
   method: "GET",
 })
-  .validator(
+  .inputValidator(
     (data: { patientId: string; startDate: string; endDate: string }) => data,
   )
   .handler(async ({ data }) => {
@@ -100,7 +100,7 @@ export const getVitalsByDateRange = createServerFn({
 export const createPatientVital = createServerFn({
   method: "POST",
 })
-  .validator((data: PatientVital.Table.NewPatientVitals) => data)
+  .inputValidator((data: PatientVital.Table.NewPatientVitals) => data)
   .handler(async ({ data }) => {
     return Sentry.startSpan({ name: "createPatientVital" }, async () => {
       const authorized = await userRoleTokenHasCapability([

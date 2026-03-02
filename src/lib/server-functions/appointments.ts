@@ -19,7 +19,7 @@ export const getAllAppointments = createServerFn({ method: "GET" }).handler(
  * @returns {Promise<Appointment.EncodedT | null>} - The appointment or null if not found
  */
 export const getAppointmentById = createServerFn({ method: "GET" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<Appointment.EncodedT | null> => {
     const res = await Appointment.API.getById(data.id);
 
@@ -32,7 +32,7 @@ export const getAppointmentById = createServerFn({ method: "GET" })
  * @returns {Promise<Appointment.EncodedT[]>} - the list of appointments for the patient, sorted by date from earliest to latest
  */
 export const getAppointmentsByPatientId = createServerFn({ method: "GET" })
-  .validator((data: { patientId: string }) => data)
+  .inputValidator((data: { patientId: string }) => data)
   .handler(
     async ({
       data,
@@ -88,7 +88,7 @@ export const getAllAppointmentsWithDetails = createServerFn({
  * @returns {Promise<void>}
  */
 export const toggleAppointmentStatus = createServerFn({ method: "POST" })
-  .validator((data: { id: string; status: string }) => data)
+  .inputValidator((data: { id: string; status: string }) => data)
   .handler(async ({ data }): Promise<void> => {
     await Appointment.API.toggleStatus(data.id, data.status);
   });

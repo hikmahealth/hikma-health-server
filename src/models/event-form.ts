@@ -1,25 +1,19 @@
-import { Data, Either, Match, Option } from "effect";
-import {
-  type ColumnType,
-  type Generated,
-  type Selectable,
-  type Insertable,
-  type Updateable,
-  type JSONColumnType,
-  sql,
+import { Data, Either, Match, Schema } from "effect";
+import type {
+  ColumnType,
+  Generated,
+  Selectable,
+  Insertable,
+  Updateable,
+  JSONColumnType,
 } from "kysely";
-import { Schema } from "effect";
-import { serverOnly } from "@tanstack/react-start";
+import { sql } from "kysely";
+import { createServerOnlyFn } from "@tanstack/react-start";
+import { safeJSONParse } from "@/lib/utils";
 import db from "@/db";
-import {
-  deduplicateOptions,
-  getFieldOptionsValues,
-  listToFieldOptions,
-  safeJSONParse,
-} from "@/lib/utils";
-import { nanoid } from "nanoid";
 import { v1 as uuidV1 } from "uuid";
 import Language from "@/models/language";
+import { nanoid } from "nanoid";
 
 namespace EventForm {
   // export type T = {
@@ -918,7 +912,7 @@ namespace EventForm {
     /**
      * Get a list of all the event forms
      */
-    export const getAll = serverOnly(
+    export const getAll = createServerOnlyFn(
       async (options?: { includeDeleted?: boolean }): Promise<EncodedT[]> => {
         const includeDeleted = options?.includeDeleted ?? false;
 
@@ -941,7 +935,7 @@ namespace EventForm {
      * Get a form by an id
      * @param id - The id of the form
      */
-    export const getById = serverOnly(async (id: string): Promise<EncodedT> => {
+    export const getById = createServerOnlyFn(async (id: string): Promise<EncodedT> => {
       const result = await db
         .selectFrom(EventForm.Table.name)
         .where("id", "=", id)
@@ -956,7 +950,7 @@ namespace EventForm {
      * @param form - The form to insert
      * @returns The inserted form
      */
-    export const insert = serverOnly(
+    export const insert = createServerOnlyFn(
       async (form: EventForm.EncodedT): Promise<EventForm.T> => {
         const result = await db
           .insertInto(EventForm.Table.name)
@@ -990,7 +984,7 @@ namespace EventForm {
      * @param form - The form to update
      * @returns The updated form
      */
-    export const update = serverOnly(
+    export const update = createServerOnlyFn(
       async ({
         id,
         form,
@@ -1025,7 +1019,7 @@ namespace EventForm {
      * @param id - The id of the form to delete
      * @returns The deleted form
      */
-    export const softDelete = serverOnly(
+    export const softDelete = createServerOnlyFn(
       async (id: string): Promise<EventForm.T> => {
         const result = await db
           .updateTable(EventForm.Table.name)
@@ -1048,7 +1042,7 @@ namespace EventForm {
      * @param isSnapshot - Whether the form should be in snapshot mode
      * @returns The updated form
      */
-    export const toggleSnapshot = serverOnly(
+    export const toggleSnapshot = createServerOnlyFn(
       async ({
         id,
         isSnapshot,
@@ -1076,7 +1070,7 @@ namespace EventForm {
      * @param isEditable - Whether the form should be editable
      * @returns The updated form
      */
-    export const toggleEditable = serverOnly(
+    export const toggleEditable = createServerOnlyFn(
       async ({
         id,
         isEditable,

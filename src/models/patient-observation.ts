@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { Option } from "effect";
 import {
   type ColumnType,
@@ -136,7 +136,7 @@ namespace PatientObservation {
   }
 
   export namespace API {
-    export const findById = serverOnly(
+    export const findById = createServerOnlyFn(
       async (
         id: string,
       ): Promise<
@@ -156,7 +156,7 @@ namespace PatientObservation {
       },
     );
 
-    export const findByPatientId = serverOnly(
+    export const findByPatientId = createServerOnlyFn(
       async (
         patient_id: string,
       ): Promise<PatientObservation.Table.PatientObservations[]> => {
@@ -170,7 +170,7 @@ namespace PatientObservation {
       },
     );
 
-    export const findByVisitId = serverOnly(
+    export const findByVisitId = createServerOnlyFn(
       async (
         visit_id: string,
       ): Promise<PatientObservation.Table.PatientObservations[]> => {
@@ -187,7 +187,7 @@ namespace PatientObservation {
     /**
      * Upsert a patient observation record
      */
-    export const upsert = serverOnly(
+    export const upsert = createServerOnlyFn(
       async (observation: PatientObservation.EncodedT) => {
         // permissions check
         const clinicIds =
@@ -211,7 +211,7 @@ namespace PatientObservation {
      * Upsert a patient observation record
      * SYNC ONLY METHOD
      */
-    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_upsert = createServerOnlyFn(
       async (observation: PatientObservation.EncodedT) => {
         return await upsert_core(observation);
       },
@@ -221,7 +221,7 @@ namespace PatientObservation {
      * Upsert a patient observation
      * DO NOT EXPORT OR USE DIRECTLY
      */
-    const upsert_core = serverOnly(
+    const upsert_core = createServerOnlyFn(
       async (observation: PatientObservation.EncodedT) => {
         return await db
           .insertInto(PatientObservation.Table.name)
@@ -293,7 +293,7 @@ namespace PatientObservation {
      * Soft Delete a patient observation
      * @param id - The id of the observation to delete
      */
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       return await db
         .updateTable(PatientObservation.Table.name)
         .set({
@@ -309,7 +309,7 @@ namespace PatientObservation {
     /**
      * Get observations by patient and code
      */
-    export const findByPatientAndCode = serverOnly(
+    export const findByPatientAndCode = createServerOnlyFn(
       async (
         patient_id: string,
         observation_code: string,
@@ -334,7 +334,7 @@ namespace PatientObservation {
     /**
      * Get latest observation by patient and code
      */
-    export const findLatestByPatientAndCode = serverOnly(
+    export const findLatestByPatientAndCode = createServerOnlyFn(
       async (
         patient_id: string,
         observation_code: string,
@@ -353,13 +353,13 @@ namespace PatientObservation {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (delta: PatientObservation.EncodedT) => {
         return API.DANGEROUS_SYNC_ONLY_upsert(delta);
       },
     );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.softDelete(id);
     });
   }

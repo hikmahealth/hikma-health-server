@@ -186,7 +186,8 @@ export const navData = {
       items: [
         {
           title: "Reports (?)",
-          url: "/app/data/reports",
+          url: "/app/reports",
+          icon: BarChart3,
         },
         {
           title: "Explore Events",
@@ -207,6 +208,10 @@ export const navData = {
         {
           title: "Configuration",
           url: "/app/settings/configurations",
+        },
+        {
+          title: "Devices",
+          url: "/app/settings/devices",
         },
         // {
         //   title: "File Storage",

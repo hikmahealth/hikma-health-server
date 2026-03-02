@@ -9,7 +9,7 @@ import {
   ValidationError,
   type DomainError,
 } from "@/db/helpers";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { flow, Option, pipe, Effect } from "effect";
 import {
   type ColumnType,
@@ -243,7 +243,7 @@ namespace DrugCatalogue {
   );
 
   export namespace API {
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       (id: string): Effect.Effect<ApiDrug | undefined, DomainError> =>
         pipe(
           validateDrugId(id),
@@ -256,7 +256,7 @@ namespace DrugCatalogue {
         ),
     );
 
-    export const getByBarcode = serverOnly(
+    export const getByBarcode = createServerOnlyFn(
       (barcode: string): Effect.Effect<ApiDrug | undefined, DomainError> =>
         pipe(
           validateBarcode(barcode),
@@ -269,7 +269,7 @@ namespace DrugCatalogue {
         ),
     );
 
-    export const getAll = serverOnly(
+    export const getAll = createServerOnlyFn(
       (
         params: {
           limit?: number;
@@ -295,7 +295,7 @@ namespace DrugCatalogue {
         ),
     );
 
-    export const search = serverOnly(
+    export const search = createServerOnlyFn(
       (params: {
         searchTerm: string;
         limit?: number;
@@ -418,7 +418,7 @@ namespace DrugCatalogue {
         catch: (error) => new DatabaseError("Transaction failed", error),
       });
 
-    export const upsert = serverOnly(
+    export const upsert = createServerOnlyFn(
       (drug: Partial<ApiDrug>): Effect.Effect<{ id: string }, DomainError> =>
         pipe(
           checkInventoryPermission,
@@ -428,7 +428,7 @@ namespace DrugCatalogue {
         ),
     );
 
-    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_upsert = createServerOnlyFn(
       (drug: Partial<ApiDrug>): Effect.Effect<{ id: string }, DomainError> =>
         withTransaction((trx) => executeCoreUpsert(drug, trx)),
     );
@@ -459,7 +459,7 @@ namespace DrugCatalogue {
         ),
       );
 
-    export const softDelete = serverOnly(
+    export const softDelete = createServerOnlyFn(
       (id: string): Effect.Effect<void, DomainError> =>
         pipe(
           checkInventoryPermission,
@@ -467,12 +467,12 @@ namespace DrugCatalogue {
         ),
     );
 
-    export const DANGEROUS_SYNC_ONLY_softDelete = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_softDelete = createServerOnlyFn(
       (id: string): Effect.Effect<void, DomainError> =>
         executeCoreSoftDelete(id),
     );
 
-    export const batchGetByIds = serverOnly(
+    export const batchGetByIds = createServerOnlyFn(
       (ids: string[]): Effect.Effect<ApiDrug[], DomainError> =>
         pipe(
           Effect.all(ids.map(validateDrugId)),
@@ -492,7 +492,7 @@ namespace DrugCatalogue {
 
     // ============ AGGREGATION QUERIES ============
 
-    export const getStats = serverOnly(
+    export const getStats = createServerOnlyFn(
       (): Effect.Effect<
         {
           totalDrugs: number;
@@ -543,12 +543,12 @@ namespace DrugCatalogue {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       (delta: ApiDrug): Effect.Effect<{ id: string }, DomainError> =>
         API.DANGEROUS_SYNC_ONLY_upsert(delta),
     );
 
-    export const deleteFromDelta = serverOnly(
+    export const deleteFromDelta = createServerOnlyFn(
       (id: string): Effect.Effect<void, DomainError> =>
         API.DANGEROUS_SYNC_ONLY_softDelete(id),
     );

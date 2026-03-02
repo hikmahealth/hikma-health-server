@@ -10,7 +10,7 @@ import {
 } from "kysely";
 import Token from "./token";
 import bcrypt from "bcrypt";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import cloneDeep from "lodash/cloneDeep";
 import UserClinicPermissions from "./user-clinic-permissions";
@@ -310,7 +310,7 @@ namespace User {
    * @param {number} validHours - The number of hours the token is valid for
    * @returns {Promise<{ user: User.EncodedT; token: string }>} - The user if authentication is successful, null otherwise
    */
-  export const signIn = serverOnly(
+  export const signIn = createServerOnlyFn(
     async (
       email: string,
       password: string,
@@ -354,9 +354,11 @@ namespace User {
    * @param {string} token - The user's token
    * @returns {Promise<void>} - Resolves when the token is invalidated
    */
-  export const signOut = serverOnly(async (token: string): Promise<void> => {
-    await Token.invalidate(token);
-  });
+  export const signOut = createServerOnlyFn(
+    async (token: string): Promise<void> => {
+      await Token.invalidate(token);
+    },
+  );
 
   export namespace API {
     /**
@@ -364,7 +366,7 @@ namespace User {
      * @param {User.EncodedT} user - The user to create
      * @returns {Promise<User.EncodedT["id"] | null>} - The created user
      */
-    export const create = serverOnly(
+    export const create = createServerOnlyFn(
       async (
         user: User.EncodedT,
         creatorId: string,
@@ -426,27 +428,29 @@ namespace User {
      * Get all users
      * @returns {Promise<User.EncodedT[]>} - The list of users
      */
-    export const getAll = serverOnly(async (): Promise<User.EncodedT[]> => {
-      const users = await db
-        .selectFrom(Table.name)
-        .where("is_deleted", "=", false)
-        .selectAll()
-        .execute();
+    export const getAll = createServerOnlyFn(
+      async (): Promise<User.EncodedT[]> => {
+        const users = await db
+          .selectFrom(Table.name)
+          .where("is_deleted", "=", false)
+          .selectAll()
+          .execute();
 
-      const entries = users.map(User.fromDbEntry);
+        const entries = users.map(User.fromDbEntry);
 
-      // Throws an error if encoding fails. Something to keep in mind!
-      return entries
-        .filter(Either.isRight)
-        .map((e) => Schema.encodeSync(UserSchema)(e.right));
-    });
+        // Throws an error if encoding fails. Something to keep in mind!
+        return entries
+          .filter(Either.isRight)
+          .map((e) => Schema.encodeSync(UserSchema)(e.right));
+      },
+    );
 
     /**
      * get a user by their id
      * @param {string} id - The id of the user
      * @returns {Promise<User.EncodedT | null>} - The user
      */
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       async (id: string): Promise<User.EncodedT | null> => {
         const user = await db
           .selectFrom(Table.name)
@@ -469,7 +473,7 @@ namespace User {
      * @param {string} name - The first name of the user
      * @returns {Promise<User.EncodedT[]>} - The list of users
      */
-    export const getByName = serverOnly(
+    export const getByName = createServerOnlyFn(
       async (name: string): Promise<User.EncodedT[]> => {
         const users = await db
           .selectFrom(Table.name)
@@ -485,7 +489,7 @@ namespace User {
       },
     );
 
-    export const update = serverOnly(
+    export const update = createServerOnlyFn(
       async (
         id: string,
         user: Omit<
@@ -518,7 +522,7 @@ namespace User {
     );
 
     // Specific methods to update passwords
-    export const updatePassword = serverOnly(
+    export const updatePassword = createServerOnlyFn(
       async (id: string, password: string): Promise<User.EncodedT["id"]> => {
         const saltRounds = 10;
         const salt = bcrypt.genSaltSync(saltRounds);
@@ -538,13 +542,15 @@ namespace User {
       },
     );
 
-    export const softDelete = serverOnly(async (id: string): Promise<void> => {
-      await db
-        .updateTable(Table.name)
-        .set({ is_deleted: true })
-        .where("id", "=", id)
-        .execute();
-    });
+    export const softDelete = createServerOnlyFn(
+      async (id: string): Promise<void> => {
+        await db
+          .updateTable(Table.name)
+          .set({ is_deleted: true })
+          .where("id", "=", id)
+          .execute();
+      },
+    );
   }
 }
 

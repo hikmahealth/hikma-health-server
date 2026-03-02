@@ -43,7 +43,7 @@ import { permissionsMiddleware } from "@/middleware/auth";
 // });
 
 const deleteUser = createServerFn({ method: "POST" })
-  .validator((d: { id: string }) => d)
+  .inputValidator((d: { id: string }) => d)
   .middleware([permissionsMiddleware])
   .handler(async ({ data, context }) => {
     if (context.role !== User.ROLES.SUPER_ADMIN) {

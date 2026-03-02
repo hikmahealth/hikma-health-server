@@ -8,7 +8,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import type Clinic from "@/models/clinic";
 
 export const authMiddleware = createMiddleware({ type: "function" })
-  .validator(
+  .inputValidator(
     (data: { capabilities?: (typeof User.CapabilitySchema.Type)[] }) => data,
   )
   .server(async ({ next, data, context }) => {
@@ -60,6 +60,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
 export const capabilitiesMiddleware = createMiddleware({
   type: "function",
 }).server(async ({ next }) => {
+  console.log("Calling capabilities middlware");
   const token = getCookieToken();
   if (!token) {
     return next({
@@ -83,6 +84,7 @@ export const capabilitiesMiddleware = createMiddleware({
 export const permissionsMiddleware = createMiddleware({
   type: "function",
 }).server(async ({ next }) => {
+  console.log("Calling permssions middlware");
   return Sentry.startSpan(
     { name: "Getting user clinic permissions" },
     async () => {

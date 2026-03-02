@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { Option } from "effect";
 import {
   type ColumnType,
@@ -128,7 +128,7 @@ namespace InventoryTransactions {
      * Insert a new inventory transaction.
      * This is typically called automatically by other inventory operations.
      */
-    export const insert = serverOnly(
+    export const insert = createServerOnlyFn(
       async (transaction: Partial<EncodedT>): Promise<{ id: string }> => {
         // Permissions check - user must have inventory management permission for the clinic
         const clinicIds =
@@ -154,13 +154,13 @@ namespace InventoryTransactions {
      * Insert without permission checks - for internal use only
      * Used by other models that need to record transactions
      */
-    export const DANGEROUS_INTERNAL_ONLY_insert = serverOnly(
+    export const DANGEROUS_INTERNAL_ONLY_insert = createServerOnlyFn(
       async (transaction: Partial<EncodedT>): Promise<{ id: string }> => {
         return await insert_core(transaction);
       },
     );
 
-    const insert_core = serverOnly(
+    const insert_core = createServerOnlyFn(
       async (transaction: Partial<EncodedT>): Promise<{ id: string }> => {
         if (!transaction.clinic_id || !transaction.drug_id) {
           throw new Error("Clinic ID and Drug ID are required");
@@ -221,7 +221,7 @@ namespace InventoryTransactions {
      * Limited to updating reason, reference fields, and metadata.
      * Cannot change quantity, balance, or core transaction details.
      */
-    export const update = serverOnly(
+    export const update = createServerOnlyFn(
       async (
         id: string,
         updates: {
@@ -260,7 +260,7 @@ namespace InventoryTransactions {
     /**
      * Update without permission checks - for internal use only
      */
-    export const DANGEROUS_INTERNAL_ONLY_update = serverOnly(
+    export const DANGEROUS_INTERNAL_ONLY_update = createServerOnlyFn(
       async (
         id: string,
         updates: {
@@ -273,7 +273,7 @@ namespace InventoryTransactions {
       },
     );
 
-    const update_core = serverOnly(
+    const update_core = createServerOnlyFn(
       async (
         id: string,
         updates: {
@@ -307,7 +307,7 @@ namespace InventoryTransactions {
      * so this would need to be a hard delete or the migration needs updating.
      * For now, implementing as a no-op with a warning.
      */
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       // Since the inventory_transactions table doesn't have soft delete columns in the migration,
       // we'll throw an error to indicate this operation is not supported
       throw new Error(
@@ -319,7 +319,7 @@ namespace InventoryTransactions {
     /**
      * Get transactions by clinic
      */
-    export const getByClinic = serverOnly(
+    export const getByClinic = createServerOnlyFn(
       async (
         clinicId: string,
         {
@@ -392,7 +392,7 @@ namespace InventoryTransactions {
     /**
      * Get transaction details with drug information
      */
-    export const getWithDrugInfo = serverOnly(
+    export const getWithDrugInfo = createServerOnlyFn(
       async (
         clinicId: string,
         options: {
@@ -482,7 +482,7 @@ namespace InventoryTransactions {
     /**
      * Get summary statistics for a clinic
      */
-    export const getSummaryStats = serverOnly(
+    export const getSummaryStats = createServerOnlyFn(
       async (
         clinicId: string,
         {

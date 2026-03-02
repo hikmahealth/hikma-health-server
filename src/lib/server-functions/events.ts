@@ -12,13 +12,14 @@ import {
   buildEventInsertValues,
 } from "./builders";
 import { logAuditEvent } from "./audit";
+import { type Result, ok, err } from "@/lib/utils";
 
 /**
  * Get all events by form id with pagination
  * @returns {Promise<{ events: Event.EncodedT[], pagination: { total: number, offset: number, limit: number, hasMore: boolean } }>} - The list of events and pagination info
  */
 export const getEventsByFormId = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (data: { form_id: string; limit?: number; offset?: number }) => data,
   )
   .handler(
@@ -60,14 +61,15 @@ export const getEventsByFormId = createServerFn({ method: "GET" })
  * @returns Array of events belonging to the visit
  */
 export const getVisitEvents = createServerFn({ method: "GET" })
-  .validator((data: { visitId: string }) => data)
+  .inputValidator((data: { visitId: string }) => data)
   .handler(
     async ({
       data,
-    }): Promise<{
-      items: Event.EncodedT[];
-      error: string | null;
-    }> => {
+    }): Promise<
+      Result<{
+        items: Event.EncodedT[];
+      }>
+    > => {
       const authorized = await userRoleTokenHasCapability([
         User.CAPABILITIES.READ_ALL_PATIENT,
       ]);
@@ -81,14 +83,14 @@ export const getVisitEvents = createServerFn({ method: "GET" })
 
       try {
         const items = await Event.API.getByVisitId(data.visitId);
-        return { items, error: null };
+        return ok({ items });
       } catch (error) {
         Sentry.captureException(error);
-        return {
-          items: [],
-          error:
+        return err({
+          _tag: "ServerError" as const,
+          message:
             error instanceof Error ? error.message : "Failed to fetch events",
-        };
+        });
       }
     },
   );
@@ -100,7 +102,7 @@ export const getVisitEvents = createServerFn({ method: "GET" })
  * @returns The new event ID on success
  */
 export const createEvent = createServerFn({ method: "POST" })
-  .validator((data: CreateEventInput) => data)
+  .inputValidator((data: CreateEventInput) => data)
   .middleware([permissionsMiddleware])
   .handler(
     async ({
@@ -171,7 +173,7 @@ export const createEvent = createServerFn({ method: "POST" })
  * @returns Success status
  */
 export const updateEvent = createServerFn({ method: "POST" })
-  .validator((data: UpdateEventInput) => data)
+  .inputValidator((data: UpdateEventInput) => data)
   .middleware([permissionsMiddleware])
   .handler(
     async ({

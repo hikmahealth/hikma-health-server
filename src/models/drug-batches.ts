@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { Option } from "effect";
 import {
   type ColumnType,
@@ -137,7 +137,7 @@ namespace DrugBatches {
   }
 
   export namespace API {
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       async (id: string): Promise<EncodedT | undefined> => {
         return (await db
           .selectFrom(Table.name)
@@ -148,7 +148,7 @@ namespace DrugBatches {
       },
     );
 
-    export const getByDrugId = serverOnly(
+    export const getByDrugId = createServerOnlyFn(
       async (
         drugId: string,
         {
@@ -189,7 +189,7 @@ namespace DrugBatches {
       },
     );
 
-    export const getByBatchNumber = serverOnly(
+    export const getByBatchNumber = createServerOnlyFn(
       async (
         batchNumber: string,
         drugId?: string,
@@ -210,7 +210,7 @@ namespace DrugBatches {
       },
     );
 
-    export const getExpiringBatches = serverOnly(
+    export const getExpiringBatches = createServerOnlyFn(
       async (daysAhead: number = 30, clinicId?: string): Promise<any[]> => {
         let query = db
           .selectFrom("drug_batches as db")
@@ -258,54 +258,58 @@ namespace DrugBatches {
       },
     );
 
-    export const getExpiredBatches = serverOnly(async (): Promise<any[]> => {
-      const results = await db
-        .selectFrom("drug_batches as db")
-        .innerJoin("drug_catalogue as dc", "db.drug_id", "dc.id")
-        .select([
-          "db.id as batch_id",
-          "db.batch_number",
-          "db.expiry_date",
-          "db.quantity_remaining",
-          "db.supplier_name",
-          "dc.id as drug_id",
-          "dc.generic_name",
-          "dc.brand_name",
-          "dc.form",
-          "dc.dosage_quantity",
-          "dc.dosage_units",
-        ])
-        .where("db.is_deleted", "=", false)
-        .where("dc.is_deleted", "=", false)
-        .where("db.quantity_remaining", ">", 0)
-        .where("db.expiry_date", "<", sql`CURRENT_DATE`)
-        .orderBy("db.expiry_date", "desc")
-        .execute();
+    export const getExpiredBatches = createServerOnlyFn(
+      async (): Promise<any[]> => {
+        const results = await db
+          .selectFrom("drug_batches as db")
+          .innerJoin("drug_catalogue as dc", "db.drug_id", "dc.id")
+          .select([
+            "db.id as batch_id",
+            "db.batch_number",
+            "db.expiry_date",
+            "db.quantity_remaining",
+            "db.supplier_name",
+            "dc.id as drug_id",
+            "dc.generic_name",
+            "dc.brand_name",
+            "dc.form",
+            "dc.dosage_quantity",
+            "dc.dosage_units",
+          ])
+          .where("db.is_deleted", "=", false)
+          .where("dc.is_deleted", "=", false)
+          .where("db.quantity_remaining", ">", 0)
+          .where("db.expiry_date", "<", sql`CURRENT_DATE`)
+          .orderBy("db.expiry_date", "desc")
+          .execute();
 
-      return results;
-    });
+        return results;
+      },
+    );
 
-    export const upsert = serverOnly(async (batch: Partial<EncodedT>) => {
-      // Permissions check
-      const clinicIds =
-        await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
-          "is_clinic_admin",
-        );
+    export const upsert = createServerOnlyFn(
+      async (batch: Partial<EncodedT>) => {
+        // Permissions check
+        const clinicIds =
+          await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+            "is_clinic_admin",
+          );
 
-      if (clinicIds.length === 0) {
-        throw new Error("Unauthorized: No inventory management permissions");
-      }
+        if (clinicIds.length === 0) {
+          throw new Error("Unauthorized: No inventory management permissions");
+        }
 
-      return await upsert_core(batch);
-    });
+        return await upsert_core(batch);
+      },
+    );
 
-    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_upsert = createServerOnlyFn(
       async (batch: Partial<EncodedT>) => {
         return await upsert_core(batch);
       },
     );
 
-    const upsert_core = serverOnly(async (batch: Partial<EncodedT>) => {
+    const upsert_core = createServerOnlyFn(async (batch: Partial<EncodedT>) => {
       const id = batch.id || uuidV1();
 
       // Validate required fields
@@ -394,7 +398,7 @@ namespace DrugBatches {
       return result;
     });
 
-    export const updateQuantity = serverOnly(
+    export const updateQuantity = createServerOnlyFn(
       async (
         id: string,
         quantityChange: number,
@@ -433,7 +437,7 @@ namespace DrugBatches {
       },
     );
 
-    export const quarantineBatch = serverOnly(
+    export const quarantineBatch = createServerOnlyFn(
       async (
         id: string,
         reason: string,
@@ -470,7 +474,7 @@ namespace DrugBatches {
       },
     );
 
-    export const releaseBatch = serverOnly(
+    export const releaseBatch = createServerOnlyFn(
       async (
         id: string,
         reason: string,
@@ -507,7 +511,7 @@ namespace DrugBatches {
       },
     );
 
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       // Permissions check
       const clinicIds =
         await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
@@ -521,13 +525,13 @@ namespace DrugBatches {
       return await softDelete_core(id);
     });
 
-    export const DANGEROUS_SYNC_ONLY_softDelete = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_softDelete = createServerOnlyFn(
       async (id: string) => {
         return await softDelete_core(id);
       },
     );
 
-    const softDelete_core = serverOnly(async (id: string) => {
+    const softDelete_core = createServerOnlyFn(async (id: string) => {
       await db
         .updateTable(Table.name)
         .set({
@@ -540,7 +544,7 @@ namespace DrugBatches {
         .execute();
     });
 
-    export const getBatchesBySupplier = serverOnly(
+    export const getBatchesBySupplier = createServerOnlyFn(
       async (
         supplierName: string,
         {
@@ -580,7 +584,7 @@ namespace DrugBatches {
       },
     );
 
-    export const getTotalValue = serverOnly(
+    export const getTotalValue = createServerOnlyFn(
       async (drugId?: string): Promise<any> => {
         let query = db
           .selectFrom(Table.name)
@@ -609,11 +613,13 @@ namespace DrugBatches {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(async (delta: EncodedT) => {
-      return API.DANGEROUS_SYNC_ONLY_upsert(delta);
-    });
+    export const upsertFromDelta = createServerOnlyFn(
+      async (delta: EncodedT) => {
+        return API.DANGEROUS_SYNC_ONLY_upsert(delta);
+      },
+    );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.DANGEROUS_SYNC_ONLY_softDelete(id);
     });
   }

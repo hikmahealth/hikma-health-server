@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format, formatDate } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn, getResultData } from "@/lib/utils";
 import User from "@/models/user";
 import Clinic from "@/models/clinic";
 import { SelectInput } from "@/components/select-input";
@@ -42,7 +42,7 @@ import If from "@/components/if";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const saveAppointment = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       appointment: Appointment.EncodedT;
       id: string | null;
@@ -86,7 +86,10 @@ export const Route = createFileRoute("/app/appointments/edit/$")({
     }
 
     result.users = (await getAllUsers()) as User.EncodedT[];
-    result.clinics = (await getAllClinics()) as Clinic.EncodedT[];
+    result.clinics = getResultData(
+      await getAllClinics(),
+      [],
+    ) as Clinic.EncodedT[];
     result.currentUser = (await getCurrentUser()) as User.EncodedT | null;
     if (patientId) {
       const patientResult = await getPatientById({
@@ -225,7 +228,7 @@ function RouteComponent() {
           const clinicResponse = await getClinicById({
             data: { id: selectedClinic },
           });
-          if (clinicResponse?.data?.departments) {
+          if (clinicResponse.ok && clinicResponse.data.departments) {
             setAvailableDepartments(clinicResponse.data.departments);
 
             // Update form field with departments if they don't already have values

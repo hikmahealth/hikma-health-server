@@ -5,7 +5,7 @@ import {
   safeStringify,
   toSafeDateString,
 } from "@/lib/utils";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { Option } from "effect";
 import {
   type ColumnType,
@@ -109,7 +109,7 @@ namespace Event {
 
   export namespace API {
     // FIXME: Events should only be created if the visit_id is present and the visit exists. Update!
-    export const save = serverOnly(
+    export const save = createServerOnlyFn(
       async (id: string | null, event: Event.EncodedT) => {
         // if the id is null, we are creating a new event. If the ID is present, then we are updating an existing event.
         // Eitherway we always do an upsert
@@ -233,7 +233,7 @@ namespace Event {
       },
     );
 
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       await db
         .updateTable(Event.Table.name)
         .set({
@@ -245,7 +245,7 @@ namespace Event {
         .execute();
     });
 
-    export const getAllByFormId = serverOnly(
+    export const getAllByFormId = createServerOnlyFn(
       async (
         form_id: string,
         {
@@ -272,7 +272,7 @@ namespace Event {
      * @param visitId - The visit ID to filter by
      * @returns Array of events belonging to the visit
      */
-    export const getByVisitId = serverOnly(
+    export const getByVisitId = createServerOnlyFn(
       async (visitId: string): Promise<Event.EncodedT[]> => {
         const res = await db
           .selectFrom(Table.name)
@@ -291,7 +291,7 @@ namespace Event {
      * @param formData - The new form data array
      * @param metadata - Optional updated metadata
      */
-    export const updateFormData = serverOnly(
+    export const updateFormData = createServerOnlyFn(
       async (
         id: string,
         formData: Array<Record<string, any>>,
@@ -314,7 +314,7 @@ namespace Event {
       },
     );
 
-    export const getAllForExport = serverOnly(
+    export const getAllForExport = createServerOnlyFn(
       async (): Promise<
         (Event.EncodedT & { patient?: Partial<Patient.EncodedT> })[]
       > => {
@@ -348,17 +348,19 @@ namespace Event {
       },
     );
 
-    export const getAllWithPatientForExport = serverOnly(
+    export const getAllWithPatientForExport = createServerOnlyFn(
       async (): Promise<(Event.EncodedT & { patient?: Patient.T })[]> => {},
     );
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(async (delta: Event.EncodedT) => {
-      return API.save(delta.id, delta);
-    });
+    export const upsertFromDelta = createServerOnlyFn(
+      async (delta: Event.EncodedT) => {
+        return API.save(delta.id, delta);
+      },
+    );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.softDelete(id);
     });
   }

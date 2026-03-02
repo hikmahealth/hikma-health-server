@@ -10,7 +10,7 @@ import {
 } from "kysely";
 import { Schema } from "effect";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import type Clinic from "./clinic";
 import type Patient from "./patient";
 import User from "./user";
@@ -151,7 +151,7 @@ namespace Prescription {
   }
 
   export namespace API {
-    export const getAll = serverOnly(
+    export const getAll = createServerOnlyFn(
       async (): Promise<Prescription.EncodedT[]> => {
         const res = await db
           .selectFrom(Prescription.Table.name)
@@ -166,7 +166,7 @@ namespace Prescription {
     /**
      * Get paginated prescriptions for a patient, ordered by most recent first.
      */
-    export const getByPatientId = serverOnly(
+    export const getByPatientId = createServerOnlyFn(
       async (options: {
         patientId: string;
         limit?: number;
@@ -221,7 +221,7 @@ namespace Prescription {
       },
     );
 
-    export const toggleStatus = serverOnly(
+    export const toggleStatus = createServerOnlyFn(
       async (id: string, status: string) => {
         await db
           .updateTable(Prescription.Table.name)
@@ -235,7 +235,7 @@ namespace Prescription {
       },
     );
 
-    export const getAllWithDetails = serverOnly(async () => {
+    export const getAllWithDetails = createServerOnlyFn(async () => {
       const res = await db.executeQuery<{
         prescription: Prescription.EncodedT;
         patient: Patient.EncodedT;
@@ -262,7 +262,7 @@ namespace Prescription {
     /**
      * Save a prescription - this is an upsert operation
      */
-    export const save = serverOnly(
+    export const save = createServerOnlyFn(
       async (
         id: string | null,
         prescription: Prescription.EncodedT,
@@ -435,7 +435,7 @@ namespace Prescription {
     /**
      * Soft delete a prescription. ITs an update operation -
      */
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       await db
         .updateTable(Prescription.Table.name)
         .set({
@@ -449,13 +449,13 @@ namespace Prescription {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (delta: Prescription.EncodedT) => {
         return API.save(delta.id || uuidV1(), delta, [], "", "");
       },
     );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.softDelete(id);
     });
   }

@@ -3,23 +3,23 @@
  * All routes route to /api/auth/*
  */
 
-import { createServerFileRoute } from "@tanstack/react-start/server";
+import { createFileRoute } from "@tanstack/react-router";
 
-// export const Route = createFileRoute("/v1/api/sync")({
-//   component: RouteComponent,
-// });
+export const Route = createFileRoute("/api/login")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        // Forward the request to the /api/auth/sign-in endpoint
+        const apiSignInUrl = new URL("/api/auth/sign-in", request.url);
+        const forwardedRequest = new Request(apiSignInUrl, request);
+        const response = await fetch(forwardedRequest);
+        const { user, token } = await response.json();
 
-export const ServerRoute = createServerFileRoute("/api/login").methods({
-  POST: async ({ request }) => {
-    // Forward the request to the /api/auth/sign-in endpoint
-    const apiSignInUrl = new URL("/api/auth/sign-in", request.url);
-    const forwardedRequest = new Request(apiSignInUrl, request);
-    const response = await fetch(forwardedRequest);
-    const { user, token } = await response.json();
-
-    return new Response(JSON.stringify({ ...user, token }), {
-      headers: { "Content-Type": "application/json" },
-      status: response.status,
-    });
+        return new Response(JSON.stringify({ ...user, token }), {
+          headers: { "Content-Type": "application/json" },
+          status: response.status,
+        });
+      },
+    },
   },
 });

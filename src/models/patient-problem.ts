@@ -9,7 +9,7 @@ import {
   sql,
 } from "kysely";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 
 namespace PatientProblem {
@@ -142,7 +142,7 @@ namespace PatientProblem {
    * @param problem - The problem data to create
    * @returns {Promise<EncodedT>} - The created problem record
    */
-  export const create = serverOnly(
+  export const create = createServerOnlyFn(
     async (
       problem: Omit<Table.NewPatientProblems, "id">,
     ): Promise<EncodedT> => {
@@ -165,7 +165,7 @@ namespace PatientProblem {
    * @param patientId - The patient ID
    * @returns {Promise<EncodedT[]>} - List of problem records
    */
-  export const getByPatientId = serverOnly(
+  export const getByPatientId = createServerOnlyFn(
     async (patientId: string): Promise<EncodedT[]> => {
       const result = await db
         .selectFrom(Table.name)
@@ -182,7 +182,7 @@ namespace PatientProblem {
   /**
    * Get paginated problems for a patient, ordered by most recently updated first.
    */
-  export const getByPatientIdPaginated = serverOnly(
+  export const getByPatientIdPaginated = createServerOnlyFn(
     async (options: {
       patientId: string;
       limit?: number;
@@ -242,7 +242,7 @@ namespace PatientProblem {
    * @param patientId - The patient ID
    * @returns {Promise<EncodedT[]>} - List of active problem records
    */
-  export const getActiveProblems = serverOnly(
+  export const getActiveProblems = createServerOnlyFn(
     async (patientId: string): Promise<EncodedT[]> => {
       const result = await db
         .selectFrom(Table.name)
@@ -263,7 +263,7 @@ namespace PatientProblem {
    * @param visitId - The visit ID
    * @returns {Promise<EncodedT[]>} - List of problem records for the visit
    */
-  export const getByVisitId = serverOnly(
+  export const getByVisitId = createServerOnlyFn(
     async (visitId: string): Promise<EncodedT[]> => {
       const result = await db
         .selectFrom(Table.name)
@@ -282,7 +282,7 @@ namespace PatientProblem {
    * @param id - The problem ID
    * @returns {Promise<EncodedT | undefined>} - The problem record
    */
-  export const getById = serverOnly(
+  export const getById = createServerOnlyFn(
     async (id: string): Promise<EncodedT | undefined> => {
       const result = await db
         .selectFrom(Table.name)
@@ -301,7 +301,7 @@ namespace PatientProblem {
    * @param updates - The updates to apply
    * @returns {Promise<EncodedT>} - The updated problem record
    */
-  export const update = serverOnly(
+  export const update = createServerOnlyFn(
     async (
       id: string,
       updates: Table.PatientProblemsUpdate,
@@ -325,16 +325,18 @@ namespace PatientProblem {
    * @param id - The problem record ID
    * @returns {Promise<void>}
    */
-  export const softDelete = serverOnly(async (id: string): Promise<void> => {
-    await db
-      .updateTable(Table.name)
-      .set({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .where("id", "=", id)
-      .execute();
-  });
+  export const softDelete = createServerOnlyFn(
+    async (id: string): Promise<void> => {
+      await db
+        .updateTable(Table.name)
+        .set({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
+        })
+        .where("id", "=", id)
+        .execute();
+    },
+  );
 
   /**
    * Search problems by code or label
@@ -342,7 +344,7 @@ namespace PatientProblem {
    * @param codeSystem - Optional code system filter
    * @returns {Promise<EncodedT[]>} - List of matching problem records
    */
-  export const search = serverOnly(
+  export const search = createServerOnlyFn(
     async (searchTerm: string, codeSystem?: string): Promise<EncodedT[]> => {
       let query = db
         .selectFrom(Table.name)
@@ -370,7 +372,7 @@ namespace PatientProblem {
    * @param clinicalStatus - The clinical status
    * @returns {Promise<EncodedT[]>} - List of problem records
    */
-  export const getByClinicalStatus = serverOnly(
+  export const getByClinicalStatus = createServerOnlyFn(
     async (patientId: string, clinicalStatus: string): Promise<EncodedT[]> => {
       const result = await db
         .selectFrom(Table.name)
@@ -411,7 +413,7 @@ namespace PatientProblem {
       deleted_at: delta.deleted_at ?? null,
     });
 
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (deltaData: Table.NewPatientProblems): Promise<void> => {
         const row = pickColumns(deltaData as Record<string, any>);
         await db
@@ -427,7 +429,7 @@ namespace PatientProblem {
       },
     );
 
-    export const deleteFromDelta = serverOnly(
+    export const deleteFromDelta = createServerOnlyFn(
       async (id: string): Promise<void> => {
         await softDelete(id);
       },

@@ -20,3 +20,7 @@ count.txt
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+/lib/
+.bsb.lock
+coverage

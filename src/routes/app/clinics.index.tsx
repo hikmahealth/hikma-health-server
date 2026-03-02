@@ -22,16 +22,17 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAllClinics } from "@/lib/server-functions/clinics";
+import { getResultData } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
 const deleteClinic = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     return Clinic.softDelete(data.id);
   });
 
 export const archiveClinic = createServerFn({ method: "POST" })
-  .validator((data: { id: string; isArchived: boolean }) => data)
+  .inputValidator((data: { id: string; isArchived: boolean }) => data)
   .handler(async ({ data }) => {
     return Clinic.API.setArchivedStatus(data.id, data.isArchived);
   });
@@ -39,7 +40,7 @@ export const archiveClinic = createServerFn({ method: "POST" })
 export const Route = createFileRoute("/app/clinics/")({
   component: RouteComponent,
   loader: async () => {
-    const clinics = await getAllClinics();
+    const clinics = getResultData(await getAllClinics(), []);
     return { clinics };
   },
 });

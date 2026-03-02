@@ -447,3 +447,73 @@ export function calculateAge(
 
   return ageString;
 }
+
+/**
+ * Separator used for joining multiple checkbox values into a single string.
+ * Chosen to avoid conflicts with commas or other common characters in user input.
+ */
+export const CHECKBOX_SEPARATOR = ";;";
+
+/**
+ * Join an array of selected checkbox values into a single string using the custom separator.
+ */
+export function joinCheckboxValues(values: string[]): string {
+  return values.join(CHECKBOX_SEPARATOR);
+}
+
+/**
+ * Split a stored checkbox string back into an array of values.
+ */
+export function splitCheckboxValues(value: string): string[] {
+  if (!value) return [];
+  return value.split(CHECKBOX_SEPARATOR).filter(Boolean);
+}
+
+/** Result implementation lifted from the mobile react-native application . TODO: Unify when monorepo is live */
+
+// ---------------------------------------------------------------------------
+// Result type — explicit success/failure for all provider operations
+// ---------------------------------------------------------------------------
+
+/** Discriminated union for provider operation errors */
+export type DataError =
+  | { _tag: "NetworkError"; message: string; statusCode?: number }
+  | { _tag: "NotFound"; entity: string; id: string }
+  | { _tag: "ValidationError"; message: string; field?: string }
+  | { _tag: "Unauthorized"; message: string }
+  | { _tag: "ServerError"; message: string }
+  | { _tag: "PermissionDenied"; permission: string; message: string };
+
+/** Result of an operation that can fail */
+export type Result<T, E = DataError> =
+  | { ok: true; data: T }
+  | { ok: false; error: E };
+
+/** Create a success result */
+export const ok = <T>(data: T): Result<T, never> => ({ ok: true, data });
+
+/** Create a failure result */
+export const err = <E extends DataError>(error: E): Result<never, E> => ({
+  ok: false,
+  error,
+});
+
+/** Get the result data value, with option of return a default value */
+export const getResultData = <T, E = DataError>(
+  res: Result<T, E>,
+  fallback: T,
+) => {
+  if (res.ok) {
+    return res.data;
+  } else {
+    return fallback;
+  }
+};
+
+/** Extract a human-readable message from any DataError variant */
+export function dataErrorMessage(e: DataError): string {
+  if (e._tag === "NotFound") return `${e.entity} not found: ${e.id}`;
+  if (e._tag === "PermissionDenied")
+    return `Permission denied: ${e.permission}. ${e.message}`;
+  return e.message || e._tag;
+}

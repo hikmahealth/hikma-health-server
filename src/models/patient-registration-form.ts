@@ -11,9 +11,13 @@ import {
 import { type Language } from "./language";
 import { v1 as uuidv1 } from "uuid";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { format } from "date-fns";
-import { mapObjectValues, toSafeDateString } from "@/lib/utils";
+import {
+  mapObjectValues,
+  toSafeDateString,
+  splitCheckboxValues,
+} from "@/lib/utils";
 import { baseFields } from "@/data/registration-form-base-fields";
 
 namespace PatientRegistrationForm {
@@ -35,6 +39,7 @@ namespace PatientRegistrationForm {
     "number",
     "text",
     "select",
+    "checkbox",
     "date",
     "boolean",
   ] as const;
@@ -155,7 +160,7 @@ namespace PatientRegistrationForm {
    * Upsert a patient registration form
    * @param form The form to upsert
    */
-  export const upsertPatientRegistrationForm = serverOnly(
+  export const upsertPatientRegistrationForm = createServerOnlyFn(
     async (form: PatientRegistrationForm.EncodedT) => {
       // NOTE: it is possible for the form to not have an id (if it is a new form)
       const id = Option.match(Option.fromNullable(form.id), {
@@ -213,7 +218,7 @@ namespace PatientRegistrationForm {
    * Get all the patient registration forms
    * @returns {Promise<PatientRegistrationForm.T[]>} Array of patient registration forms
    */
-  export const getAll = serverOnly(
+  export const getAll = createServerOnlyFn(
     async (): Promise<PatientRegistrationForm.EncodedT[]> => {
       const result = await db.selectFrom(Table.name).selectAll().execute();
 
@@ -265,6 +270,8 @@ namespace PatientRegistrationForm {
             return String(value);
           case "select":
             return String(value);
+          case "checkbox":
+            return splitCheckboxValues(String(value)).join(", ");
           default:
             return JSON.stringify(value);
         }
@@ -289,6 +296,8 @@ namespace PatientRegistrationForm {
             return String(val.string_value);
           case "select":
             return String(val.string_value);
+          case "checkbox":
+            return splitCheckboxValues(String(val.string_value)).join(", ");
           default:
             return JSON.stringify(val);
         }

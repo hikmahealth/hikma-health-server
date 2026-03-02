@@ -8,7 +8,7 @@ import {
   sql,
 } from "kysely";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 
 namespace AppConfig {
   export const DataTypeSchema = Schema.Union(
@@ -95,7 +95,7 @@ namespace AppConfig {
      * @param {string} key - The key of the configuration
      * @returns {Promise<AppConfig.EncodedT | null>} - The configuration entry
      */
-    export const get = serverOnly(
+    export const get = createServerOnlyFn(
       async (
         namespace: string,
         key: string,
@@ -116,7 +116,7 @@ namespace AppConfig {
      * @param {string} namespace - The namespace to retrieve configurations for
      * @returns {Promise<AppConfig.EncodedT[]>} - All configurations in the namespace
      */
-    export const getByNamespace = serverOnly(
+    export const getByNamespace = createServerOnlyFn(
       async (namespace: string): Promise<AppConfig.EncodedT[]> => {
         const result = await db
           .selectFrom(AppConfig.Table.name)
@@ -133,7 +133,7 @@ namespace AppConfig {
      * Get all configuration values
      * @returns {Promise<AppConfig.EncodedT[]>} - All configuration entries
      */
-    export const getAll = serverOnly(
+    export const getAll = createServerOnlyFn(
       async (): Promise<AppConfig.EncodedT[]> => {
         const result = await db
           .selectFrom(AppConfig.Table.name)
@@ -155,7 +155,7 @@ namespace AppConfig {
      * @param {string | null} updatedBy - The ID of the user making the update
      * @returns {Promise<AppConfig.EncodedT>} - The created/updated configuration
      */
-    export const set = serverOnly(
+    export const set = createServerOnlyFn(
       async (
         namespace: string,
         key: string,
@@ -200,7 +200,7 @@ namespace AppConfig {
      * @param {string} key - The key of the configuration
      * @returns {Promise<void>} - Resolves when the configuration is deleted
      */
-    export const remove = serverOnly(
+    export const remove = createServerOnlyFn(
       async (namespace: string, key: string): Promise<void> => {
         await db
           .deleteFrom(AppConfig.Table.name)
@@ -215,7 +215,7 @@ namespace AppConfig {
      * @param {string} namespace - The namespace to clear
      * @returns {Promise<void>} - Resolves when all configurations are deleted
      */
-    export const clearNamespace = serverOnly(
+    export const clearNamespace = createServerOnlyFn(
       async (namespace: string): Promise<void> => {
         await db
           .deleteFrom(AppConfig.Table.name)
@@ -228,16 +228,18 @@ namespace AppConfig {
      * Get all unique namespaces
      * @returns {Promise<string[]>} - List of unique namespaces
      */
-    export const getNamespaces = serverOnly(async (): Promise<string[]> => {
-      const result = await db
-        .selectFrom(AppConfig.Table.name)
-        .select("namespace")
-        .distinct()
-        .orderBy("namespace", "asc")
-        .execute();
+    export const getNamespaces = createServerOnlyFn(
+      async (): Promise<string[]> => {
+        const result = await db
+          .selectFrom(AppConfig.Table.name)
+          .select("namespace")
+          .distinct()
+          .orderBy("namespace", "asc")
+          .execute();
 
-      return result.map((row) => row.namespace);
-    });
+        return result.map((row) => row.namespace);
+      },
+    );
 
     /**
      * Update multiple configuration values in a transaction
@@ -245,7 +247,7 @@ namespace AppConfig {
      * @param {string | null} updatedBy - The ID of the user making the updates
      * @returns {Promise<AppConfig.EncodedT[]>} - The updated configurations
      */
-    export const setMultiple = serverOnly(
+    export const setMultiple = createServerOnlyFn(
       async (
         configs: Array<{
           namespace: string;

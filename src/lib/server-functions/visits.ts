@@ -13,6 +13,7 @@ import {
   buildVisitInsertValues,
 } from "./builders";
 import { logAuditEvent } from "./audit";
+import { type Result, ok, err } from "@/lib/utils";
 
 /** A visit with its associated events pre-loaded. */
 export type VisitWithEvents = Visit.EncodedT & {
@@ -25,7 +26,7 @@ export type VisitWithEvents = Visit.EncodedT & {
  * @returns Paginated list of visits
  */
 export const getPatientVisits = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (data: {
       patientId: string;
       offset?: number;
@@ -36,11 +37,12 @@ export const getPatientVisits = createServerFn({ method: "GET" })
   .handler(
     async ({
       data,
-    }): Promise<{
-      items: VisitWithEvents[];
-      pagination: Pagination;
-      error: string | null;
-    }> => {
+    }): Promise<
+      Result<{
+        items: VisitWithEvents[];
+        pagination: Pagination;
+      }>
+    > => {
       const authorized = await userRoleTokenHasCapability([
         User.CAPABILITIES.READ_ALL_PATIENT,
       ]);
@@ -87,19 +89,14 @@ export const getPatientVisits = createServerFn({ method: "GET" })
           items = result.items.map((v) => ({ ...v, events: [] }));
         }
 
-        return {
-          items,
-          pagination: result.pagination,
-          error: null,
-        };
+        return ok({ items, pagination: result.pagination });
       } catch (error) {
         Sentry.captureException(error);
-        return {
-          items: [],
-          pagination: { offset: 0, limit: 50, total: 0, hasMore: false },
-          error:
+        return err({
+          _tag: "ServerError" as const,
+          message:
             error instanceof Error ? error.message : "Failed to fetch visits",
-        };
+        });
       }
     },
   );
@@ -110,7 +107,7 @@ export const getPatientVisits = createServerFn({ method: "GET" })
  * @returns The new visit ID on success
  */
 export const createVisit = createServerFn({ method: "POST" })
-  .validator((data: CreateVisitInput) => data)
+  .inputValidator((data: CreateVisitInput) => data)
   .middleware([permissionsMiddleware])
   .handler(
     async ({

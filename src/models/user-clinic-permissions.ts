@@ -8,7 +8,7 @@ import {
   sql,
 } from "kysely";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import User from "./user";
 import Clinic from "./clinic";
 import { Option } from "effect";
@@ -234,7 +234,7 @@ namespace UserClinicPermissions {
      * @param {string} clinicId - The clinic ID
      * @returns {Promise<UserClinicPermissions.EncodedT | null>} - The user's permissions for the clinic
      */
-    export const getByUserAndClinic = serverOnly(
+    export const getByUserAndClinic = createServerOnlyFn(
       async (
         userId: string,
         clinicId: string,
@@ -256,7 +256,7 @@ namespace UserClinicPermissions {
      * @param permission Permission to check for
      * @returns Array of clinics where the user has the permission
      */
-    export const getClinicIdsWithPermissionFromToken = serverOnly(
+    export const getClinicIdsWithPermissionFromToken = createServerOnlyFn(
       async (permission: UserPermissionsT) => {
         const token = getCookie("token");
         if (!token) {
@@ -281,7 +281,7 @@ namespace UserClinicPermissions {
      * @param permission Permission to check for
      * @returns Array of clinics where the user has the permission
      */
-    export const getClinicIdsWithPermission = serverOnly(
+    export const getClinicIdsWithPermission = createServerOnlyFn(
       async (
         userId: string,
         permission: UserPermissionsT,
@@ -325,7 +325,7 @@ namespace UserClinicPermissions {
      * @throws {Error} Throws "Unauthorized" error if the user doesn't have the permission for the clinic
      * @returns {Promise<void>} Resolves if authorized, rejects if not
      */
-    export const isAuthorizedWithClinic = serverOnly(
+    export const isAuthorizedWithClinic = createServerOnlyFn(
       async (clinicId: string | null, permission: UserPermissionsT) => {
         if (!clinicId) {
           throw new Error("Unauthorized");
@@ -343,7 +343,7 @@ namespace UserClinicPermissions {
      * @param {string} userId - The user ID
      * @returns {Promise<UserClinicPermissions.EncodedT[]>} - All clinic permissions for the user
      */
-    export const getByUser = serverOnly(
+    export const getByUser = createServerOnlyFn(
       async (userId: string): Promise<UserClinicPermissions.EncodedT[]> => {
         const result = await db
           .selectFrom(UserClinicPermissions.Table.name)
@@ -360,7 +360,7 @@ namespace UserClinicPermissions {
      * @param {string} clinicId - The clinic ID
      * @returns {Promise<UserClinicPermissions.EncodedT[]>} - All user permissions for the clinic
      */
-    export const getByClinic = serverOnly(
+    export const getByClinic = createServerOnlyFn(
       async (clinicId: string): Promise<UserClinicPermissions.EncodedT[]> => {
         const result = await db
           .selectFrom(UserClinicPermissions.Table.name)
@@ -378,7 +378,7 @@ namespace UserClinicPermissions {
      * @param {string} currentUserId - The ID of the user performing the operation
      * @returns {Promise<UserClinicPermissions.EncodedT>} - The created/updated permissions
      */
-    export const upsert = serverOnly(
+    export const upsert = createServerOnlyFn(
       async (
         permissions: Omit<
           UserClinicPermissions.EncodedT,
@@ -445,7 +445,7 @@ namespace UserClinicPermissions {
      * @param {string} clinicId
      * @param {string} currentUserId
      */
-    export const newClinicCreated = serverOnly(
+    export const newClinicCreated = createServerOnlyFn(
       async (clinicId: string, currentUserId: string) => {
         const superAdmins = await db
           .selectFrom(User.Table.name)
@@ -486,7 +486,7 @@ namespace UserClinicPermissions {
      * @param {string} clinicId - The clinic ID
      * @returns {Promise<void>} - Resolves when permissions are deleted
      */
-    export const remove = serverOnly(
+    export const remove = createServerOnlyFn(
       async (userId: string, clinicId: string): Promise<void> => {
         await db
           .deleteFrom(UserClinicPermissions.Table.name)
@@ -503,7 +503,7 @@ namespace UserClinicPermissions {
      * @param {keyof Pick<UserClinicPermissions.T, 'can_register_patients' | 'can_view_history' | 'can_edit_records' | 'can_delete_records' | 'is_clinic_admin'>} permission - The permission to check
      * @returns {Promise<boolean>} - Whether the user has the permission
      */
-    export const hasPermission = serverOnly(
+    export const hasPermission = createServerOnlyFn(
       async (
         userId: string,
         clinicId: string,
@@ -541,7 +541,7 @@ namespace UserClinicPermissions {
      * @param {boolean} value - The value to set the permission to
      * @returns {Promise<void>}
      */
-    export const setPermission = serverOnly(
+    export const setPermission = createServerOnlyFn(
       async (
         userId: string,
         clinicId: string,
@@ -575,7 +575,7 @@ namespace UserClinicPermissions {
      * @param {string} clinicId - The clinic ID
      * @returns {Promise<UserClinicPermissions.EncodedT[]>} - All clinic admins
      */
-    export const getClinicAdmins = serverOnly(
+    export const getClinicAdmins = createServerOnlyFn(
       async (clinicId: string): Promise<UserClinicPermissions.EncodedT[]> => {
         const result = await db
           .selectFrom(UserClinicPermissions.Table.name)

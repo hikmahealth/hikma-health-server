@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { getCurrentUserId } from "@/lib/server-functions/auth";
 import { getAllClinics } from "@/lib/server-functions/clinics";
+import { getResultData } from "@/lib/utils";
 import {
   currentUserHasRole,
   getUserById,
@@ -36,7 +37,7 @@ import { permissionsMiddleware } from "@/middleware/auth";
 import User from "@/models/user";
 
 const addClinicPermissions = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: { userId: string; clinicId: string; currentUserId: string }) => data,
   )
   .middleware([permissionsMiddleware])
@@ -65,7 +66,7 @@ const addClinicPermissions = createServerFn({ method: "POST" })
   });
 
 const togglePermission = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       userId: string;
       clinicId: string;
@@ -143,7 +144,7 @@ export const Route = createFileRoute("/app/users/manage-permissions/$")({
     return {
       user,
       userClinicPermissions,
-      clinics: await getAllClinics(),
+      clinics: getResultData(await getAllClinics(), []),
       currentUserId: await getCurrentUserId(),
       isSuperAdmin,
     };

@@ -20,6 +20,10 @@ import ClinicInventory from "./clinic-inventory";
 import DispensingRecord from "./dispensing-records";
 import PrescriptionItem from "./prescription-items";
 import { toSafeDateString } from "@/lib/utils";
+import User from "./user";
+import Device from "./device";
+import DevicePinCode from "./device-pin-code";
+import UserClinicPermissions from "./user-clinic-permissions";
 
 /** Returns true if the value looks like a raw epoch timestamp (10-13 digit numeric string or number). */
 const isEpochTimestamp = (value: unknown): boolean =>
@@ -55,6 +59,21 @@ namespace Sync {
         PrescriptionItem,
         // Add more syncable entities here. Do not add any server defined entities here that do not track server_created_at or server_updated_at
     ];
+
+
+  /**
+   * These entities are synced to the local sync hub. They contain a subset of the information available in the server for the respective clinics the sync hub is allowed to store data for.
+   * Syncing users is allowed.
+   *
+   * When adding new entities that need to be synced to the hubs, add them to ENTITIES_TO_PUSH_TO_HUB
+   */
+  const ENTITIES_TO_PUSH_TO_HUB = [
+    ...ENTITIES_TO_PUSH_TO_MOBILE,
+    User,
+    Device,
+    DevicePinCode,
+  ]
+
 
     /**
      * These entities are synced from mobile.
@@ -186,8 +205,11 @@ namespace Sync {
      * @returns
      */
     export const getDeltaRecords = async (
-        lastSyncedAt: number
+      lastSyncedAt: number,
+      peerType?: Device.DeviceTypeT
     ): Promise<DBChangeSet> => {
+      /** Determine what gets pushed to the client based on the peer type */
+      const ENTITIES_TO_PUSH_TO_CLIENT = peerType === "sync_hub" ? ENTITIES_TO_PUSH_TO_HUB : ENTITIES_TO_PUSH_TO_MOBILE
         const result: DBChangeSet = {};
 
       const clientLastSyncDate = new Date(lastSyncedAt);
@@ -213,7 +235,7 @@ namespace Sync {
           'clinic_inventory' // this should synced for just the signed in clinic??
       ];
 
-        for (const entity of ENTITIES_TO_PUSH_TO_MOBILE) {
+        for (const entity of ENTITIES_TO_PUSH_TO_CLIENT) {
             // It can happen that the server table name is different from the mobile table name
             // This just ensures we do the correct mapping. Often the name is the same.
             const server_table_name = entity.Table.name;
@@ -228,10 +250,11 @@ namespace Sync {
             // let lastSyncDate = always_push_to_mobile ? now : effectiveLastSyncDate;
             let lastSyncDate = isExemptFromHistoryLimit ? clientLastSyncDate : effectiveLastSyncDate;
 
-            // Query for new records created after last sync
+            // Query for new records created at or after last sync.
+            // Using >= to avoid missing records created exactly at the boundary timestamp.
             const newRecords = await db
                 .selectFrom(server_table_name)
-                .where("server_created_at", ">", lastSyncDate)
+                .where("server_created_at", ">=", lastSyncDate)
                 .where("deleted_at", "is", null)
                 .where("is_deleted", "=", false)
                 .selectAll()
@@ -270,7 +293,7 @@ namespace Sync {
         result["user_clinic_permissions"] = {
           created:  await db
               .selectFrom("user_clinic_permissions")
-              .where("created_at", ">", clientLastSyncDate)
+              .where("created_at", ">=", clientLastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
@@ -286,7 +309,7 @@ namespace Sync {
         result["app_config"] = {
           created:  await db
               .selectFrom("app_config")
-              .where("created_at", ">", clientLastSyncDate)
+              .where("created_at", ">=", clientLastSyncDate)
               .selectAll()
               .execute(),
           updated: await db
@@ -307,7 +330,7 @@ namespace Sync {
      * @param entity
      * @param deltaData
      */
-    export const persistClientChanges = async (data: PushRequest): Promise<void> => {
+    export const persistClientChanges = async (data: PushRequest, peerType?: Device.DeviceTypeT): Promise<void> => {
         console.log("Starting to persist client changes", data);
         // Process the delta data from the client
         for (const [tableName, newDeltaJson] of Object.entries(data) as [PostTableName, Sync.DeltaData][]) {
@@ -350,7 +373,7 @@ namespace Sync {
                             return [key, value];
                         }),
                 );
-                await pushTableNameModelMap[tableName].Sync.upsertFromDelta(cleaned as typeof pushTableNameModelMap[typeof tableName].EncodedT);
+                await pushTableNameModelMap[tableName].Sync.upsertFromDelta(cleaned as (typeof pushTableNameModelMap)[typeof tableName]["EncodedT"]);
             }
 
             for (const id of deltaData.deleted) {

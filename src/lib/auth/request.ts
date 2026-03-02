@@ -1,11 +1,11 @@
 import { getHeader, getCookie, setCookie } from "@tanstack/react-start/server";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { createServerFn } from "@tanstack/react-start";
 import Token from "@/models/token";
 import User from "@/models/user";
 import { Option } from "effect";
 
-export const getCookieToken = serverOnly(() => {
+export const getCookieToken = createServerOnlyFn(() => {
   const token = getCookie("token");
   return token;
 });
@@ -14,7 +14,7 @@ export const getToken = createServerFn({ method: "GET" }).handler(async () => {
   return getCookie("token");
 });
 
-export const userRoleTokenHasCapability = serverOnly(
+export const userRoleTokenHasCapability = createServerOnlyFn(
   async (capabilities: (typeof User.CapabilitySchema.Type)[]) => {
     const token = getCookie("token");
     if (!token) return false;
@@ -25,9 +25,9 @@ export const userRoleTokenHasCapability = serverOnly(
         const role = user.role;
         const roleCapabilities = User.ROLE_CAPABILITIES[role] || [];
         return capabilities.every((capability) =>
-          roleCapabilities.includes(capability)
+          roleCapabilities.includes(capability),
         );
       },
     });
-  }
+  },
 );

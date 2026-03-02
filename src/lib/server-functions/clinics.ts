@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import ClinicDepartment from "@/models/clinic-department";
 import { permissionsMiddleware } from "@/middleware/auth";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
+import { type Result, ok, err } from "@/lib/utils";
 
 /**
  * Get all clinics
@@ -14,10 +15,14 @@ export const getAllClinics = createServerFn({ method: "GET" }).handler(
     return Sentry.startSpan({ name: "Get all clinics" }, async () => {
       try {
         const clinics = await Clinic.getAll();
-        return clinics;
+        return ok(clinics);
       } catch (error) {
         Sentry.captureException(error);
-        return [];
+        return err({
+          _tag: "ServerError" as const,
+          message:
+            error instanceof Error ? error.message : "Failed to fetch clinics",
+        });
       }
     });
   },
@@ -26,45 +31,32 @@ export const getAllClinics = createServerFn({ method: "GET" }).handler(
 export const getClinicById = createServerFn({
   method: "GET",
 })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const clinicId = data.id;
-    let result:
-      | {
-          data: {
-            clinic: Clinic.EncodedT;
-            departments: ClinicDepartment.EncodedT[];
-          };
-          error: null;
-        }
-      | { data: null; error: string };
     return await Sentry.startSpan({ name: "getClinicById" }, async () => {
       try {
         const clinic = await Clinic.getById(clinicId);
         const departments =
           await ClinicDepartment.API.getActiveByClinicId(clinicId);
-        // Convert the clinic to a plain object for serialization
-        result = {
-          data: {
-            clinic: clinic as Clinic.EncodedT,
-            departments: departments as ClinicDepartment.EncodedT[],
-          },
-          error: null,
-        };
-
-        return result;
+        return ok({
+          clinic: clinic as Clinic.EncodedT,
+          departments: departments as ClinicDepartment.EncodedT[],
+        });
       } catch (error) {
+        Sentry.captureException(error);
         console.error("Error fetching clinic:", error);
-        return {
-          data: null,
-          error: "Error fetching clinic",
-        };
+        return err({
+          _tag: "ServerError" as const,
+          message:
+            error instanceof Error ? error.message : "Error fetching clinic",
+        });
       }
     });
   });
 
 export const createDepartment = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       clinicId: string;
       name: string;
@@ -93,7 +85,7 @@ export const createDepartment = createServerFn({ method: "POST" })
   });
 
 export const toggleDepartmentCapability = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       clinicId: string;
       departmentId: string;
@@ -124,7 +116,7 @@ export const toggleDepartmentCapability = createServerFn({ method: "POST" })
   });
 
 export const deleteDepartment = createServerFn({ method: "POST" })
-  .validator((data: { clinicId: string; departmentId: string }) => data)
+  .inputValidator((data: { clinicId: string; departmentId: string }) => data)
   .middleware([permissionsMiddleware])
   .handler(async ({ data, context }) => {
     if (!context.userId) {

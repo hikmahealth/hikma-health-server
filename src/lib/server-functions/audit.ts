@@ -6,6 +6,7 @@
 
 import { getHeader } from "@tanstack/react-start/server";
 import { createHash } from "crypto";
+import * as Sentry from "@sentry/tanstackstart-react";
 import db from "@/db";
 import EventLog from "@/models/event-logs";
 
@@ -49,6 +50,7 @@ export async function logAuditEvent(
     await EventLog.logEvent(db, params, ctx);
   } catch (error) {
     // Audit logging should never break the primary operation
+    Sentry.captureException(error, { tags: { subsystem: "audit" } });
     console.error("Audit log failed:", error);
   }
 }

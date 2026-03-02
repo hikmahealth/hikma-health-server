@@ -8,21 +8,24 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
+import { Route as RpcHeartbeatRouteImport } from './routes/rpc/heartbeat'
 import { Route as DemoTableRouteImport } from './routes/demo.table'
 import { Route as DemoStoreRouteImport } from './routes/demo.store'
+import { Route as ApiLoginRouteImport } from './routes/api/login'
+import { Route as ApiDemoNamesRouteImport } from './routes/api.demo-names'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users.index'
+import { Route as AppReportsIndexRouteImport } from './routes/app/reports/index'
 import { Route as AppPrescriptionsIndexRouteImport } from './routes/app/prescriptions.index'
 import { Route as AppPatientsIndexRouteImport } from './routes/app/patients.index'
 import { Route as AppEventFormsIndexRouteImport } from './routes/app/event-forms.index'
 import { Route as AppClinicsIndexRouteImport } from './routes/app/clinics.index'
 import { Route as AppAppointmentsIndexRouteImport } from './routes/app/appointments.index'
+import { Route as RpcQuerySplatRouteImport } from './routes/rpc.query.$'
+import { Route as RpcCommandSplatRouteImport } from './routes/rpc.command.$'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
 import { Route as DemoSentryTestingRouteImport } from './routes/demo.sentry.testing'
@@ -32,28 +35,27 @@ import { Route as AppSettingsRegisterMobileAppRouteImport } from './routes/app/s
 import { Route as AppSettingsConfigurationsRouteImport } from './routes/app/settings.configurations'
 import { Route as AppPatientsRegisterRouteImport } from './routes/app/patients.register'
 import { Route as AppPatientsCustomizeRegistrationFormRouteImport } from './routes/app/patients.customize-registration-form'
+import { Route as AppPatientsIdRouteImport } from './routes/app/patients.$id'
 import { Route as AppDataEventsRouteImport } from './routes/app/data.events'
-import { Route as AppPatientsSplatIndexRouteImport } from './routes/app/patients.$.index'
+import { Route as ApiV2SyncRouteImport } from './routes/api/v2.sync'
+import { Route as ApiHubVerifyKeyRouteImport } from './routes/api/hub.verify-key'
+import { Route as ApiAuthSignOutRouteImport } from './routes/api/auth.sign-out'
+import { Route as ApiAuthSignInRouteImport } from './routes/api/auth.sign-in'
+import { Route as ApiAuthIsValidTokenRouteImport } from './routes/api/auth.is-valid-token'
+import { Route as AppSettingsDevicesIndexRouteImport } from './routes/app/settings.devices.index'
 import { Route as AppInventoryDrugCatalogueIndexRouteImport } from './routes/app/inventory/drug-catalogue.index'
 import { Route as AppInventoryClinicInventoryIndexRouteImport } from './routes/app/inventory/clinic-inventory.index'
-import { Route as AppClinicsSplatIndexRouteImport } from './routes/app/clinics.$.index'
+import { Route as AppClinicsIdIndexRouteImport } from './routes/app/clinics.$id.index'
 import { Route as AppUsersManagePermissionsSplatRouteImport } from './routes/app/users.manage-permissions.$'
 import { Route as AppUsersEditSplatRouteImport } from './routes/app/users.edit.$'
+import { Route as AppReportsIdEditRouteImport } from './routes/app/reports/$id.edit'
 import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/prescriptions.edit.$'
 import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-forms.edit.$'
 import { Route as AppClinicsEditSplatRouteImport } from './routes/app/clinics.edit.$'
 import { Route as AppAppointmentsEditSplatRouteImport } from './routes/app/appointments.edit.$'
+import { Route as AppSettingsDevicesEditSplatRouteImport } from './routes/app/settings.devices.edit.$'
 import { Route as AppInventoryDrugCatalogueEditSplatRouteImport } from './routes/app/inventory/drug-catalogue.edit.$'
 import { Route as AppInventoryClinicInventoryDrugEditSplatRouteImport } from './routes/app/inventory/clinic-inventory.drug.edit.$'
-import { ServerRoute as ApiLoginServerRouteImport } from './routes/api/login'
-import { ServerRoute as ApiDemoNamesServerRouteImport } from './routes/api.demo-names'
-import { ServerRoute as ApiV2SyncServerRouteImport } from './routes/api/v2.sync'
-import { ServerRoute as ApiTrpcSplatServerRouteImport } from './routes/api.trpc.$'
-import { ServerRoute as ApiAuthSignOutServerRouteImport } from './routes/api/auth.sign-out'
-import { ServerRoute as ApiAuthSignInServerRouteImport } from './routes/api/auth.sign-in'
-import { ServerRoute as ApiAuthIsValidTokenServerRouteImport } from './routes/api/auth.is-valid-token'
-
-const rootServerRouteImport = createServerRootRoute()
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -70,9 +72,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
+const RpcHeartbeatRoute = RpcHeartbeatRouteImport.update({
+  id: '/rpc/heartbeat',
+  path: '/rpc/heartbeat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoTableRoute = DemoTableRouteImport.update({
@@ -85,9 +87,24 @@ const DemoStoreRoute = DemoStoreRouteImport.update({
   path: '/demo/store',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLoginRoute = ApiLoginRouteImport.update({
+  id: '/api/login',
+  path: '/api/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDemoNamesRoute = ApiDemoNamesRouteImport.update({
+  id: '/api/demo-names',
+  path: '/api/demo-names',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPrescriptionsIndexRoute = AppPrescriptionsIndexRouteImport.update({
@@ -114,6 +131,16 @@ const AppAppointmentsIndexRoute = AppAppointmentsIndexRouteImport.update({
   id: '/appointments/',
   path: '/appointments/',
   getParentRoute: () => AppRoute,
+} as any)
+const RpcQuerySplatRoute = RpcQuerySplatRouteImport.update({
+  id: '/rpc/query/$',
+  path: '/rpc/query/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RpcCommandSplatRoute = RpcCommandSplatRouteImport.update({
+  id: '/rpc/command/$',
+  path: '/rpc/command/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
   id: '/demo/start/server-funcs',
@@ -163,14 +190,44 @@ const AppPatientsCustomizeRegistrationFormRoute =
     path: '/patients/customize-registration-form',
     getParentRoute: () => AppRoute,
   } as any)
+const AppPatientsIdRoute = AppPatientsIdRouteImport.update({
+  id: '/patients/$id',
+  path: '/patients/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDataEventsRoute = AppDataEventsRouteImport.update({
   id: '/data/events',
   path: '/data/events',
   getParentRoute: () => AppRoute,
 } as any)
-const AppPatientsSplatIndexRoute = AppPatientsSplatIndexRouteImport.update({
-  id: '/patients/$/',
-  path: '/patients/$/',
+const ApiV2SyncRoute = ApiV2SyncRouteImport.update({
+  id: '/api/v2/sync',
+  path: '/api/v2/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiHubVerifyKeyRoute = ApiHubVerifyKeyRouteImport.update({
+  id: '/api/hub/verify-key',
+  path: '/api/hub/verify-key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSignOutRoute = ApiAuthSignOutRouteImport.update({
+  id: '/api/auth/sign-out',
+  path: '/api/auth/sign-out',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthSignInRoute = ApiAuthSignInRouteImport.update({
+  id: '/api/auth/sign-in',
+  path: '/api/auth/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAuthIsValidTokenRoute = ApiAuthIsValidTokenRouteImport.update({
+  id: '/api/auth/is-valid-token',
+  path: '/api/auth/is-valid-token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppSettingsDevicesIndexRoute = AppSettingsDevicesIndexRouteImport.update({
+  id: '/settings/devices/',
+  path: '/settings/devices/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInventoryDrugCatalogueIndexRoute =
@@ -185,9 +242,9 @@ const AppInventoryClinicInventoryIndexRoute =
     path: '/inventory/clinic-inventory/',
     getParentRoute: () => AppRoute,
   } as any)
-const AppClinicsSplatIndexRoute = AppClinicsSplatIndexRouteImport.update({
-  id: '/clinics/$/',
-  path: '/clinics/$/',
+const AppClinicsIdIndexRoute = AppClinicsIdIndexRouteImport.update({
+  id: '/clinics/$id/',
+  path: '/clinics/$id/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppUsersManagePermissionsSplatRoute =
@@ -199,6 +256,11 @@ const AppUsersManagePermissionsSplatRoute =
 const AppUsersEditSplatRoute = AppUsersEditSplatRouteImport.update({
   id: '/users/edit/$',
   path: '/users/edit/$',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsIdEditRoute = AppReportsIdEditRouteImport.update({
+  id: '/reports/$id/edit',
+  path: '/reports/$id/edit',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPrescriptionsEditSplatRoute =
@@ -223,6 +285,12 @@ const AppAppointmentsEditSplatRoute =
     path: '/appointments/edit/$',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSettingsDevicesEditSplatRoute =
+  AppSettingsDevicesEditSplatRouteImport.update({
+    id: '/settings/devices/edit/$',
+    path: '/settings/devices/edit/$',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppInventoryDrugCatalogueEditSplatRoute =
   AppInventoryDrugCatalogueEditSplatRouteImport.update({
     id: '/inventory/drug-catalogue/edit/$',
@@ -235,51 +303,23 @@ const AppInventoryClinicInventoryDrugEditSplatRoute =
     path: '/inventory/clinic-inventory/drug/edit/$',
     getParentRoute: () => AppRoute,
   } as any)
-const ApiLoginServerRoute = ApiLoginServerRouteImport.update({
-  id: '/api/login',
-  path: '/api/login',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiDemoNamesServerRoute = ApiDemoNamesServerRouteImport.update({
-  id: '/api/demo-names',
-  path: '/api/demo-names',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiV2SyncServerRoute = ApiV2SyncServerRouteImport.update({
-  id: '/api/v2/sync',
-  path: '/api/v2/sync',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiTrpcSplatServerRoute = ApiTrpcSplatServerRouteImport.update({
-  id: '/api/trpc/$',
-  path: '/api/trpc/$',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAuthSignOutServerRoute = ApiAuthSignOutServerRouteImport.update({
-  id: '/api/auth/sign-out',
-  path: '/api/auth/sign-out',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAuthSignInServerRoute = ApiAuthSignInServerRouteImport.update({
-  id: '/api/auth/sign-in',
-  path: '/api/auth/sign-in',
-  getParentRoute: () => rootServerRouteImport,
-} as any)
-const ApiAuthIsValidTokenServerRoute =
-  ApiAuthIsValidTokenServerRouteImport.update({
-    id: '/api/auth/is-valid-token',
-    path: '/api/auth/is-valid-token',
-    getParentRoute: () => rootServerRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/api/demo-names': typeof ApiDemoNamesRoute
+  '/api/login': typeof ApiLoginRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
+  '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
+  '/api/auth/sign-in': typeof ApiAuthSignInRoute
+  '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
+  '/api/v2/sync': typeof ApiV2SyncRoute
   '/app/data/events': typeof AppDataEventsRoute
+  '/app/patients/$id': typeof AppPatientsIdRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
@@ -289,32 +329,45 @@ export interface FileRoutesByFullPath {
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
-  '/app/appointments': typeof AppAppointmentsIndexRoute
-  '/app/clinics': typeof AppClinicsIndexRoute
-  '/app/event-forms': typeof AppEventFormsIndexRoute
-  '/app/patients': typeof AppPatientsIndexRoute
-  '/app/prescriptions': typeof AppPrescriptionsIndexRoute
-  '/app/users': typeof AppUsersIndexRoute
+  '/rpc/command/$': typeof RpcCommandSplatRoute
+  '/rpc/query/$': typeof RpcQuerySplatRoute
+  '/app/appointments/': typeof AppAppointmentsIndexRoute
+  '/app/clinics/': typeof AppClinicsIndexRoute
+  '/app/event-forms/': typeof AppEventFormsIndexRoute
+  '/app/patients/': typeof AppPatientsIndexRoute
+  '/app/prescriptions/': typeof AppPrescriptionsIndexRoute
+  '/app/reports/': typeof AppReportsIndexRoute
+  '/app/users/': typeof AppUsersIndexRoute
   '/app/appointments/edit/$': typeof AppAppointmentsEditSplatRoute
   '/app/clinics/edit/$': typeof AppClinicsEditSplatRoute
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
+  '/app/reports/$id/edit': typeof AppReportsIdEditRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
-  '/app/clinics/$': typeof AppClinicsSplatIndexRoute
-  '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
-  '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
-  '/app/patients/$': typeof AppPatientsSplatIndexRoute
+  '/app/clinics/$id/': typeof AppClinicsIdIndexRoute
+  '/app/inventory/clinic-inventory/': typeof AppInventoryClinicInventoryIndexRoute
+  '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
+  '/app/settings/devices/': typeof AppSettingsDevicesIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
+  '/app/settings/devices/edit/$': typeof AppSettingsDevicesEditSplatRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/demo-names': typeof ApiDemoNamesRoute
+  '/api/login': typeof ApiLoginRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app': typeof AppIndexRoute
+  '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
+  '/api/auth/sign-in': typeof ApiAuthSignInRoute
+  '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
+  '/api/v2/sync': typeof ApiV2SyncRoute
   '/app/data/events': typeof AppDataEventsRoute
+  '/app/patients/$id': typeof AppPatientsIdRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
@@ -324,34 +377,47 @@ export interface FileRoutesByTo {
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/rpc/command/$': typeof RpcCommandSplatRoute
+  '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments': typeof AppAppointmentsIndexRoute
   '/app/clinics': typeof AppClinicsIndexRoute
   '/app/event-forms': typeof AppEventFormsIndexRoute
   '/app/patients': typeof AppPatientsIndexRoute
   '/app/prescriptions': typeof AppPrescriptionsIndexRoute
+  '/app/reports': typeof AppReportsIndexRoute
   '/app/users': typeof AppUsersIndexRoute
   '/app/appointments/edit/$': typeof AppAppointmentsEditSplatRoute
   '/app/clinics/edit/$': typeof AppClinicsEditSplatRoute
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
+  '/app/reports/$id/edit': typeof AppReportsIdEditRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
-  '/app/clinics/$': typeof AppClinicsSplatIndexRoute
+  '/app/clinics/$id': typeof AppClinicsIdIndexRoute
   '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
-  '/app/patients/$': typeof AppPatientsSplatIndexRoute
+  '/app/settings/devices': typeof AppSettingsDevicesIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
+  '/app/settings/devices/edit/$': typeof AppSettingsDevicesEditSplatRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/api/demo-names': typeof ApiDemoNamesRoute
+  '/api/login': typeof ApiLoginRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
-  '/demo/tanstack-query': typeof DemoTanstackQueryRoute
+  '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
+  '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
+  '/api/auth/sign-in': typeof ApiAuthSignInRoute
+  '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
+  '/api/v2/sync': typeof ApiV2SyncRoute
   '/app/data/events': typeof AppDataEventsRoute
+  '/app/patients/$id': typeof AppPatientsIdRoute
   '/app/patients/customize-registration-form': typeof AppPatientsCustomizeRegistrationFormRoute
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
@@ -361,23 +427,28 @@ export interface FileRoutesById {
   '/demo/sentry/testing': typeof DemoSentryTestingRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
   '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
+  '/rpc/command/$': typeof RpcCommandSplatRoute
+  '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments/': typeof AppAppointmentsIndexRoute
   '/app/clinics/': typeof AppClinicsIndexRoute
   '/app/event-forms/': typeof AppEventFormsIndexRoute
   '/app/patients/': typeof AppPatientsIndexRoute
   '/app/prescriptions/': typeof AppPrescriptionsIndexRoute
+  '/app/reports/': typeof AppReportsIndexRoute
   '/app/users/': typeof AppUsersIndexRoute
   '/app/appointments/edit/$': typeof AppAppointmentsEditSplatRoute
   '/app/clinics/edit/$': typeof AppClinicsEditSplatRoute
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
+  '/app/reports/$id/edit': typeof AppReportsIdEditRoute
   '/app/users/edit/$': typeof AppUsersEditSplatRoute
   '/app/users/manage-permissions/$': typeof AppUsersManagePermissionsSplatRoute
-  '/app/clinics/$/': typeof AppClinicsSplatIndexRoute
+  '/app/clinics/$id/': typeof AppClinicsIdIndexRoute
   '/app/inventory/clinic-inventory/': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
-  '/app/patients/$/': typeof AppPatientsSplatIndexRoute
+  '/app/settings/devices/': typeof AppSettingsDevicesIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
+  '/app/settings/devices/edit/$': typeof AppSettingsDevicesEditSplatRoute
   '/app/inventory/clinic-inventory/drug/edit/$': typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 export interface FileRouteTypes {
@@ -385,11 +456,19 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/api/demo-names'
+    | '/api/login'
     | '/demo/store'
     | '/demo/table'
-    | '/demo/tanstack-query'
+    | '/rpc/heartbeat'
     | '/app/'
+    | '/api/auth/is-valid-token'
+    | '/api/auth/sign-in'
+    | '/api/auth/sign-out'
+    | '/api/hub/verify-key'
+    | '/api/v2/sync'
     | '/app/data/events'
+    | '/app/patients/$id'
     | '/app/patients/customize-registration-form'
     | '/app/patients/register'
     | '/app/settings/configurations'
@@ -399,175 +478,148 @@ export interface FileRouteTypes {
     | '/demo/sentry/testing'
     | '/demo/start/api-request'
     | '/demo/start/server-funcs'
-    | '/app/appointments'
-    | '/app/clinics'
-    | '/app/event-forms'
-    | '/app/patients'
-    | '/app/prescriptions'
-    | '/app/users'
-    | '/app/appointments/edit/$'
-    | '/app/clinics/edit/$'
-    | '/app/event-forms/edit/$'
-    | '/app/prescriptions/edit/$'
-    | '/app/users/edit/$'
-    | '/app/users/manage-permissions/$'
-    | '/app/clinics/$'
-    | '/app/inventory/clinic-inventory'
-    | '/app/inventory/drug-catalogue'
-    | '/app/patients/$'
-    | '/app/inventory/drug-catalogue/edit/$'
-    | '/app/inventory/clinic-inventory/drug/edit/$'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanstack-query'
-    | '/app'
-    | '/app/data/events'
-    | '/app/patients/customize-registration-form'
-    | '/app/patients/register'
-    | '/app/settings/configurations'
-    | '/app/settings/register-mobile-app'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sentry/testing'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
-    | '/app/appointments'
-    | '/app/clinics'
-    | '/app/event-forms'
-    | '/app/patients'
-    | '/app/prescriptions'
-    | '/app/users'
-    | '/app/appointments/edit/$'
-    | '/app/clinics/edit/$'
-    | '/app/event-forms/edit/$'
-    | '/app/prescriptions/edit/$'
-    | '/app/users/edit/$'
-    | '/app/users/manage-permissions/$'
-    | '/app/clinics/$'
-    | '/app/inventory/clinic-inventory'
-    | '/app/inventory/drug-catalogue'
-    | '/app/patients/$'
-    | '/app/inventory/drug-catalogue/edit/$'
-    | '/app/inventory/clinic-inventory/drug/edit/$'
-  id:
-    | '__root__'
-    | '/'
-    | '/app'
-    | '/demo/store'
-    | '/demo/table'
-    | '/demo/tanstack-query'
-    | '/app/'
-    | '/app/data/events'
-    | '/app/patients/customize-registration-form'
-    | '/app/patients/register'
-    | '/app/settings/configurations'
-    | '/app/settings/register-mobile-app'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sentry/testing'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
+    | '/rpc/command/$'
+    | '/rpc/query/$'
     | '/app/appointments/'
     | '/app/clinics/'
     | '/app/event-forms/'
     | '/app/patients/'
     | '/app/prescriptions/'
+    | '/app/reports/'
     | '/app/users/'
     | '/app/appointments/edit/$'
     | '/app/clinics/edit/$'
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
+    | '/app/reports/$id/edit'
     | '/app/users/edit/$'
     | '/app/users/manage-permissions/$'
-    | '/app/clinics/$/'
+    | '/app/clinics/$id/'
     | '/app/inventory/clinic-inventory/'
     | '/app/inventory/drug-catalogue/'
-    | '/app/patients/$/'
+    | '/app/settings/devices/'
     | '/app/inventory/drug-catalogue/edit/$'
+    | '/app/settings/devices/edit/$'
+    | '/app/inventory/clinic-inventory/drug/edit/$'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/api/demo-names'
+    | '/api/login'
+    | '/demo/store'
+    | '/demo/table'
+    | '/rpc/heartbeat'
+    | '/app'
+    | '/api/auth/is-valid-token'
+    | '/api/auth/sign-in'
+    | '/api/auth/sign-out'
+    | '/api/hub/verify-key'
+    | '/api/v2/sync'
+    | '/app/data/events'
+    | '/app/patients/$id'
+    | '/app/patients/customize-registration-form'
+    | '/app/patients/register'
+    | '/app/settings/configurations'
+    | '/app/settings/register-mobile-app'
+    | '/demo/form/address'
+    | '/demo/form/simple'
+    | '/demo/sentry/testing'
+    | '/demo/start/api-request'
+    | '/demo/start/server-funcs'
+    | '/rpc/command/$'
+    | '/rpc/query/$'
+    | '/app/appointments'
+    | '/app/clinics'
+    | '/app/event-forms'
+    | '/app/patients'
+    | '/app/prescriptions'
+    | '/app/reports'
+    | '/app/users'
+    | '/app/appointments/edit/$'
+    | '/app/clinics/edit/$'
+    | '/app/event-forms/edit/$'
+    | '/app/prescriptions/edit/$'
+    | '/app/reports/$id/edit'
+    | '/app/users/edit/$'
+    | '/app/users/manage-permissions/$'
+    | '/app/clinics/$id'
+    | '/app/inventory/clinic-inventory'
+    | '/app/inventory/drug-catalogue'
+    | '/app/settings/devices'
+    | '/app/inventory/drug-catalogue/edit/$'
+    | '/app/settings/devices/edit/$'
+    | '/app/inventory/clinic-inventory/drug/edit/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/api/demo-names'
+    | '/api/login'
+    | '/demo/store'
+    | '/demo/table'
+    | '/rpc/heartbeat'
+    | '/app/'
+    | '/api/auth/is-valid-token'
+    | '/api/auth/sign-in'
+    | '/api/auth/sign-out'
+    | '/api/hub/verify-key'
+    | '/api/v2/sync'
+    | '/app/data/events'
+    | '/app/patients/$id'
+    | '/app/patients/customize-registration-form'
+    | '/app/patients/register'
+    | '/app/settings/configurations'
+    | '/app/settings/register-mobile-app'
+    | '/demo/form/address'
+    | '/demo/form/simple'
+    | '/demo/sentry/testing'
+    | '/demo/start/api-request'
+    | '/demo/start/server-funcs'
+    | '/rpc/command/$'
+    | '/rpc/query/$'
+    | '/app/appointments/'
+    | '/app/clinics/'
+    | '/app/event-forms/'
+    | '/app/patients/'
+    | '/app/prescriptions/'
+    | '/app/reports/'
+    | '/app/users/'
+    | '/app/appointments/edit/$'
+    | '/app/clinics/edit/$'
+    | '/app/event-forms/edit/$'
+    | '/app/prescriptions/edit/$'
+    | '/app/reports/$id/edit'
+    | '/app/users/edit/$'
+    | '/app/users/manage-permissions/$'
+    | '/app/clinics/$id/'
+    | '/app/inventory/clinic-inventory/'
+    | '/app/inventory/drug-catalogue/'
+    | '/app/settings/devices/'
+    | '/app/inventory/drug-catalogue/edit/$'
+    | '/app/settings/devices/edit/$'
     | '/app/inventory/clinic-inventory/drug/edit/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  ApiDemoNamesRoute: typeof ApiDemoNamesRoute
+  ApiLoginRoute: typeof ApiLoginRoute
   DemoStoreRoute: typeof DemoStoreRoute
   DemoTableRoute: typeof DemoTableRoute
-  DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
+  RpcHeartbeatRoute: typeof RpcHeartbeatRoute
+  ApiAuthIsValidTokenRoute: typeof ApiAuthIsValidTokenRoute
+  ApiAuthSignInRoute: typeof ApiAuthSignInRoute
+  ApiAuthSignOutRoute: typeof ApiAuthSignOutRoute
+  ApiHubVerifyKeyRoute: typeof ApiHubVerifyKeyRoute
+  ApiV2SyncRoute: typeof ApiV2SyncRoute
   DemoFormAddressRoute: typeof DemoFormAddressRoute
   DemoFormSimpleRoute: typeof DemoFormSimpleRoute
   DemoSentryTestingRoute: typeof DemoSentryTestingRoute
   DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
   DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
-}
-export interface FileServerRoutesByFullPath {
-  '/api/demo-names': typeof ApiDemoNamesServerRoute
-  '/api/login': typeof ApiLoginServerRoute
-  '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenServerRoute
-  '/api/auth/sign-in': typeof ApiAuthSignInServerRoute
-  '/api/auth/sign-out': typeof ApiAuthSignOutServerRoute
-  '/api/trpc/$': typeof ApiTrpcSplatServerRoute
-  '/api/v2/sync': typeof ApiV2SyncServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/demo-names': typeof ApiDemoNamesServerRoute
-  '/api/login': typeof ApiLoginServerRoute
-  '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenServerRoute
-  '/api/auth/sign-in': typeof ApiAuthSignInServerRoute
-  '/api/auth/sign-out': typeof ApiAuthSignOutServerRoute
-  '/api/trpc/$': typeof ApiTrpcSplatServerRoute
-  '/api/v2/sync': typeof ApiV2SyncServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/demo-names': typeof ApiDemoNamesServerRoute
-  '/api/login': typeof ApiLoginServerRoute
-  '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenServerRoute
-  '/api/auth/sign-in': typeof ApiAuthSignInServerRoute
-  '/api/auth/sign-out': typeof ApiAuthSignOutServerRoute
-  '/api/trpc/$': typeof ApiTrpcSplatServerRoute
-  '/api/v2/sync': typeof ApiV2SyncServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths:
-    | '/api/demo-names'
-    | '/api/login'
-    | '/api/auth/is-valid-token'
-    | '/api/auth/sign-in'
-    | '/api/auth/sign-out'
-    | '/api/trpc/$'
-    | '/api/v2/sync'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to:
-    | '/api/demo-names'
-    | '/api/login'
-    | '/api/auth/is-valid-token'
-    | '/api/auth/sign-in'
-    | '/api/auth/sign-out'
-    | '/api/trpc/$'
-    | '/api/v2/sync'
-  id:
-    | '__root__'
-    | '/api/demo-names'
-    | '/api/login'
-    | '/api/auth/is-valid-token'
-    | '/api/auth/sign-in'
-    | '/api/auth/sign-out'
-    | '/api/trpc/$'
-    | '/api/v2/sync'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiDemoNamesServerRoute: typeof ApiDemoNamesServerRoute
-  ApiLoginServerRoute: typeof ApiLoginServerRoute
-  ApiAuthIsValidTokenServerRoute: typeof ApiAuthIsValidTokenServerRoute
-  ApiAuthSignInServerRoute: typeof ApiAuthSignInServerRoute
-  ApiAuthSignOutServerRoute: typeof ApiAuthSignOutServerRoute
-  ApiTrpcSplatServerRoute: typeof ApiTrpcSplatServerRoute
-  ApiV2SyncServerRoute: typeof ApiV2SyncServerRoute
+  RpcCommandSplatRoute: typeof RpcCommandSplatRoute
+  RpcQuerySplatRoute: typeof RpcQuerySplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -593,11 +645,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
+    '/rpc/heartbeat': {
+      id: '/rpc/heartbeat'
+      path: '/rpc/heartbeat'
+      fullPath: '/rpc/heartbeat'
+      preLoaderRoute: typeof RpcHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/table': {
@@ -614,47 +666,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoStoreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/login': {
+      id: '/api/login'
+      path: '/api/login'
+      fullPath: '/api/login'
+      preLoaderRoute: typeof ApiLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/demo-names': {
+      id: '/api/demo-names'
+      path: '/api/demo-names'
+      fullPath: '/api/demo-names'
+      preLoaderRoute: typeof ApiDemoNamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/users/': {
       id: '/app/users/'
       path: '/users'
-      fullPath: '/app/users'
+      fullPath: '/app/users/'
       preLoaderRoute: typeof AppUsersIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/reports/': {
+      id: '/app/reports/'
+      path: '/reports'
+      fullPath: '/app/reports/'
+      preLoaderRoute: typeof AppReportsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/prescriptions/': {
       id: '/app/prescriptions/'
       path: '/prescriptions'
-      fullPath: '/app/prescriptions'
+      fullPath: '/app/prescriptions/'
       preLoaderRoute: typeof AppPrescriptionsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/patients/': {
       id: '/app/patients/'
       path: '/patients'
-      fullPath: '/app/patients'
+      fullPath: '/app/patients/'
       preLoaderRoute: typeof AppPatientsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/event-forms/': {
       id: '/app/event-forms/'
       path: '/event-forms'
-      fullPath: '/app/event-forms'
+      fullPath: '/app/event-forms/'
       preLoaderRoute: typeof AppEventFormsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/clinics/': {
       id: '/app/clinics/'
       path: '/clinics'
-      fullPath: '/app/clinics'
+      fullPath: '/app/clinics/'
       preLoaderRoute: typeof AppClinicsIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/appointments/': {
       id: '/app/appointments/'
       path: '/appointments'
-      fullPath: '/app/appointments'
+      fullPath: '/app/appointments/'
       preLoaderRoute: typeof AppAppointmentsIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/rpc/query/$': {
+      id: '/rpc/query/$'
+      path: '/rpc/query/$'
+      fullPath: '/rpc/query/$'
+      preLoaderRoute: typeof RpcQuerySplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rpc/command/$': {
+      id: '/rpc/command/$'
+      path: '/rpc/command/$'
+      fullPath: '/rpc/command/$'
+      preLoaderRoute: typeof RpcCommandSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
       id: '/demo/start/server-funcs'
@@ -719,6 +806,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPatientsCustomizeRegistrationFormRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/patients/$id': {
+      id: '/app/patients/$id'
+      path: '/patients/$id'
+      fullPath: '/app/patients/$id'
+      preLoaderRoute: typeof AppPatientsIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/data/events': {
       id: '/app/data/events'
       path: '/data/events'
@@ -726,32 +820,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDataEventsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/patients/$/': {
-      id: '/app/patients/$/'
-      path: '/patients/$'
-      fullPath: '/app/patients/$'
-      preLoaderRoute: typeof AppPatientsSplatIndexRouteImport
+    '/api/v2/sync': {
+      id: '/api/v2/sync'
+      path: '/api/v2/sync'
+      fullPath: '/api/v2/sync'
+      preLoaderRoute: typeof ApiV2SyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/hub/verify-key': {
+      id: '/api/hub/verify-key'
+      path: '/api/hub/verify-key'
+      fullPath: '/api/hub/verify-key'
+      preLoaderRoute: typeof ApiHubVerifyKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/sign-out': {
+      id: '/api/auth/sign-out'
+      path: '/api/auth/sign-out'
+      fullPath: '/api/auth/sign-out'
+      preLoaderRoute: typeof ApiAuthSignOutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/sign-in': {
+      id: '/api/auth/sign-in'
+      path: '/api/auth/sign-in'
+      fullPath: '/api/auth/sign-in'
+      preLoaderRoute: typeof ApiAuthSignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/is-valid-token': {
+      id: '/api/auth/is-valid-token'
+      path: '/api/auth/is-valid-token'
+      fullPath: '/api/auth/is-valid-token'
+      preLoaderRoute: typeof ApiAuthIsValidTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/settings/devices/': {
+      id: '/app/settings/devices/'
+      path: '/settings/devices'
+      fullPath: '/app/settings/devices/'
+      preLoaderRoute: typeof AppSettingsDevicesIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/inventory/drug-catalogue/': {
       id: '/app/inventory/drug-catalogue/'
       path: '/inventory/drug-catalogue'
-      fullPath: '/app/inventory/drug-catalogue'
+      fullPath: '/app/inventory/drug-catalogue/'
       preLoaderRoute: typeof AppInventoryDrugCatalogueIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/inventory/clinic-inventory/': {
       id: '/app/inventory/clinic-inventory/'
       path: '/inventory/clinic-inventory'
-      fullPath: '/app/inventory/clinic-inventory'
+      fullPath: '/app/inventory/clinic-inventory/'
       preLoaderRoute: typeof AppInventoryClinicInventoryIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/clinics/$/': {
-      id: '/app/clinics/$/'
-      path: '/clinics/$'
-      fullPath: '/app/clinics/$'
-      preLoaderRoute: typeof AppClinicsSplatIndexRouteImport
+    '/app/clinics/$id/': {
+      id: '/app/clinics/$id/'
+      path: '/clinics/$id'
+      fullPath: '/app/clinics/$id/'
+      preLoaderRoute: typeof AppClinicsIdIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/users/manage-permissions/$': {
@@ -766,6 +895,13 @@ declare module '@tanstack/react-router' {
       path: '/users/edit/$'
       fullPath: '/app/users/edit/$'
       preLoaderRoute: typeof AppUsersEditSplatRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/reports/$id/edit': {
+      id: '/app/reports/$id/edit'
+      path: '/reports/$id/edit'
+      fullPath: '/app/reports/$id/edit'
+      preLoaderRoute: typeof AppReportsIdEditRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/prescriptions/edit/$': {
@@ -796,6 +932,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAppointmentsEditSplatRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/settings/devices/edit/$': {
+      id: '/app/settings/devices/edit/$'
+      path: '/settings/devices/edit/$'
+      fullPath: '/app/settings/devices/edit/$'
+      preLoaderRoute: typeof AppSettingsDevicesEditSplatRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/inventory/drug-catalogue/edit/$': {
       id: '/app/inventory/drug-catalogue/edit/$'
       path: '/inventory/drug-catalogue/edit/$'
@@ -812,63 +955,11 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/login': {
-      id: '/api/login'
-      path: '/api/login'
-      fullPath: '/api/login'
-      preLoaderRoute: typeof ApiLoginServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/demo-names': {
-      id: '/api/demo-names'
-      path: '/api/demo-names'
-      fullPath: '/api/demo-names'
-      preLoaderRoute: typeof ApiDemoNamesServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/v2/sync': {
-      id: '/api/v2/sync'
-      path: '/api/v2/sync'
-      fullPath: '/api/v2/sync'
-      preLoaderRoute: typeof ApiV2SyncServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/trpc/$': {
-      id: '/api/trpc/$'
-      path: '/api/trpc/$'
-      fullPath: '/api/trpc/$'
-      preLoaderRoute: typeof ApiTrpcSplatServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/auth/sign-out': {
-      id: '/api/auth/sign-out'
-      path: '/api/auth/sign-out'
-      fullPath: '/api/auth/sign-out'
-      preLoaderRoute: typeof ApiAuthSignOutServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/auth/sign-in': {
-      id: '/api/auth/sign-in'
-      path: '/api/auth/sign-in'
-      fullPath: '/api/auth/sign-in'
-      preLoaderRoute: typeof ApiAuthSignInServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-    '/api/auth/is-valid-token': {
-      id: '/api/auth/is-valid-token'
-      path: '/api/auth/is-valid-token'
-      fullPath: '/api/auth/is-valid-token'
-      preLoaderRoute: typeof ApiAuthIsValidTokenServerRouteImport
-      parentRoute: typeof rootServerRouteImport
-    }
-  }
-}
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppDataEventsRoute: typeof AppDataEventsRoute
+  AppPatientsIdRoute: typeof AppPatientsIdRoute
   AppPatientsCustomizeRegistrationFormRoute: typeof AppPatientsCustomizeRegistrationFormRoute
   AppPatientsRegisterRoute: typeof AppPatientsRegisterRoute
   AppSettingsConfigurationsRoute: typeof AppSettingsConfigurationsRoute
@@ -878,24 +969,28 @@ interface AppRouteChildren {
   AppEventFormsIndexRoute: typeof AppEventFormsIndexRoute
   AppPatientsIndexRoute: typeof AppPatientsIndexRoute
   AppPrescriptionsIndexRoute: typeof AppPrescriptionsIndexRoute
+  AppReportsIndexRoute: typeof AppReportsIndexRoute
   AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppAppointmentsEditSplatRoute: typeof AppAppointmentsEditSplatRoute
   AppClinicsEditSplatRoute: typeof AppClinicsEditSplatRoute
   AppEventFormsEditSplatRoute: typeof AppEventFormsEditSplatRoute
   AppPrescriptionsEditSplatRoute: typeof AppPrescriptionsEditSplatRoute
+  AppReportsIdEditRoute: typeof AppReportsIdEditRoute
   AppUsersEditSplatRoute: typeof AppUsersEditSplatRoute
   AppUsersManagePermissionsSplatRoute: typeof AppUsersManagePermissionsSplatRoute
-  AppClinicsSplatIndexRoute: typeof AppClinicsSplatIndexRoute
+  AppClinicsIdIndexRoute: typeof AppClinicsIdIndexRoute
   AppInventoryClinicInventoryIndexRoute: typeof AppInventoryClinicInventoryIndexRoute
   AppInventoryDrugCatalogueIndexRoute: typeof AppInventoryDrugCatalogueIndexRoute
-  AppPatientsSplatIndexRoute: typeof AppPatientsSplatIndexRoute
+  AppSettingsDevicesIndexRoute: typeof AppSettingsDevicesIndexRoute
   AppInventoryDrugCatalogueEditSplatRoute: typeof AppInventoryDrugCatalogueEditSplatRoute
+  AppSettingsDevicesEditSplatRoute: typeof AppSettingsDevicesEditSplatRoute
   AppInventoryClinicInventoryDrugEditSplatRoute: typeof AppInventoryClinicInventoryDrugEditSplatRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppDataEventsRoute: AppDataEventsRoute,
+  AppPatientsIdRoute: AppPatientsIdRoute,
   AppPatientsCustomizeRegistrationFormRoute:
     AppPatientsCustomizeRegistrationFormRoute,
   AppPatientsRegisterRoute: AppPatientsRegisterRoute,
@@ -906,19 +1001,22 @@ const AppRouteChildren: AppRouteChildren = {
   AppEventFormsIndexRoute: AppEventFormsIndexRoute,
   AppPatientsIndexRoute: AppPatientsIndexRoute,
   AppPrescriptionsIndexRoute: AppPrescriptionsIndexRoute,
+  AppReportsIndexRoute: AppReportsIndexRoute,
   AppUsersIndexRoute: AppUsersIndexRoute,
   AppAppointmentsEditSplatRoute: AppAppointmentsEditSplatRoute,
   AppClinicsEditSplatRoute: AppClinicsEditSplatRoute,
   AppEventFormsEditSplatRoute: AppEventFormsEditSplatRoute,
   AppPrescriptionsEditSplatRoute: AppPrescriptionsEditSplatRoute,
+  AppReportsIdEditRoute: AppReportsIdEditRoute,
   AppUsersEditSplatRoute: AppUsersEditSplatRoute,
   AppUsersManagePermissionsSplatRoute: AppUsersManagePermissionsSplatRoute,
-  AppClinicsSplatIndexRoute: AppClinicsSplatIndexRoute,
+  AppClinicsIdIndexRoute: AppClinicsIdIndexRoute,
   AppInventoryClinicInventoryIndexRoute: AppInventoryClinicInventoryIndexRoute,
   AppInventoryDrugCatalogueIndexRoute: AppInventoryDrugCatalogueIndexRoute,
-  AppPatientsSplatIndexRoute: AppPatientsSplatIndexRoute,
+  AppSettingsDevicesIndexRoute: AppSettingsDevicesIndexRoute,
   AppInventoryDrugCatalogueEditSplatRoute:
     AppInventoryDrugCatalogueEditSplatRoute,
+  AppSettingsDevicesEditSplatRoute: AppSettingsDevicesEditSplatRoute,
   AppInventoryClinicInventoryDrugEditSplatRoute:
     AppInventoryClinicInventoryDrugEditSplatRoute,
 }
@@ -928,27 +1026,33 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  ApiDemoNamesRoute: ApiDemoNamesRoute,
+  ApiLoginRoute: ApiLoginRoute,
   DemoStoreRoute: DemoStoreRoute,
   DemoTableRoute: DemoTableRoute,
-  DemoTanstackQueryRoute: DemoTanstackQueryRoute,
+  RpcHeartbeatRoute: RpcHeartbeatRoute,
+  ApiAuthIsValidTokenRoute: ApiAuthIsValidTokenRoute,
+  ApiAuthSignInRoute: ApiAuthSignInRoute,
+  ApiAuthSignOutRoute: ApiAuthSignOutRoute,
+  ApiHubVerifyKeyRoute: ApiHubVerifyKeyRoute,
+  ApiV2SyncRoute: ApiV2SyncRoute,
   DemoFormAddressRoute: DemoFormAddressRoute,
   DemoFormSimpleRoute: DemoFormSimpleRoute,
   DemoSentryTestingRoute: DemoSentryTestingRoute,
   DemoStartApiRequestRoute: DemoStartApiRequestRoute,
   DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
+  RpcCommandSplatRoute: RpcCommandSplatRoute,
+  RpcQuerySplatRoute: RpcQuerySplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiDemoNamesServerRoute: ApiDemoNamesServerRoute,
-  ApiLoginServerRoute: ApiLoginServerRoute,
-  ApiAuthIsValidTokenServerRoute: ApiAuthIsValidTokenServerRoute,
-  ApiAuthSignInServerRoute: ApiAuthSignInServerRoute,
-  ApiAuthSignOutServerRoute: ApiAuthSignOutServerRoute,
-  ApiTrpcSplatServerRoute: ApiTrpcSplatServerRoute,
-  ApiV2SyncServerRoute: ApiV2SyncServerRoute,
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
 }
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

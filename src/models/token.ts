@@ -8,7 +8,7 @@ import type {
 } from "kysely";
 import db from "@/db";
 import User from "./user";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 
 namespace Token {
   export type T = {
@@ -40,7 +40,7 @@ namespace Token {
    * @param {string} token - The token to validate
    * @returns {Promise<Option.Option<User.T>>} - The user if the token is valid, null otherwise
    */
-  export const getUser = serverOnly(
+  export const getUser = createServerOnlyFn(
     async (token: string): Promise<Option.Option<User.T>> => {
       let query = db.selectFrom(Table.name);
 
@@ -64,7 +64,7 @@ namespace Token {
           } as unknown as User.T);
         },
       });
-    }
+    },
   );
 
   /**
@@ -72,9 +72,11 @@ namespace Token {
    * @param {string} token - The token to invalidate
    * @returns {Promise<void>} - Resolves when the token is invalidated
    */
-  export const invalidate = serverOnly(async (token: string): Promise<void> => {
-    await db.deleteFrom(Table.name).where("token", "=", token).execute();
-  });
+  export const invalidate = createServerOnlyFn(
+    async (token: string): Promise<void> => {
+      await db.deleteFrom(Table.name).where("token", "=", token).execute();
+    },
+  );
 
   /**
    * Create a new token for a user given their id
@@ -82,7 +84,7 @@ namespace Token {
    * @param {Date} expiry - The token's expiry date
    * @returns {Promise<string>} - The new token
    */
-  export const create = serverOnly(
+  export const create = createServerOnlyFn(
     async (userId: string, expiry: Date): Promise<string> => {
       const token = crypto.randomUUID();
       await db
@@ -95,7 +97,7 @@ namespace Token {
         .execute();
 
       return token;
-    }
+    },
   );
 }
 

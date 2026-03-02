@@ -23,7 +23,7 @@ import { z } from "zod";
 import { getPatientRegistrationForm } from "@/lib/server-functions/patient-registration-forms";
 
 export const saveForm = createServerFn({ method: "POST" })
-  .validator((data: PatientRegistrationForm.EncodedT) => data)
+  .inputValidator((data: PatientRegistrationForm.EncodedT) => data)
   .handler(async ({ data }) => {
     return PatientRegistrationForm.upsertPatientRegistrationForm(data);
   });
@@ -206,14 +206,16 @@ function reducer(state: State, action: Action) {
         const oldFieldType = field.fieldType;
         field.fieldType = type;
 
-        // if the new field is of type "select", insert a new starting option in the options field
-        if (oldFieldType !== "select" && type === "select") {
+        const typesWithOptions = ["select", "checkbox"];
+        const hadOptions = typesWithOptions.includes(oldFieldType);
+        const needsOptions = typesWithOptions.includes(type);
+
+        if (!hadOptions && needsOptions) {
           field.options.length === 0 &&
             field.options.push({
               en: "",
             });
-        } else if (oldFieldType === "select" && type !== "select") {
-          // when you leave the select input type, clear the options to reduce the clutter in the stored form
+        } else if (hadOptions && !needsOptions) {
           field.options = [];
         }
       }
@@ -223,7 +225,10 @@ function reducer(state: State, action: Action) {
       const { id } = action.payload;
       const field = state.fields.find((f) => f.id === id);
 
-      if (field && field.fieldType === "select") {
+      if (
+        field &&
+        (field.fieldType === "select" || field.fieldType === "checkbox")
+      ) {
         field.options.push({ en: "" });
       }
       break;
@@ -232,7 +237,10 @@ function reducer(state: State, action: Action) {
       const { id, index } = action.payload;
       const field = state.fields.find((f) => f.id === id);
 
-      if (field && field.fieldType === "select") {
+      if (
+        field &&
+        (field.fieldType === "select" || field.fieldType === "checkbox")
+      ) {
         field.options.splice(index, 1);
       }
       break;
@@ -241,7 +249,10 @@ function reducer(state: State, action: Action) {
       const { id, index, language } = action.payload;
       const field = state.fields.find((f) => f.id === id);
 
-      if (field && field.fieldType === "select") {
+      if (
+        field &&
+        (field.fieldType === "select" || field.fieldType === "checkbox")
+      ) {
         field.options.forEach((field, idx) => {
           if (idx === index) {
             field[language] = "";
@@ -254,7 +265,10 @@ function reducer(state: State, action: Action) {
       const { id, index, language } = action.payload;
       const field = state.fields.find((f) => f.id === id);
 
-      if (field && field.fieldType === "select") {
+      if (
+        field &&
+        (field.fieldType === "select" || field.fieldType === "checkbox")
+      ) {
         field.options.forEach((field, idx) => {
           if (idx === index) {
             delete field[language];
@@ -267,7 +281,10 @@ function reducer(state: State, action: Action) {
       const { id, index, language, value } = action.payload;
       const field = state.fields.find((f) => f.id === id);
 
-      if (field && field.fieldType === "select") {
+      if (
+        field &&
+        (field.fieldType === "select" || field.fieldType === "checkbox")
+      ) {
         field.options.forEach((field, idx) => {
           if (idx === index) {
             field[language] = value;
@@ -498,7 +515,7 @@ function RouteComponent() {
             const isInEditMode = editField.id === id;
             const getTranslation = Language.getTranslation;
             const friendlyLang = Language.friendlyLang;
-            const inputTypes = ["number", "text", "select", "date", "boolean"];
+            const inputTypes = PatientRegistrationForm.inputTypes;
 
             return (
               <div
@@ -538,6 +555,39 @@ function RouteComponent() {
                         )}
                       </SelectContent>
                     </Select>
+                    {required && (
+                      <span className="text-xs text-destructive">
+                        *Required
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {fieldType === "checkbox" && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      {getTranslation(label, formLanguage)}
+                      {!field.visible && (
+                        <span className="text-muted-foreground"> (hidden)</span>
+                      )}
+                    </label>
+                    <div className="space-y-1">
+                      {translationObjectOptions(options, formLanguage).map(
+                        (option, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                              disabled
+                            />
+                            <span className="text-sm">{option.label}</span>
+                          </div>
+                        ),
+                      )}
+                    </div>
                     {required && (
                       <span className="text-xs text-destructive">
                         *Required
@@ -702,7 +752,7 @@ function RouteComponent() {
                         </div>
                       </div>
 
-                      {fieldType === "select" && (
+                      {(fieldType === "select" || fieldType === "checkbox") && (
                         <div className="col-span-12">
                           <div className="space-y-4">
                             <label className="text-sm font-medium leading-none">

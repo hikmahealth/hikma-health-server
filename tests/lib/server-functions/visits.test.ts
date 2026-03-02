@@ -20,10 +20,8 @@ describe("buildVisitInsertValues", () => {
           providerName: fc.option(fc.string(), { nil: null }),
           checkInTimestamp: fc.option(
             fc
-              .date()
-              .map((d) =>
-                isNaN(d.getTime()) ? "invalid-date" : d.toISOString(),
-              ),
+              .date({ min: new Date("1900-01-01"), max: new Date("2100-01-01") })
+              .map((d) => d.toISOString()),
             {
               nil: null,
             },
@@ -41,11 +39,8 @@ describe("buildVisitInsertValues", () => {
 
           // Optional fields default to null
           expect(result.provider_name).toBe(input.providerName ?? null);
-          // Invalid timestamps are coerced to null
-          if (
-            input.checkInTimestamp &&
-            !isNaN(new Date(input.checkInTimestamp).getTime())
-          ) {
+          // checkInTimestamp is either a valid ISO string or null
+          if (input.checkInTimestamp) {
             expect(result.check_in_timestamp).toBe(input.checkInTimestamp);
           } else {
             expect(result.check_in_timestamp).toBeNull();

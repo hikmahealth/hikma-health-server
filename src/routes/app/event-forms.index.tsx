@@ -21,15 +21,16 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { getEventForms } from "@/lib/server-functions/event-forms";
 import { getAllClinics } from "@/lib/server-functions/clinics";
+import { getResultData } from "@/lib/utils";
 
 const deleteForm = createServerFn({ method: "POST" })
-  .validator((d: { id: string }) => d)
+  .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
     return EventForm.API.softDelete(data.id);
   });
 
 const toggleFormDetail = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (d: { id: string; field: "snapshot" | "editable"; value: boolean }) => d,
   )
   .handler(async ({ data }) => {
@@ -54,7 +55,7 @@ export const Route = createFileRoute("/app/event-forms/")({
   loader: async () => {
     const [forms, clinics] = await Promise.all([
       getEventForms({ data: { includeDeleted: false } }),
-      getAllClinics(),
+      getAllClinics().then((r) => getResultData(r, [])),
     ]);
     return { forms, clinics };
   },
@@ -117,7 +118,7 @@ function RouteComponent() {
             <TableCaption>Event Forms</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead>Snapshot</TableHead>
+                {/*<TableHead>Snapshot</TableHead>*/}
                 <TableHead>Editable</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Description</TableHead>
@@ -137,14 +138,14 @@ function RouteComponent() {
               ) : (
                 forms.map((form) => (
                   <TableRow key={form.id}>
-                    <TableCell>
+                    {/*<TableCell>
                       <Checkbox
                         checked={form.is_snapshot_form}
                         onCheckedChange={() =>
                           handleSnapshotToggle(form.id, !form.is_snapshot_form)
                         }
                       />
-                    </TableCell>
+                    </TableCell>*/}
                     <TableCell>
                       <Checkbox
                         checked={form.is_editable}

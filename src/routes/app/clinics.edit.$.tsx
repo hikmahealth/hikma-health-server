@@ -34,7 +34,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 // Server function to get a clinic by ID
 const getClinicById = createServerFn({ method: "GET" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const clinic = await db
       .selectFrom("clinics")
@@ -48,7 +48,7 @@ const getClinicById = createServerFn({ method: "GET" })
 
 // Server function to create or update a clinic
 const saveClinic = createServerFn({ method: "POST" })
-  .validator((data: { id?: string; name: string }) => data)
+  .inputValidator((data: { id?: string; name: string }) => data)
   .handler(async ({ data }) => {
     return await Clinic.save({ id: data.id, name: data.name });
   });
@@ -92,7 +92,7 @@ function RouteComponent() {
       toast.success(
         isEditing
           ? "Clinic updated successfully"
-          : "Clinic created successfully"
+          : "Clinic created successfully",
       );
       navigate({ to: "/app/clinics" });
     } catch (error) {

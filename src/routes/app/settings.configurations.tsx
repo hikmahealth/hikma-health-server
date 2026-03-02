@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { useImmerReducer } from "use-immer";
 
 const saveConfiguration = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       // TODO: set this to the type of a namespace from the AppConfig module
       namespace: string;

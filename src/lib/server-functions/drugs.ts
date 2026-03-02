@@ -4,7 +4,7 @@ import DrugCatalogue from "@/models/drug-catalogue";
 import * as Sentry from "@sentry/tanstackstart-react";
 
 export const saveDrug = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: { drug: Partial<DrugCatalogue.ApiDrug>; isEdit: boolean }) => data,
   )
   .handler(async ({ data }) => {
@@ -22,7 +22,7 @@ export const saveDrug = createServerFn({ method: "POST" })
   });
 
 export const getDrugById = createServerFn({ method: "GET" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     return Sentry.startSpan({ name: "Get drug by id" }, async () => {
       const result = await Effect.runPromise(
@@ -38,7 +38,7 @@ export const getDrugById = createServerFn({ method: "GET" })
   });
 
 export const getAllDrugs = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (params: { limit?: number; offset?: number; isActive?: boolean }) => params,
   )
   .handler(async ({ data }) => {
@@ -69,7 +69,7 @@ export const getAllDrugs = createServerFn({ method: "GET" })
   });
 
 export const searchDrugs = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (params: { searchTerm: string; limit?: number; offset?: number }) => params,
   )
   .handler(async ({ data }) => {
