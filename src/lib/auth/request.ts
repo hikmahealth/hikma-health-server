@@ -1,4 +1,4 @@
-import { getHeader, getCookie, setCookie } from "@tanstack/react-start/server";
+import { getCookie } from "@tanstack/react-start/server";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { createServerFn } from "@tanstack/react-start";
 import Token from "@/models/token";

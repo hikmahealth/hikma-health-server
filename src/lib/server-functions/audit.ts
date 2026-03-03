@@ -4,31 +4,31 @@
  * from within createServerFn handlers.
  */
 
-import { getHeader } from "@tanstack/react-start/server";
 import { createHash } from "crypto";
 import * as Sentry from "@sentry/tanstackstart-react";
 import db from "@/db";
 import EventLog from "@/models/event-logs";
+import { getRequestHeader } from "@tanstack/react-start/server";
 
 /**
  * Build an EventLog.RequestContext from the current server function request.
- * Uses TanStack's getHeader() which works inside createServerFn handlers.
+ * Uses TanStack's getRequestHeader() which works inside createServerFn handlers.
  */
 export function getWebRequestContext(): EventLog.RequestContext {
   let ipAddress: string | null = null;
   let deviceId = "unknown";
 
   try {
-    const forwarded = getHeader("x-forwarded-for");
+    const forwarded = getRequestHeader("x-forwarded-for");
     ipAddress =
       typeof forwarded === "string"
-        ? forwarded.split(",")[0]?.trim() ?? null
+        ? (forwarded.split(",")[0]?.trim() ?? null)
         : null;
 
-    const userAgent = getHeader("user-agent") ?? "unknown";
+    const userAgent = getRequestHeader("user-agent") ?? "unknown";
     deviceId = createHash("sha256").update(userAgent).digest("hex");
   } catch {
-    // getHeader may throw if called outside a request context (e.g. in tests)
+    // getRequestHeader may throw if called outside a request context (e.g. in tests)
   }
 
   return {

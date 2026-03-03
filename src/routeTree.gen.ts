@@ -13,10 +13,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as RpcHeartbeatRouteImport } from './routes/rpc/heartbeat'
-import { Route as DemoTableRouteImport } from './routes/demo.table'
-import { Route as DemoStoreRouteImport } from './routes/demo.store'
 import { Route as ApiLoginRouteImport } from './routes/api/login'
-import { Route as ApiDemoNamesRouteImport } from './routes/api.demo-names'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users.index'
 import { Route as AppReportsIndexRouteImport } from './routes/app/reports/index'
 import { Route as AppPrescriptionsIndexRouteImport } from './routes/app/prescriptions.index'
@@ -26,11 +23,6 @@ import { Route as AppClinicsIndexRouteImport } from './routes/app/clinics.index'
 import { Route as AppAppointmentsIndexRouteImport } from './routes/app/appointments.index'
 import { Route as RpcQuerySplatRouteImport } from './routes/rpc.query.$'
 import { Route as RpcCommandSplatRouteImport } from './routes/rpc.command.$'
-import { Route as DemoStartServerFuncsRouteImport } from './routes/demo.start.server-funcs'
-import { Route as DemoStartApiRequestRouteImport } from './routes/demo.start.api-request'
-import { Route as DemoSentryTestingRouteImport } from './routes/demo.sentry.testing'
-import { Route as DemoFormSimpleRouteImport } from './routes/demo.form.simple'
-import { Route as DemoFormAddressRouteImport } from './routes/demo.form.address'
 import { Route as AppSettingsRegisterMobileAppRouteImport } from './routes/app/settings.register-mobile-app'
 import { Route as AppSettingsConfigurationsRouteImport } from './routes/app/settings.configurations'
 import { Route as AppPatientsRegisterRouteImport } from './routes/app/patients.register'
@@ -77,24 +69,9 @@ const RpcHeartbeatRoute = RpcHeartbeatRouteImport.update({
   path: '/rpc/heartbeat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoTableRoute = DemoTableRouteImport.update({
-  id: '/demo/table',
-  path: '/demo/table',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStoreRoute = DemoStoreRouteImport.update({
-  id: '/demo/store',
-  path: '/demo/store',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiLoginRoute = ApiLoginRouteImport.update({
   id: '/api/login',
   path: '/api/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiDemoNamesRoute = ApiDemoNamesRouteImport.update({
-  id: '/api/demo-names',
-  path: '/api/demo-names',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppUsersIndexRoute = AppUsersIndexRouteImport.update({
@@ -140,31 +117,6 @@ const RpcQuerySplatRoute = RpcQuerySplatRouteImport.update({
 const RpcCommandSplatRoute = RpcCommandSplatRouteImport.update({
   id: '/rpc/command/$',
   path: '/rpc/command/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartServerFuncsRoute = DemoStartServerFuncsRouteImport.update({
-  id: '/demo/start/server-funcs',
-  path: '/demo/start/server-funcs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStartApiRequestRoute = DemoStartApiRequestRouteImport.update({
-  id: '/demo/start/api-request',
-  path: '/demo/start/api-request',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoSentryTestingRoute = DemoSentryTestingRouteImport.update({
-  id: '/demo/sentry/testing',
-  path: '/demo/sentry/testing',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
-  id: '/demo/form/simple',
-  path: '/demo/form/simple',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
-  id: '/demo/form/address',
-  path: '/demo/form/address',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppSettingsRegisterMobileAppRoute =
@@ -307,10 +259,7 @@ const AppInventoryClinicInventoryDrugEditSplatRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/api/demo-names': typeof ApiDemoNamesRoute
   '/api/login': typeof ApiLoginRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
@@ -324,11 +273,6 @@ export interface FileRoutesByFullPath {
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/sentry/testing': typeof DemoSentryTestingRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/rpc/command/$': typeof RpcCommandSplatRoute
   '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments/': typeof AppAppointmentsIndexRoute
@@ -355,10 +299,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/demo-names': typeof ApiDemoNamesRoute
   '/api/login': typeof ApiLoginRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app': typeof AppIndexRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
@@ -372,11 +313,6 @@ export interface FileRoutesByTo {
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/sentry/testing': typeof DemoSentryTestingRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/rpc/command/$': typeof RpcCommandSplatRoute
   '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments': typeof AppAppointmentsIndexRoute
@@ -405,10 +341,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
-  '/api/demo-names': typeof ApiDemoNamesRoute
   '/api/login': typeof ApiLoginRoute
-  '/demo/store': typeof DemoStoreRoute
-  '/demo/table': typeof DemoTableRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
@@ -422,11 +355,6 @@ export interface FileRoutesById {
   '/app/patients/register': typeof AppPatientsRegisterRoute
   '/app/settings/configurations': typeof AppSettingsConfigurationsRoute
   '/app/settings/register-mobile-app': typeof AppSettingsRegisterMobileAppRoute
-  '/demo/form/address': typeof DemoFormAddressRoute
-  '/demo/form/simple': typeof DemoFormSimpleRoute
-  '/demo/sentry/testing': typeof DemoSentryTestingRoute
-  '/demo/start/api-request': typeof DemoStartApiRequestRoute
-  '/demo/start/server-funcs': typeof DemoStartServerFuncsRoute
   '/rpc/command/$': typeof RpcCommandSplatRoute
   '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments/': typeof AppAppointmentsIndexRoute
@@ -456,10 +384,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
-    | '/api/demo-names'
     | '/api/login'
-    | '/demo/store'
-    | '/demo/table'
     | '/rpc/heartbeat'
     | '/app/'
     | '/api/auth/is-valid-token'
@@ -473,11 +398,6 @@ export interface FileRouteTypes {
     | '/app/patients/register'
     | '/app/settings/configurations'
     | '/app/settings/register-mobile-app'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sentry/testing'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
     | '/rpc/command/$'
     | '/rpc/query/$'
     | '/app/appointments/'
@@ -504,10 +424,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api/demo-names'
     | '/api/login'
-    | '/demo/store'
-    | '/demo/table'
     | '/rpc/heartbeat'
     | '/app'
     | '/api/auth/is-valid-token'
@@ -521,11 +438,6 @@ export interface FileRouteTypes {
     | '/app/patients/register'
     | '/app/settings/configurations'
     | '/app/settings/register-mobile-app'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sentry/testing'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
     | '/rpc/command/$'
     | '/rpc/query/$'
     | '/app/appointments'
@@ -553,10 +465,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
-    | '/api/demo-names'
     | '/api/login'
-    | '/demo/store'
-    | '/demo/table'
     | '/rpc/heartbeat'
     | '/app/'
     | '/api/auth/is-valid-token'
@@ -570,11 +479,6 @@ export interface FileRouteTypes {
     | '/app/patients/register'
     | '/app/settings/configurations'
     | '/app/settings/register-mobile-app'
-    | '/demo/form/address'
-    | '/demo/form/simple'
-    | '/demo/sentry/testing'
-    | '/demo/start/api-request'
-    | '/demo/start/server-funcs'
     | '/rpc/command/$'
     | '/rpc/query/$'
     | '/app/appointments/'
@@ -603,21 +507,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
-  ApiDemoNamesRoute: typeof ApiDemoNamesRoute
   ApiLoginRoute: typeof ApiLoginRoute
-  DemoStoreRoute: typeof DemoStoreRoute
-  DemoTableRoute: typeof DemoTableRoute
   RpcHeartbeatRoute: typeof RpcHeartbeatRoute
   ApiAuthIsValidTokenRoute: typeof ApiAuthIsValidTokenRoute
   ApiAuthSignInRoute: typeof ApiAuthSignInRoute
   ApiAuthSignOutRoute: typeof ApiAuthSignOutRoute
   ApiHubVerifyKeyRoute: typeof ApiHubVerifyKeyRoute
   ApiV2SyncRoute: typeof ApiV2SyncRoute
-  DemoFormAddressRoute: typeof DemoFormAddressRoute
-  DemoFormSimpleRoute: typeof DemoFormSimpleRoute
-  DemoSentryTestingRoute: typeof DemoSentryTestingRoute
-  DemoStartApiRequestRoute: typeof DemoStartApiRequestRoute
-  DemoStartServerFuncsRoute: typeof DemoStartServerFuncsRoute
   RpcCommandSplatRoute: typeof RpcCommandSplatRoute
   RpcQuerySplatRoute: typeof RpcQuerySplatRoute
 }
@@ -652,32 +548,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RpcHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/table': {
-      id: '/demo/table'
-      path: '/demo/table'
-      fullPath: '/demo/table'
-      preLoaderRoute: typeof DemoTableRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/store': {
-      id: '/demo/store'
-      path: '/demo/store'
-      fullPath: '/demo/store'
-      preLoaderRoute: typeof DemoStoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/login': {
       id: '/api/login'
       path: '/api/login'
       fullPath: '/api/login'
       preLoaderRoute: typeof ApiLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/demo-names': {
-      id: '/api/demo-names'
-      path: '/api/demo-names'
-      fullPath: '/api/demo-names'
-      preLoaderRoute: typeof ApiDemoNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/users/': {
@@ -741,41 +616,6 @@ declare module '@tanstack/react-router' {
       path: '/rpc/command/$'
       fullPath: '/rpc/command/$'
       preLoaderRoute: typeof RpcCommandSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/server-funcs': {
-      id: '/demo/start/server-funcs'
-      path: '/demo/start/server-funcs'
-      fullPath: '/demo/start/server-funcs'
-      preLoaderRoute: typeof DemoStartServerFuncsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/start/api-request': {
-      id: '/demo/start/api-request'
-      path: '/demo/start/api-request'
-      fullPath: '/demo/start/api-request'
-      preLoaderRoute: typeof DemoStartApiRequestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/sentry/testing': {
-      id: '/demo/sentry/testing'
-      path: '/demo/sentry/testing'
-      fullPath: '/demo/sentry/testing'
-      preLoaderRoute: typeof DemoSentryTestingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/form/simple': {
-      id: '/demo/form/simple'
-      path: '/demo/form/simple'
-      fullPath: '/demo/form/simple'
-      preLoaderRoute: typeof DemoFormSimpleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/form/address': {
-      id: '/demo/form/address'
-      path: '/demo/form/address'
-      fullPath: '/demo/form/address'
-      preLoaderRoute: typeof DemoFormAddressRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/settings/register-mobile-app': {
@@ -1026,21 +866,13 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
-  ApiDemoNamesRoute: ApiDemoNamesRoute,
   ApiLoginRoute: ApiLoginRoute,
-  DemoStoreRoute: DemoStoreRoute,
-  DemoTableRoute: DemoTableRoute,
   RpcHeartbeatRoute: RpcHeartbeatRoute,
   ApiAuthIsValidTokenRoute: ApiAuthIsValidTokenRoute,
   ApiAuthSignInRoute: ApiAuthSignInRoute,
   ApiAuthSignOutRoute: ApiAuthSignOutRoute,
   ApiHubVerifyKeyRoute: ApiHubVerifyKeyRoute,
   ApiV2SyncRoute: ApiV2SyncRoute,
-  DemoFormAddressRoute: DemoFormAddressRoute,
-  DemoFormSimpleRoute: DemoFormSimpleRoute,
-  DemoSentryTestingRoute: DemoSentryTestingRoute,
-  DemoStartApiRequestRoute: DemoStartApiRequestRoute,
-  DemoStartServerFuncsRoute: DemoStartServerFuncsRoute,
   RpcCommandSplatRoute: RpcCommandSplatRoute,
   RpcQuerySplatRoute: RpcQuerySplatRoute,
 }
