@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { Option } from "effect";
 import {
   type ColumnType,
@@ -10,9 +10,11 @@ import {
   type JSONColumnType,
   sql,
 } from "kysely";
+import * as Sentry from "@sentry/tanstackstart-react";
 import Prescription from "./prescription";
 import Appointment from "./appointment";
 import Event from "./event";
+import { cascadeSoftDelete } from "@/lib/soft-delete-registry";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import Patient from "./patient";
@@ -108,7 +110,7 @@ namespace Visit {
   }
 
   export namespace API {
-    export const findById = serverOnly(
+    export const findById = createServerOnlyFn(
       async (
         id: string,
       ): Promise<
@@ -129,7 +131,7 @@ namespace Visit {
     /**
      * Upsert a patient record without the additional patient attributes
      */
-    export const upsert = serverOnly(async (visit: Visit.EncodedT) => {
+    export const upsert = createServerOnlyFn(async (visit: Visit.EncodedT) => {
       // permissions check
       const clinicIds =
         await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
@@ -154,7 +156,7 @@ namespace Visit {
      * Upsert a visit record
      * SYNC ONLY METHOD
      */
-    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_upsert = createServerOnlyFn(
       async (visit: Visit.EncodedT) => {
         return await upsert_core(visit);
       },
@@ -165,7 +167,7 @@ namespace Visit {
      * DO NOT EXPORT OR USE DIRECTLY
      * note: experimenting with visits coming in with their own ids.
      */
-    const upsert_core = serverOnly(async (visit: Visit.EncodedT) => {
+    const upsert_core = createServerOnlyFn(async (visit: Visit.EncodedT) => {
       return await db
         .insertInto(Visit.Table.name)
         .values({
@@ -212,7 +214,7 @@ namespace Visit {
      * @param options - patientId, limit, offset, includeCount
      * @returns Paginated visit list
      */
-    export const getByPatientId = serverOnly(
+    export const getByPatientId = createServerOnlyFn(
       async (options: {
         patientId: string;
         limit?: number;
@@ -273,57 +275,45 @@ namespace Visit {
      *
      * Deletes on visits cascade down to any prescriptoins, events, appointments, etc that are related to the visit.
      */
-    export const softDelete = serverOnly(async (id: string) => {
-      await db.transaction().execute(async (trx) => {
-        await trx
-          .updateTable(Visit.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("id", "=", id)
-          .execute();
+    export const softDelete = createServerOnlyFn(async (id: string) => {
+      try {
+        await db.transaction().execute(async (trx) => {
+          await cascadeSoftDelete(trx, "visits", id);
 
-        await trx
-          .updateTable(Prescription.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("visit_id", "=", id)
-          .execute();
-
-        await trx
-          .updateTable(Event.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("visit_id", "=", id)
-          .execute();
-
-        await trx
-          .updateTable(Appointment.Table.name)
-          .set({
-            is_deleted: true,
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          .where("appointments.current_visit_id", "=", id)
-          .execute();
-      });
+          await trx
+            .updateTable(Visit.Table.name)
+            .set({
+              is_deleted: true,
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            .where("id", "=", id)
+            .execute();
+        });
+      } catch (error) {
+        Sentry.captureException(error);
+        console.error("Visit soft delete operation failed:", {
+          operation: "visit_soft_delete",
+          error: {
+            message: error instanceof Error ? error.message : String(error),
+            name: error instanceof Error ? error.constructor.name : "Unknown",
+          },
+          context: { visitId: id },
+          timestamp: new Date().toISOString(),
+        });
+        throw error;
+      }
     });
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(async (delta: Visit.EncodedT) => {
-      return API.DANGEROUS_SYNC_ONLY_upsert(delta);
-    });
+    export const upsertFromDelta = createServerOnlyFn(
+      async (delta: Visit.EncodedT) => {
+        return API.DANGEROUS_SYNC_ONLY_upsert(delta);
+      },
+    );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.softDelete(id);
     });
   }

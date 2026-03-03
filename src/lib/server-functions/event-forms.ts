@@ -7,7 +7,7 @@ import { safeJSONParse } from "../utils";
  * @returns {Promise<EventForm.EncodedT[]>} - The list of event forms
  */
 export const getEventForms = createServerFn({ method: "GET" })
-  .validator((data: { includeDeleted?: boolean } = {}) => data)
+  .inputValidator((data: { includeDeleted?: boolean } = {}) => data)
   .handler(
     async ({
       data,

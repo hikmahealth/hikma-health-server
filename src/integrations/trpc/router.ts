@@ -1,22 +1,17 @@
-import type { TRPCRouterRecord } from "@trpc/server";
-import { createTRPCRouter, publicProcedure } from "./init";
-import { patientsRouter } from "./routers/patients";
-import { visitsRouter } from "./routers/visits";
-import { eventsRouter } from "./routers/events";
+import { createTRPCRouter } from "./init";
+import { queryProcedures } from "./routers/queries";
+import { commandProcedures } from "./routers/commands";
 
-/** Demo router — kept for the existing demo page at /demo/tanstack-query */
-const peopleRouter = {
-  list: publicProcedure.query(async () => [
-    { name: "John Doe" },
-    { name: "Jane Doe" },
-  ]),
-} satisfies TRPCRouterRecord;
+/** Query-only router served at /rpc/query */
+export const queryAppRouter = createTRPCRouter(queryProcedures);
 
-export const trpcRouter = createTRPCRouter({
-  people: peopleRouter,
-  patients: patientsRouter,
-  visits: visitsRouter,
-  events: eventsRouter,
+/** Command-only router served at /rpc/command */
+export const commandAppRouter = createTRPCRouter(commandProcedures);
+
+/** Merged router for client-side type inference (never served directly) */
+const appRouter = createTRPCRouter({
+  ...queryProcedures,
+  ...commandProcedures,
 });
 
-export type TRPCRouter = typeof trpcRouter;
+export type AppRouter = typeof appRouter;

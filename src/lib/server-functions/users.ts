@@ -24,7 +24,7 @@ export const getAllUsers = createServerFn({ method: "GET" }).handler(
  * @returns Array of clinic IDs where the user has the specified permission
  */
 export const getClinicIdsWithUserPermission = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (data: {
       userId: string;
       permission: UserClinicPermissions.UserPermissionsT;
@@ -53,7 +53,7 @@ export const getClinicIdsWithUserPermission = createServerFn({ method: "GET" })
  * @returns User object if found and authorized, null if ID not provided, rejects if unauthorized
  */
 export const getUserById = createServerFn({ method: "GET" })
-  .validator((data: { id?: string | null } = {}) => data)
+  .inputValidator((data: { id?: string | null } = {}) => data)
   .middleware([permissionsMiddleware])
   .handler(async ({ data, context }) => {
     if (!context.userId) {
@@ -90,7 +90,7 @@ export const getUserById = createServerFn({ method: "GET" })
  * @returns True if current user has the specified role, false otherwise
  */
 export const currentUserHasRole = createServerFn({ method: "GET" })
-  .validator((data: { role: User.RoleT }) => data)
+  .inputValidator((data: { role: User.RoleT }) => data)
   .handler(async ({ data }) => {
     const tokenCookie = getCookie("token");
     if (!tokenCookie) return false;
@@ -111,7 +111,7 @@ export const currentUserHasRole = createServerFn({ method: "GET" })
  * @returns User's clinic permissions
  */
 export const getUserClinicPermissions = createServerFn({ method: "GET" })
-  .validator((data: { userId: string }) => data)
+  .inputValidator((data: { userId: string }) => data)
   .handler(async ({ data }) => {
     return await UserClinicPermissions.API.getByUser(data.userId);
   });
@@ -125,7 +125,7 @@ export const getUserClinicPermissions = createServerFn({ method: "GET" })
  * @requires SUPER_ADMIN role for access
  */
 export const resetUserPassword = createServerFn({ method: "POST" })
-  .validator((data: { userId: string; password: string }) => data)
+  .inputValidator((data: { userId: string; password: string }) => data)
   .middleware([permissionsMiddleware])
   .handler(async ({ data, context }) => {
     if (context.role !== User.ROLES.SUPER_ADMIN) {

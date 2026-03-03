@@ -6,7 +6,7 @@ import {
   ValidationError,
   type DomainError,
 } from "@/db/helpers";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import {
   type ColumnType,
   type Generated,
@@ -191,7 +191,7 @@ namespace PrescriptionItem {
   };
 
   export namespace API {
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       async (id: string): Promise<ApiPrescriptionItem | undefined> => {
         const validId = validateItemId(id);
         const result = await baseQuery()
@@ -202,7 +202,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const getByPrescriptionId = serverOnly(
+    export const getByPrescriptionId = createServerOnlyFn(
       async (
         prescriptionId: string,
         params: { limit?: number; offset?: number } = {},
@@ -222,7 +222,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const getByPatientId = serverOnly(
+    export const getByPatientId = createServerOnlyFn(
       async (
         patientId: string,
         params: { status?: string; limit?: number; offset?: number } = {},
@@ -248,7 +248,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const getByClinicId = serverOnly(
+    export const getByClinicId = createServerOnlyFn(
       async (
         clinicId: string,
         params: { status?: string; limit?: number; offset?: number } = {},
@@ -274,7 +274,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const getActiveItemsForPatient = serverOnly(
+    export const getActiveItemsForPatient = createServerOnlyFn(
       async (patientId: string): Promise<ApiPrescriptionItem[]> => {
         const validPatientId = validatePatientId(patientId);
 
@@ -343,7 +343,7 @@ namespace PrescriptionItem {
       }
     };
 
-    export const upsert = serverOnly(
+    export const upsert = createServerOnlyFn(
       async (item: Partial<ApiPrescriptionItem>): Promise<{ id: string }> => {
         if (item.clinic_id) {
           await checkPrescriptionPermission(item.clinic_id);
@@ -359,7 +359,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_upsert = createServerOnlyFn(
       async (item: Partial<ApiPrescriptionItem>): Promise<{ id: string }> => {
         try {
           return await db.transaction().execute(async (trx) => {
@@ -371,7 +371,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const updateQuantityDispensed = serverOnly(
+    export const updateQuantityDispensed = createServerOnlyFn(
       async (
         id: string,
         quantityToAdd: number,
@@ -420,7 +420,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const updateStatus = serverOnly(
+    export const updateStatus = createServerOnlyFn(
       async (
         id: string,
         status: "active" | "completed" | "cancelled" | "partially_dispensed",
@@ -442,7 +442,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const batchGetByIds = serverOnly(
+    export const batchGetByIds = createServerOnlyFn(
       async (ids: string[]): Promise<ApiPrescriptionItem[]> => {
         if (ids.length === 0) return [];
         if (ids.length > 100) {
@@ -466,7 +466,7 @@ namespace PrescriptionItem {
       },
     );
 
-    export const getStats = serverOnly(
+    export const getStats = createServerOnlyFn(
       async (
         clinicId: string,
       ): Promise<{
@@ -515,13 +515,13 @@ namespace PrescriptionItem {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (item: Partial<ApiPrescriptionItem>): Promise<{ id: string }> => {
         return API.DANGEROUS_SYNC_ONLY_upsert(item);
       },
     );
 
-    export const deleteFromDelta = serverOnly(
+    export const deleteFromDelta = createServerOnlyFn(
       async (id: string): Promise<void> => {
         const validId = validateItemId(id);
 

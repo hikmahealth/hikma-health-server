@@ -4,9 +4,10 @@ import ClinicInventory from "@/models/clinic-inventory";
 import DrugBatches from "@/models/drug-batches";
 import { createServerFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
+import { type Result, ok, err } from "@/lib/utils";
 
 export const getClinicInventory = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (params: {
       clinicId: string;
       searchQuery?: string;
@@ -33,34 +34,46 @@ export const getClinicInventory = createServerFn({ method: "GET" })
           // This avoids an extra query and is more efficient
           const hasMore = items.length === (data.limit ?? 100);
 
-          return { items, hasMore };
+          return ok({ items, hasMore });
         } catch (error) {
           Sentry.captureException(error);
-          return { items: [], hasMore: false };
+          return err({
+            _tag: "ServerError" as const,
+            message:
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch inventory",
+          });
         }
       },
     );
   });
 
 export const getClinicInventoryById = createServerFn({ method: "GET" })
-  .validator((params: { id: string }) => params)
+  .inputValidator((params: { id: string }) => params)
   .handler(async ({ data }) => {
     return Sentry.startSpan(
       { name: "Get clinic inventory item by ID" },
       async () => {
         try {
           const item = await ClinicInventory.API.getById(data.id);
-          return item || null;
+          return ok(item || null);
         } catch (error) {
           Sentry.captureException(error);
-          return null;
+          return err({
+            _tag: "ServerError" as const,
+            message:
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch inventory item",
+          });
         }
       },
     );
   });
 
 export const getBatchesByDrug = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (params: {
       drugId: string;
       onlyAvailable?: boolean;
@@ -76,16 +89,20 @@ export const getBatchesByDrug = createServerFn({ method: "GET" })
           limit: 100,
         });
 
-        return batches || [];
+        return ok(batches || []);
       } catch (error) {
         Sentry.captureException(error);
-        return [];
+        return err({
+          _tag: "ServerError" as const,
+          message:
+            error instanceof Error ? error.message : "Failed to fetch batches",
+        });
       }
     });
   });
 
 export const saveClinicInventory = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       id: string | null;
       clinicId: string;
@@ -152,7 +169,7 @@ export const saveClinicInventory = createServerFn({ method: "POST" })
   });
 
 export const createDrugBatch = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       drugId: string;
       clinicId: string;

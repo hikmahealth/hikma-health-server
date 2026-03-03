@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { cn, isValidUUID } from "@/lib/utils";
+import { cn, getResultData, isValidUUID } from "@/lib/utils";
 import { SelectInput } from "@/components/select-input";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { getAllUsers } from "@/lib/server-functions/users";
@@ -44,7 +44,7 @@ import {
 
 // Create a save prescription server function
 const savePrescription = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       prescription: PrescriptionFormValues;
       items: PrescriptionItemValues[];
@@ -69,7 +69,7 @@ const savePrescription = createServerFn({ method: "POST" })
 
 // Get prescription by ID server function
 const getPrescriptionById = createServerFn({ method: "POST" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const { id } = data;
     const res = await db
@@ -100,7 +100,10 @@ export const Route = createFileRoute("/app/prescriptions/edit/$")({
     }
 
     result.users = (await getAllUsers()) as User.EncodedT[];
-    result.clinics = (await getAllClinics()) as Clinic.EncodedT[];
+    result.clinics = getResultData(
+      await getAllClinics(),
+      [],
+    ) as Clinic.EncodedT[];
     result.currentUser = (await getCurrentUser()) as User.EncodedT | null;
 
     return result;

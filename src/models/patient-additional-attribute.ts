@@ -8,7 +8,7 @@ import type {
   JSONColumnType,
 } from "kysely";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { sql } from "kysely";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 
@@ -113,7 +113,7 @@ namespace PatientAdditionalAttribute {
     /**
      * Upsert a patient additional attribute
      */
-    export const upsert = serverOnly(
+    export const upsert = createServerOnlyFn(
       async (attribute: PatientAdditionalAttribute.EncodedT) => {
         return await db
           .insertInto(PatientAdditionalAttribute.Table.name)
@@ -167,7 +167,7 @@ namespace PatientAdditionalAttribute {
      * Soft Delete a patient additional attribute
      * @param id - The id of the patient additional attribute to delete
      */
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       await db
         .updateTable(PatientAdditionalAttribute.Table.name)
         .set({
@@ -181,13 +181,13 @@ namespace PatientAdditionalAttribute {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (delta: PatientAdditionalAttribute.EncodedT) => {
         return API.upsert(delta);
       },
     );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.softDelete(id);
     });
   }

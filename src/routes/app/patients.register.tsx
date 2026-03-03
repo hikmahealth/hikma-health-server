@@ -23,9 +23,14 @@ import { v1 as uuidv1 } from "uuid";
 import PatientAdditionalAttribute from "@/models/patient-additional-attribute";
 import { SelectInput } from "@/components/select-input";
 import { getAllClinics } from "@/lib/server-functions/clinics";
+import {
+  getResultData,
+  joinCheckboxValues,
+  splitCheckboxValues,
+} from "@/lib/utils";
 
 export const createPatient = createServerFn({ method: "POST" })
-  .validator<{
+  .inputValidator<{
     baseFields: Patient.T;
     additionalAttributes: PatientAdditionalAttribute.T[];
   }>((data) => data)
@@ -48,7 +53,7 @@ export const Route = createFileRoute("/app/patients/register")({
   component: RouteComponent,
   loader: async () => {
     const patientRegistrationForm = await getAllPatientRegistrationForms();
-    const clinicsList = await getAllClinics();
+    const clinicsList = getResultData(await getAllClinics(), []);
     return { patientRegistrationForm: patientRegistrationForm[0], clinicsList };
   },
 });
@@ -112,8 +117,8 @@ function RouteComponent() {
               field.fieldType === "number" ? Number(data[field.column]) : null,
             ),
             string_value: Option.fromNullable(
-              ["text", "select"].includes(field.fieldType)
-                ? String(data[field.column])
+              ["text", "select", "checkbox"].includes(field.fieldType)
+                ? String(data[field.column] ?? "")
                 : null,
             ),
             date_value: Option.fromNullable(
@@ -166,7 +171,7 @@ function RouteComponent() {
   }
 
   return (
-    <div>
+    <div className="pb-4">
       <form onSubmit={handleSubmit(onSubmit)}>
         <div style={{ maxWidth: 500 }} className="space-y-4">
           {patientRegistrationForm?.fields
@@ -272,6 +277,57 @@ function RouteComponent() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
+                  </div>
+                );
+              }
+              if (field.fieldType === "checkbox") {
+                const currentValue = watch(field.column) || "";
+                const selectedValues = splitCheckboxValues(currentValue);
+                return (
+                  <div key={field.id} className="space-y-2">
+                    <Label
+                      htmlFor={field.column}
+                      className="text-muted-foreground"
+                    >
+                      {Language.getTranslation(field.label, "en")}
+                    </Label>
+                    <div className="space-y-1">
+                      {field.options.map((opt) => {
+                        const optValue = Language.getTranslation(opt, "en");
+                        const isChecked = selectedValues.includes(optValue);
+                        return (
+                          <div
+                            key={optValue}
+                            className="flex items-center space-x-2"
+                          >
+                            <input
+                              type="checkbox"
+                              id={`${field.column}-${optValue}`}
+                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                              checked={isChecked}
+                              data-testid={`register-patient-${idx}-${optValue}`}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...selectedValues, optValue]
+                                  : selectedValues.filter(
+                                      (v) => v !== optValue,
+                                    );
+                                setValue(
+                                  field.column,
+                                  joinCheckboxValues(next),
+                                );
+                              }}
+                            />
+                            <label
+                              htmlFor={`${field.column}-${optValue}`}
+                              className="text-sm"
+                            >
+                              {upperFirst(optValue)}
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               }

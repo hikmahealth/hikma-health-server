@@ -26,7 +26,7 @@ type Pagination = {
 export const getAllPatients = createServerFn({
   method: "GET",
 })
-  .validator((data?: { offset?: number; limit?: number }) => data || {})
+  .inputValidator((data?: { offset?: number; limit?: number }) => data || {})
   .handler(
     async ({
       data,
@@ -69,7 +69,7 @@ export const getAllPatients = createServerFn({
 
 // Update the searchPatients function to accept pagination parameters
 export const searchPatients = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (data: { searchQuery: string; offset?: number; limit?: number }) => data,
   )
   .handler(
@@ -139,7 +139,7 @@ export const searchPatients = createServerFn({ method: "GET" })
 export const getPatientById = createServerFn({
   method: "GET",
 })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(
     async ({
       data,
@@ -162,7 +162,7 @@ export const getPatientById = createServerFn({
 export const softDeletePatientsByIds = createServerFn({
   method: "POST",
 })
-  .validator((data: { ids: string[] }) => data)
+  .inputValidator((data: { ids: string[] }) => data)
   .middleware([permissionsMiddleware])
   .handler(
     async ({
@@ -195,7 +195,7 @@ export const softDeletePatientsByIds = createServerFn({
  * @returns The new patient ID on success
  */
 export const createPatient = createServerFn({ method: "POST" })
-  .validator((data: CreatePatientInput) => data)
+  .inputValidator((data: CreatePatientInput) => data)
   .middleware([permissionsMiddleware])
   .handler(
     async ({
@@ -312,7 +312,7 @@ export const createPatient = createServerFn({ method: "POST" })
  * @returns Success status
  */
 export const updatePatient = createServerFn({ method: "POST" })
-  .validator((data: UpdatePatientInput) => data)
+  .inputValidator((data: UpdatePatientInput) => data)
   .middleware([permissionsMiddleware])
   .handler(
     async ({

@@ -8,7 +8,7 @@ import {
   type Updateable,
   sql,
 } from "kysely";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import { safeJSONParse } from "@/lib/utils";
 
@@ -163,7 +163,7 @@ namespace ClinicDepartment {
      * @param {ClinicDepartment.EncodedT} department - The department to update
      * @returns {Promise<ClinicDepartment.EncodedT["id"] | null>} - The updated department ID
      */
-    export const upsert = serverOnly(
+    export const upsert = createServerOnlyFn(
       async (
         department: Omit<
           ClinicDepartment.EncodedT,
@@ -234,7 +234,7 @@ namespace ClinicDepartment {
      * @param {string} clinicId - Optional clinic ID to filter by
      * @returns {Promise<ClinicDepartment.EncodedT[]>} - The list of departments
      */
-    export const getAll = serverOnly(
+    export const getAll = createServerOnlyFn(
       async (clinicId?: string): Promise<ClinicDepartment.EncodedT[]> => {
         let query = db
           .selectFrom(Table.name)
@@ -260,7 +260,7 @@ namespace ClinicDepartment {
      * @param {string} clinicId - The clinic ID
      * @returns {Promise<ClinicDepartment.EncodedT[]>} - The list of active departments
      */
-    export const getActiveByClinicId = serverOnly(
+    export const getActiveByClinicId = createServerOnlyFn(
       async (clinicId: string): Promise<ClinicDepartment.EncodedT[]> => {
         const departments = await db
           .selectFrom(Table.name)
@@ -283,7 +283,7 @@ namespace ClinicDepartment {
      * @param {string} id - The ID of the department
      * @returns {Promise<ClinicDepartment.EncodedT | null>} - The department
      */
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       async (id: string): Promise<ClinicDepartment.EncodedT | null> => {
         const department = await db
           .selectFrom(Table.name)
@@ -307,7 +307,7 @@ namespace ClinicDepartment {
      * @param {string} code - The department code
      * @returns {Promise<ClinicDepartment.EncodedT | null>} - The department
      */
-    export const getByCode = serverOnly(
+    export const getByCode = createServerOnlyFn(
       async (
         clinicId: string,
         code: string,
@@ -334,18 +334,20 @@ namespace ClinicDepartment {
      * @param {string} id - The ID of the department to delete
      * @returns {Promise<void>}
      */
-    export const softDelete = serverOnly(async (id: string): Promise<void> => {
-      await db
-        .updateTable(Table.name)
-        .set({
-          is_deleted: true,
-          deleted_at: new Date().toISOString(),
-          updated_at: sql`now()`,
-          last_modified: sql`now()`,
-        })
-        .where("id", "=", id)
-        .execute();
-    });
+    export const softDelete = createServerOnlyFn(
+      async (id: string): Promise<void> => {
+        await db
+          .updateTable(Table.name)
+          .set({
+            is_deleted: true,
+            deleted_at: new Date().toISOString(),
+            updated_at: sql`now()`,
+            last_modified: sql`now()`,
+          })
+          .where("id", "=", id)
+          .execute();
+      },
+    );
 
     /**
      * Update department status
@@ -353,7 +355,7 @@ namespace ClinicDepartment {
      * @param {StatusT} status - The new status
      * @returns {Promise<void>}
      */
-    export const updateStatus = serverOnly(
+    export const updateStatus = createServerOnlyFn(
       async (id: string, status: StatusT): Promise<void> => {
         await db
           .updateTable(Table.name)
@@ -372,7 +374,7 @@ namespace ClinicDepartment {
      * @param {string} departmentId
      * @param {DepartmentCapability} capability to be toggled
      */
-    export const toggleCapability = serverOnly(
+    export const toggleCapability = createServerOnlyFn(
       async (
         departmentId: string,
         capability: DepartmentCapability,
@@ -396,7 +398,7 @@ namespace ClinicDepartment {
      * @param {object} capabilities - The capabilities to filter by
      * @returns {Promise<ClinicDepartment.EncodedT[]>} - The list of departments
      */
-    export const getByCapabilities = serverOnly(
+    export const getByCapabilities = createServerOnlyFn(
       async (
         clinicId: string,
         capabilities: {
@@ -494,11 +496,13 @@ namespace ClinicDepartment {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(async (delta: EncodedT) => {
-      return API.upsert(delta);
-    });
+    export const upsertFromDelta = createServerOnlyFn(
+      async (delta: EncodedT) => {
+        return API.upsert(delta);
+      },
+    );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return Promise.resolve(id);
     });
   }

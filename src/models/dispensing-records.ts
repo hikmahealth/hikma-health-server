@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import {
   type ColumnType,
   type Generated,
@@ -154,7 +154,7 @@ namespace DispensingRecord {
      * @param id - Record ID
      * @returns Dispensing record or null
      */
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       async (id: string): Promise<DispensingRecord.EncodedT | null> => {
         if (!id || !isValidUUID(id)) {
           return null;
@@ -178,7 +178,7 @@ namespace DispensingRecord {
      * @param offset - Pagination offset
      * @returns Array of dispensing records
      */
-    export const getByPatientId = serverOnly(
+    export const getByPatientId = createServerOnlyFn(
       async (
         patientId: string,
         limit = 50,
@@ -207,7 +207,7 @@ namespace DispensingRecord {
      * @param prescriptionItemId - Prescription item ID
      * @returns Array of dispensing records
      */
-    export const getByPrescriptionItemId = serverOnly(
+    export const getByPrescriptionItemId = createServerOnlyFn(
       async (
         prescriptionItemId: string,
       ): Promise<DispensingRecord.EncodedT[]> => {
@@ -234,7 +234,7 @@ namespace DispensingRecord {
      * @param endDate - End date
      * @returns Array of dispensing records
      */
-    export const getByClinicAndDateRange = serverOnly(
+    export const getByClinicAndDateRange = createServerOnlyFn(
       async (
         clinicId: string,
         startDate: Date,
@@ -264,7 +264,7 @@ namespace DispensingRecord {
      * @param clinicId - Optional clinic ID filter
      * @returns Array of dispensing records
      */
-    export const getByDrugId = serverOnly(
+    export const getByDrugId = createServerOnlyFn(
       async (
         drugId: string,
         clinicId?: string,
@@ -298,7 +298,7 @@ namespace DispensingRecord {
      * @param offset - Pagination offset
      * @returns Array of records with patient, drug, and user details
      */
-    export const getAllWithDetails = serverOnly(
+    export const getAllWithDetails = createServerOnlyFn(
       async (clinicId: string, limit = 50, offset = 0) => {
         const query = sql`
           SELECT
@@ -335,7 +335,7 @@ namespace DispensingRecord {
      * @param record - Dispensing record data
      * @returns Created/updated record
      */
-    export const upsert = serverOnly(
+    export const upsert = createServerOnlyFn(
       async (record: DispensingRecord.EncodedT) => {
         const id = record.id || uuidV1();
 
@@ -398,7 +398,7 @@ namespace DispensingRecord {
      * Soft delete a dispensing record
      * @param id - Record ID
      */
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       await db
         .updateTable(DispensingRecord.Table.name)
         .set({
@@ -418,7 +418,7 @@ namespace DispensingRecord {
      * @param endDate - End date
      * @returns Statistics object
      */
-    export const getStats = serverOnly(
+    export const getStats = createServerOnlyFn(
       async (clinicId: string, startDate: Date, endDate: Date) => {
         const query = sql`
           SELECT
@@ -454,7 +454,7 @@ namespace DispensingRecord {
      * @param limit - Max records to return
      * @returns Array of matching records
      */
-    export const search = serverOnly(
+    export const search = createServerOnlyFn(
       async (
         searchTerm: string,
         clinicId: string,
@@ -491,7 +491,7 @@ namespace DispensingRecord {
      * @param ids - Array of record IDs
      * @returns Array of dispensing records
      */
-    export const batchGetByIds = serverOnly(
+    export const batchGetByIds = createServerOnlyFn(
       async (ids: string[]): Promise<DispensingRecord.EncodedT[]> => {
         if (!ids || ids.length === 0) {
           return [];
@@ -520,7 +520,7 @@ namespace DispensingRecord {
      * @param delta - Delta record
      * @returns Updated record
      */
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (delta: DispensingRecord.EncodedT) => {
         return API.upsert(delta);
       },
@@ -530,7 +530,7 @@ namespace DispensingRecord {
      * Delete record from sync delta
      * @param id - Record ID
      */
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.softDelete(id);
     });
   }

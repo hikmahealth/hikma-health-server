@@ -4,22 +4,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import User from "@/models/user";
+import { createServerFn } from "@tanstack/react-start";
+import { getCookie, deleteCookie } from "@tanstack/react-start/server";
+import Token from "@/models/token";
 
-// import { Pool } from "pg"
-// import Clinic from '@/models/clinic'
 import { Option } from "effect";
 
+const checkToken = createServerFn({ method: "GET" }).handler(async () => {
+  const token = Option.fromNullable(getCookie("token"));
+  return Option.match(token, {
+    onNone: () => {
+      deleteCookie("token");
+      return { isValid: false };
+    },
+    onSome: async (t) => {
+      const user = await Token.getUser(t);
+      const isValid = Option.isSome(user);
+      if (!isValid) deleteCookie("token");
+      return { isValid };
+    },
+  });
+});
+
 export const Route = createFileRoute("/")({
-  beforeLoad: async ({ location }) => {
-    // let clinic = Clinic.Table.name;
-    const isValidToken = await fetch(`/api/auth/is-valid-token`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await isValidToken.json();
-    if (data.isValid) {
+  beforeLoad: async () => {
+    const { isValid } = await checkToken();
+    if (isValid) {
       throw redirect({ to: "/app" });
     }
   },

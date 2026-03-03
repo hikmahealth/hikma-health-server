@@ -9,7 +9,7 @@ import {
   sql,
 } from "kysely";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
@@ -134,7 +134,7 @@ namespace PatientVital {
      * @param vital - The vital data to create
      * @returns {Promise<EncodedT>} - The created vital record
      */
-    export const save = serverOnly(
+    export const save = createServerOnlyFn(
       async (vital: Table.NewPatientVitals): Promise<EncodedT> => {
         const id = vital.id || uuidV1();
         const result = await db
@@ -220,7 +220,7 @@ namespace PatientVital {
      * @param patientId - The patient ID
      * @returns {Promise<EncodedT[]>} - List of vital records
      */
-    export const getByPatientId = serverOnly(
+    export const getByPatientId = createServerOnlyFn(
       async (patientId: string): Promise<EncodedT[]> => {
         // TODO: cross check with the patient's clinic permissions
         // const clinicIds =
@@ -242,7 +242,7 @@ namespace PatientVital {
     /**
      * Gets all vitals without pagination
      */
-    export const getAll = serverOnly(async (): Promise<EncodedT[]> => {
+    export const getAll = createServerOnlyFn(async (): Promise<EncodedT[]> => {
       const result = await db
         .selectFrom(Table.name)
         .where("is_deleted", "=", false)
@@ -258,7 +258,7 @@ namespace PatientVital {
      * @param visitId - The visit ID
      * @returns {Promise<EncodedT[]>} - List of vital records for the visit
      */
-    export const getByVisitId = serverOnly(
+    export const getByVisitId = createServerOnlyFn(
       async (visitId: string): Promise<EncodedT[]> => {
         const result = await db
           .selectFrom(Table.name)
@@ -277,7 +277,7 @@ namespace PatientVital {
      * @param patientId - The patient ID
      * @returns {Promise<EncodedT | undefined>} - The most recent vital record
      */
-    export const getMostRecent = serverOnly(
+    export const getMostRecent = createServerOnlyFn(
       async (patientId: string): Promise<EncodedT | undefined> => {
         const result = await db
           .selectFrom(Table.name)
@@ -298,7 +298,7 @@ namespace PatientVital {
      * @param updates - The updates to apply
      * @returns {Promise<EncodedT>} - The updated vital record
      */
-    export const update = serverOnly(
+    export const update = createServerOnlyFn(
       async (
         id: string,
         updates: Table.PatientVitalsUpdate,
@@ -322,16 +322,18 @@ namespace PatientVital {
      * @param id - The vital record ID
      * @returns {Promise<void>}
      */
-    export const softDelete = serverOnly(async (id: string): Promise<void> => {
-      await db
-        .updateTable(Table.name)
-        .set({
-          is_deleted: true,
-          deleted_at: new Date().toISOString(),
-        })
-        .where("id", "=", id)
-        .execute();
-    });
+    export const softDelete = createServerOnlyFn(
+      async (id: string): Promise<void> => {
+        await db
+          .updateTable(Table.name)
+          .set({
+            is_deleted: true,
+            deleted_at: new Date().toISOString(),
+          })
+          .where("id", "=", id)
+          .execute();
+      },
+    );
 
     /**
      * Get vitals within a date range for a patient
@@ -340,7 +342,7 @@ namespace PatientVital {
      * @param endDate - End date of the range
      * @returns {Promise<EncodedT[]>} - List of vital records
      */
-    export const getByDateRange = serverOnly(
+    export const getByDateRange = createServerOnlyFn(
       async (
         patientId: string,
         startDate: Date,
@@ -362,13 +364,13 @@ namespace PatientVital {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (deltaData: Table.NewPatientVitals): Promise<void> => {
         await PatientVital.API.save(deltaData);
       },
     );
 
-    export const deleteFromDelta = serverOnly(
+    export const deleteFromDelta = createServerOnlyFn(
       async (id: string): Promise<void> => {
         await PatientVital.API.softDelete(id);
       },

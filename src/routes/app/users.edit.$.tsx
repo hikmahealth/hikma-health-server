@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getAllClinics } from "@/lib/server-functions/clinics";
+import { getResultData } from "@/lib/utils";
 import upperFirst from "lodash/upperFirst";
 import { getCurrentUserId } from "@/lib/server-functions/auth";
 import { toast } from "sonner";
@@ -46,7 +47,7 @@ import If from "@/components/if";
 import { useImmerReducer } from "use-immer";
 
 const updateUser = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (data: {
       id: string;
       user: Omit<
@@ -81,7 +82,7 @@ const updateUser = createServerFn({ method: "POST" })
   });
 
 const registerUser = createServerFn({ method: "POST" })
-  .validator((data: { user: User.EncodedT; creatorId: string }) => ({
+  .inputValidator((data: { user: User.EncodedT; creatorId: string }) => ({
     user: data.user,
     creatorId: data.creatorId,
   }))
@@ -131,7 +132,7 @@ export const Route = createFileRoute("/app/users/edit/$")({
     const userId = params._splat === "new" ? null : params._splat;
     return {
       user: await getUserById({ data: { id: userId } }),
-      clinics: await getAllClinics(),
+      clinics: getResultData(await getAllClinics(), []),
       currentUserId: await getCurrentUserId(),
       isSuperAdmin: await currentUserHasRole({ data: { role: "super_admin" } }),
     };

@@ -9,6 +9,7 @@ import {
 } from "@/lib/server-functions/visits";
 import { getPatientPrescriptions } from "@/lib/server-functions/prescriptions";
 import { getPatientProblems } from "@/lib/server-functions/patient-problems";
+import { getResultData } from "@/lib/utils";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -40,10 +41,10 @@ import { RecentVisitsList } from "@/components/patient/RecentVisitsList";
 import { PrescriptionsList } from "@/components/patient/PrescriptionsList";
 import { PatientProblemsList } from "@/components/patient/PatientProblemsList";
 
-export const Route = createFileRoute("/app/patients/$/")({
+export const Route = createFileRoute("/app/patients/$id")({
   component: RouteComponent,
   loader: async ({ params }) => {
-    const patientId = params["_splat"];
+    const patientId = params["id"];
 
     const emptyPagination: Pagination = {
       offset: 0,
@@ -108,25 +109,35 @@ export const Route = createFileRoute("/app/patients/$/")({
         }).catch((e) => {
           console.error("Failed to fetch visits:", e);
           return {
-            items: [] as VisitWithEvents[],
-            pagination: emptyPagination,
-            error: e,
+            ok: false as const,
+            error: {
+              _tag: "ServerError" as const,
+              message: String(e),
+            },
           };
         }),
         getPatientPrescriptions({
           data: { patientId, limit: 10, offset: 0 },
         }).catch((e) => {
           console.error("Failed to fetch prescriptions:", e);
-          return { items: [], pagination: emptyPagination, error: e };
+          return {
+            ok: false as const,
+            error: {
+              _tag: "ServerError" as const,
+              message: String(e),
+            },
+          };
         }),
         getPatientProblems({
           data: { patientId, limit: 5, offset: 0 },
         }).catch((e) => {
           console.error("Failed to fetch problems:", e);
           return {
-            items: [] as PatientProblem.EncodedT[],
-            pagination: emptyPagination,
-            error: e,
+            ok: false as const,
+            error: {
+              _tag: "ServerError" as const,
+              message: String(e),
+            },
           };
         }),
         getPatientVitals({ data: { patientId } }).catch((e) => {
@@ -136,12 +147,28 @@ export const Route = createFileRoute("/app/patients/$/")({
       ]);
 
       result.appointments = appointmentsRes.data || [];
-      result.visits = visitsRes.items;
-      result.visitsPagination = visitsRes.pagination;
-      result.prescriptions = prescriptionsRes.items;
-      result.prescriptionsPagination = prescriptionsRes.pagination;
-      result.problems = problemsRes.items;
-      result.problemsPagination = problemsRes.pagination;
+
+      const visitsData = getResultData(visitsRes, {
+        items: [] as VisitWithEvents[],
+        pagination: emptyPagination,
+      });
+      result.visits = visitsData.items;
+      result.visitsPagination = visitsData.pagination;
+
+      const rxData = getResultData(prescriptionsRes, {
+        items: [] as Prescription.EncodedT[],
+        pagination: emptyPagination,
+      });
+      result.prescriptions = rxData.items;
+      result.prescriptionsPagination = rxData.pagination;
+
+      const problemsData = getResultData(problemsRes, {
+        items: [] as PatientProblem.EncodedT[],
+        pagination: emptyPagination,
+      });
+      result.problems = problemsData.items;
+      result.problemsPagination = problemsData.pagination;
+
       result.vitals = vitals || [];
 
       return result;
@@ -167,7 +194,7 @@ function RouteComponent() {
   const params = Route.useParams();
   const navigate = Route.useNavigate();
   const router = useRouter();
-  const patientId = params._splat;
+  const patientId = params.id;
   const isEditing = !!patientId && patientId !== "new";
   const [mostRecentVital, setMostRecentVital] = useState<
     typeof PatientVital.PatientVitalSchema.Encoded | null
@@ -217,8 +244,10 @@ function RouteComponent() {
         const res = await getPatientVisits({
           data: { patientId, offset, limit: 10, includeEvents: true },
         });
-        setVisits(res.items);
-        setVisitsPag(res.pagination);
+        if (res.ok) {
+          setVisits(res.data.items);
+          setVisitsPag(res.data.pagination);
+        }
       } catch (e) {
         console.error("Failed to fetch visits page:", e);
       } finally {
@@ -236,8 +265,10 @@ function RouteComponent() {
         const res = await getPatientPrescriptions({
           data: { patientId, offset, limit: 10 },
         });
-        setPrescriptions(res.items);
-        setRxPag(res.pagination);
+        if (res.ok) {
+          setPrescriptions(res.data.items);
+          setRxPag(res.data.pagination);
+        }
       } catch (e) {
         console.error("Failed to fetch prescriptions page:", e);
       } finally {
@@ -255,8 +286,10 @@ function RouteComponent() {
         const res = await getPatientProblems({
           data: { patientId, offset, limit: 5 },
         });
-        setProblems(res.items);
-        setProblemsPag(res.pagination);
+        if (res.ok) {
+          setProblems(res.data.items);
+          setProblemsPag(res.data.pagination);
+        }
       } catch (e) {
         console.error("Failed to fetch problems page:", e);
       } finally {

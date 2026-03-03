@@ -8,7 +8,7 @@ import {
   sql,
 } from "kysely";
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import User from "./user";
 import UserClinicPermissions from "./user-clinic-permissions";
@@ -95,7 +95,7 @@ namespace Clinic {
      * @param {string} id of the clinic
      * @param {boolean} isArchived - The new archived status of the clinic
      */
-    export const setArchivedStatus = serverOnly(
+    export const setArchivedStatus = createServerOnlyFn(
       async (id: string, isArchived: boolean = false): Promise<void> => {
         await db
           .updateTable(Clinic.Table.name)
@@ -114,7 +114,7 @@ namespace Clinic {
    * Returns a list of all the clinics
    * @returns {Promise<(EncodedT & { users?: { id: string; clinic_id: string }[] })[]>} - List of clinics
    */
-  export const getAll = serverOnly(
+  export const getAll = createServerOnlyFn(
     async (
       options: { includeUsers: boolean } = { includeUsers: true },
     ): Promise<
@@ -163,32 +163,34 @@ namespace Clinic {
    * @returns {Promise<void>} - Resolves when the clinic is deleted
    * @throws {Error} - If the clinic has registered users
    */
-  export const softDelete = serverOnly(async (id: string): Promise<void> => {
-    // First check if there are any users registered to this clinic
-    const usersInClinic = await db
-      .selectFrom(User.Table.name)
-      .where("clinic_id", "=", id)
-      .where("is_deleted", "=", false)
-      .selectAll()
-      .execute();
+  export const softDelete = createServerOnlyFn(
+    async (id: string): Promise<void> => {
+      // First check if there are any users registered to this clinic
+      const usersInClinic = await db
+        .selectFrom(User.Table.name)
+        .where("clinic_id", "=", id)
+        .where("is_deleted", "=", false)
+        .selectAll()
+        .execute();
 
-    // If there are users, throw an error
-    if (usersInClinic.length > 0) {
-      throw new Error(
-        `Cannot delete clinic with ID ${id} because it has ${usersInClinic.length} registered users. Please remove or reassign all users before deleting the clinic.`,
-      );
-    }
+      // If there are users, throw an error
+      if (usersInClinic.length > 0) {
+        throw new Error(
+          `Cannot delete clinic with ID ${id} because it has ${usersInClinic.length} registered users. Please remove or reassign all users before deleting the clinic.`,
+        );
+      }
 
-    // If no users are found, proceed with deletion
-    await db
-      .updateTable(Clinic.Table.name)
-      .set({
-        is_deleted: true,
-        deleted_at: new Date().toISOString(),
-      })
-      .where("id", "=", id)
-      .execute();
-  });
+      // If no users are found, proceed with deletion
+      await db
+        .updateTable(Clinic.Table.name)
+        .set({
+          is_deleted: true,
+          deleted_at: new Date().toISOString(),
+        })
+        .where("id", "=", id)
+        .execute();
+    },
+  );
 
   /**
    * Updates a clinic given an id and name - if the clinic id is not provided, a new clinic will be created
@@ -196,7 +198,7 @@ namespace Clinic {
    * @param {string} name - The new name of the clinic
    * @returns {Promise<void>} - Resolves when the clinic is updated
    */
-  export const save = serverOnly(
+  export const save = createServerOnlyFn(
     async ({ id, name }: { id?: string; name: string }): Promise<void> => {
       const token = getCookie("token");
       if (!token) {
@@ -246,7 +248,7 @@ namespace Clinic {
    * @param {string} id - The id of the clinic to get
    * @returns {Promise<Clinic.EncodedT>} - The clinic
    */
-  export const getById = serverOnly(
+  export const getById = createServerOnlyFn(
     async (id: string): Promise<Clinic.EncodedT> => {
       const result = await db
         .selectFrom(Clinic.Table.name)

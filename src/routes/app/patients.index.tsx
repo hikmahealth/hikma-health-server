@@ -457,6 +457,7 @@ function RouteComponent() {
   };
 
   const openPatientChart = (patientId: string) => {
+    console.log({ patientId });
     navigate({ to: `/app/patients/${patientId}` });
   };
 

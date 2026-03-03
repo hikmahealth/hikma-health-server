@@ -42,9 +42,9 @@ export function useClinicInventory(): UseClinicInventoryReturn {
         },
       });
 
-      if (result && result.items) {
+      if (result.ok && result.data.items) {
         // The items already include generic_name and brand_name from the catalogue
-        setItems(result.items);
+        setItems(result.data.items);
       } else {
         setItems([]);
       }

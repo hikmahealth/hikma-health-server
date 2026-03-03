@@ -13,7 +13,7 @@ import type {
 import db from "@/db";
 import type { TableName, Database } from "@/db";
 import { sql } from "kysely";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidv1 } from "uuid";
 import PatientAdditionalAttribute from "./patient-additional-attribute";
 import Appointment from "./appointment";
@@ -26,6 +26,7 @@ import PrescriptionItem from "./prescription-items";
 import PatientVital from "./patient-vital";
 import PatientProblem from "./patient-problem";
 import PatientObservation from "./patient-observation";
+import { cascadeSoftDelete } from "@/lib/soft-delete-registry";
 
 namespace Patient {
   // export type T = {
@@ -253,7 +254,7 @@ namespace Patient {
    * Register a new patient
    * @param {{baseFields: Patient.T, additionalAttributes: PatientAdditionalAttribute.T[]}} patient
    */
-  export const register = serverOnly(
+  export const register = createServerOnlyFn(
     async ({
       baseFields,
       additionalAttributes,
@@ -483,7 +484,7 @@ namespace Patient {
   };
 
   export namespace API {
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       async (patientId: string): Promise<Patient.EncodedT> => {
         // permissions check
         const clinicIds =
@@ -511,7 +512,7 @@ namespace Patient {
      * @param {boolean} [options.includeCount=false] - Whether to include total count in response
      * @returns Object containing patients array and pagination metadata
      */
-    export const getAllWithAttributes = serverOnly(
+    export const getAllWithAttributes = createServerOnlyFn(
       async (options?: {
         limit?: number;
         offset?: number;
@@ -575,7 +576,7 @@ namespace Patient {
      * @param {boolean} [options.includeCount=false] - Whether to include total count in response
      * @returns Object containing matching patients array and pagination metadata
      */
-    export const search = serverOnly(
+    export const search = createServerOnlyFn(
       async ({
         searchQuery,
         offset = 0,
@@ -685,31 +686,33 @@ namespace Patient {
     /**
      * Upsert a patient record without the additional patient attributes
      */
-    export const upsert = serverOnly(async (patient: Patient.EncodedT) => {
-      // permissions check
-      await UserClinicPermissions.API.isAuthorizedWithClinic(
-        patient.primary_clinic_id,
-        "can_register_patients",
-      );
-      // const clinicIds =
-      //   await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
-      //     "can_register_patients",
-      //   );
+    export const upsert = createServerOnlyFn(
+      async (patient: Patient.EncodedT) => {
+        // permissions check
+        await UserClinicPermissions.API.isAuthorizedWithClinic(
+          patient.primary_clinic_id,
+          "can_register_patients",
+        );
+        // const clinicIds =
+        //   await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+        //     "can_register_patients",
+        //   );
 
-      // if (
-      //   patient.primary_clinic_id &&
-      //   !clinicIds.includes(patient.primary_clinic_id)
-      // ) {
-      //   throw new Error("Unauthorized");
-      // }
-      return await upsert_core(patient);
-    });
+        // if (
+        //   patient.primary_clinic_id &&
+        //   !clinicIds.includes(patient.primary_clinic_id)
+        // ) {
+        //   throw new Error("Unauthorized");
+        // }
+        return await upsert_core(patient);
+      },
+    );
 
     /**
      * Upsert a patient record without the additional patient attributes
      * SYNC ONLY METHOD
      */
-    export const DANGEROUS_SYNC_ONLY_upsert = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_upsert = createServerOnlyFn(
       async (patient: Patient.EncodedT) => {
         return await upsert_core(patient);
       },
@@ -720,129 +723,133 @@ namespace Patient {
      * without any authentication or authorization checks
      * DO NOT EXPORT OR CALL THIS OUTSIDE OF SYNC FUNCTIONS
      */
-    const upsert_core = serverOnly(async (patient: Patient.EncodedT) => {
-      try {
-        return await db
-          .insertInto(Patient.Table.name)
-          .values({
-            id: patient.id,
-            given_name: patient.given_name,
-            surname: patient.surname,
-            date_of_birth: patient.date_of_birth
-              ? sql`${patient.date_of_birth}::timestamp with time zone`
-              : null,
-            citizenship: patient.citizenship,
-            photo_url: patient.photo_url || null,
-            image_timestamp: patient.image_timestamp || null,
-            hometown: patient.hometown,
-            additional_data: sql`${JSON.stringify(
-              safeJSONParse(patient.additional_data, {}),
-            )}::jsonb`,
-            government_id: patient.government_id,
-            external_patient_id: patient.external_patient_id,
-            primary_clinic_id: patient.primary_clinic_id,
-            last_modified_by: patient.last_modified_by,
-            phone: patient.phone,
-            sex: patient.sex,
-            camp: patient.camp,
-            metadata: sql`${JSON.stringify(
-              safeJSONParse(patient.metadata, {}),
-            )}::jsonb`,
-            is_deleted: patient.is_deleted,
-            created_at: sql`${toSafeDateString(
-              patient.created_at,
-            )}::timestamp with time zone`,
-            updated_at: sql`${toSafeDateString(
-              patient.updated_at,
-            )}::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-            server_created_at: sql`now()::timestamp with time zone`,
-            deleted_at: null,
-          })
-          .onConflict((oc) =>
-            oc.column("id").doUpdateSet({
-              given_name: (eb) => eb.ref("excluded.given_name"),
-              surname: (eb) => eb.ref("excluded.surname"),
-              date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
-              citizenship: (eb) => eb.ref("excluded.citizenship"),
-              photo_url: (eb) => eb.ref("excluded.photo_url"),
-              image_timestamp: (eb) => eb.ref("excluded.image_timestamp"),
-              hometown: (eb) => eb.ref("excluded.hometown"),
-              additional_data: (eb) => eb.ref("excluded.additional_data"),
-              government_id: (eb) => eb.ref("excluded.government_id"),
-              external_patient_id: (eb) =>
-                eb.ref("excluded.external_patient_id"),
-              primary_clinic_id: (eb) => eb.ref("excluded.primary_clinic_id"),
-              last_modified_by: (eb) => eb.ref("excluded.last_modified_by"),
-              phone: (eb) => eb.ref("excluded.phone"),
-              sex: (eb) => eb.ref("excluded.sex"),
-              camp: (eb) => eb.ref("excluded.camp"),
-              metadata: (eb) => eb.ref("excluded.metadata"),
-              is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+    const upsert_core = createServerOnlyFn(
+      async (patient: Patient.EncodedT) => {
+        try {
+          return await db
+            .insertInto(Patient.Table.name)
+            .values({
+              id: patient.id,
+              given_name: patient.given_name,
+              surname: patient.surname,
+              date_of_birth: patient.date_of_birth
+                ? sql`${patient.date_of_birth}::timestamp with time zone`
+                : null,
+              citizenship: patient.citizenship,
+              photo_url: patient.photo_url || null,
+              image_timestamp: patient.image_timestamp || null,
+              hometown: patient.hometown,
+              additional_data: sql`${JSON.stringify(
+                safeJSONParse(patient.additional_data, {}),
+              )}::jsonb`,
+              government_id: patient.government_id,
+              external_patient_id: patient.external_patient_id,
+              primary_clinic_id: patient.primary_clinic_id,
+              last_modified_by: patient.last_modified_by,
+              phone: patient.phone,
+              sex: patient.sex,
+              camp: patient.camp,
+              metadata: sql`${JSON.stringify(
+                safeJSONParse(patient.metadata, {}),
+              )}::jsonb`,
+              is_deleted: patient.is_deleted,
+              created_at: sql`${toSafeDateString(
+                patient.created_at,
+              )}::timestamp with time zone`,
               updated_at: sql`${toSafeDateString(
                 patient.updated_at,
               )}::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
-            }),
-          )
-          .executeTakeFirstOrThrow();
-      } catch (error) {
-        console.error("Patient upsert operation failed:", {
-          operation: "patient_upsert",
-          error: {
-            message: error instanceof Error ? error.message : String(error),
-            name: error instanceof Error ? error.constructor.name : "Unknown",
-            stack: error instanceof Error ? error.stack : undefined,
-          },
-          context: {
-            patientId: patient.id,
-          },
-          timestamp: new Date().toISOString(),
-        });
-        throw error;
-      }
-    });
+              server_created_at: sql`now()::timestamp with time zone`,
+              deleted_at: null,
+            })
+            .onConflict((oc) =>
+              oc.column("id").doUpdateSet({
+                given_name: (eb) => eb.ref("excluded.given_name"),
+                surname: (eb) => eb.ref("excluded.surname"),
+                date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
+                citizenship: (eb) => eb.ref("excluded.citizenship"),
+                photo_url: (eb) => eb.ref("excluded.photo_url"),
+                image_timestamp: (eb) => eb.ref("excluded.image_timestamp"),
+                hometown: (eb) => eb.ref("excluded.hometown"),
+                additional_data: (eb) => eb.ref("excluded.additional_data"),
+                government_id: (eb) => eb.ref("excluded.government_id"),
+                external_patient_id: (eb) =>
+                  eb.ref("excluded.external_patient_id"),
+                primary_clinic_id: (eb) => eb.ref("excluded.primary_clinic_id"),
+                last_modified_by: (eb) => eb.ref("excluded.last_modified_by"),
+                phone: (eb) => eb.ref("excluded.phone"),
+                sex: (eb) => eb.ref("excluded.sex"),
+                camp: (eb) => eb.ref("excluded.camp"),
+                metadata: (eb) => eb.ref("excluded.metadata"),
+                is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+                updated_at: sql`${toSafeDateString(
+                  patient.updated_at,
+                )}::timestamp with time zone`,
+                last_modified: sql`now()::timestamp with time zone`,
+              }),
+            )
+            .executeTakeFirstOrThrow();
+        } catch (error) {
+          console.error("Patient upsert operation failed:", {
+            operation: "patient_upsert",
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+              name: error instanceof Error ? error.constructor.name : "Unknown",
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            context: {
+              patientId: patient.id,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          throw error;
+        }
+      },
+    );
 
     /**
      * Soft Delete a patient record or multiple patient records without the additional patient attributes
      * DO NOT EXPORT OR USE THIS FUNCTION DIRECTLY
      */
-    export const softDelete = serverOnly(async (id: string | string[]) => {
-      // permissions check
-      const clinicIds =
-        await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
-          "can_delete_records",
-        );
+    export const softDelete = createServerOnlyFn(
+      async (id: string | string[]) => {
+        // permissions check
+        const clinicIds =
+          await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
+            "can_delete_records",
+          );
 
-      const idArray = Array.isArray(id) ? id : [id];
+        const idArray = Array.isArray(id) ? id : [id];
 
-      const patients = await db
-        .selectFrom("patients")
-        .where("id", "in", idArray)
-        .select(["id", "primary_clinic_id"])
-        .execute();
+        const patients = await db
+          .selectFrom("patients")
+          .where("id", "in", idArray)
+          .select(["id", "primary_clinic_id"])
+          .execute();
 
-      if (patients.length === 0) {
-        throw new Error("Patient(s) not found");
-      }
-
-      // Check authorization for all patients
-      for (const patient of patients) {
-        if (
-          patient.primary_clinic_id &&
-          !clinicIds.includes(patient.primary_clinic_id)
-        ) {
-          throw new Error(`Unauthorized to delete patient ${patient.id}`);
+        if (patients.length === 0) {
+          throw new Error("Patient(s) not found");
         }
-      }
 
-      return await softDelete_core(id);
-    });
+        // Check authorization for all patients
+        for (const patient of patients) {
+          if (
+            patient.primary_clinic_id &&
+            !clinicIds.includes(patient.primary_clinic_id)
+          ) {
+            throw new Error(`Unauthorized to delete patient ${patient.id}`);
+          }
+        }
+
+        return await softDelete_core(id);
+      },
+    );
 
     /**
      * ❌ DO NOT USE
      */
-    export const DANGEROUS_SYNC_ONLY_softDelete = serverOnly(
+    export const DANGEROUS_SYNC_ONLY_softDelete = createServerOnlyFn(
       async (id: string) => {
         return softDelete_core(id);
       },
@@ -851,76 +858,45 @@ namespace Patient {
      * Soft Delete a patient record without the additional patient attributes
      * DO NOT EXPORT OR USE THIS FUNCTION DIRECTLY
      */
-    const softDelete_core = serverOnly(async (id: string | string[]) => {
-      // NOTE: Could easily call something like Appointment.API.softDelete(id, trx) - but we
-      // still dont know how the tanstackstart api calling convention for "server only" will
-      // evolve with respect to transactions.
-      // Patient, Patient Additional Attributes, Appointments, Events, Visits, Prescriptions, PrescriptionItems, Patient Vitals, Patient tobacco history, Diagnoses, Observations, Allergies
-      try {
-        await db.transaction().execute(async (trx) => {
-          async function softDeleteMatching(
-            trx: Transaction<Database>,
-            table: TableName,
-            ids: string | string[],
-            columnName: string = "patient_id",
-          ) {
-            const idArray = Array.isArray(ids) ? ids : [ids];
-            console.log(
-              `Soft deleting ${table} for patient(s) ${idArray.join(", ")}`,
-            );
+    const softDelete_core = createServerOnlyFn(
+      async (id: string | string[]) => {
+        try {
+          await db.transaction().execute(async (trx) => {
+            await cascadeSoftDelete(trx, "patients", id);
+
+            // Finally delete the patient record itself
+            const idArray = Array.isArray(id) ? id : [id];
             await trx
-              .updateTable(table)
+              .updateTable(Patient.Table.name)
               // @ts-ignore
               .set({
                 is_deleted: true,
                 updated_at: sql`now()::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
               })
-              .where(columnName, "in", idArray)
+              .where("id", "in", idArray)
               .execute();
-          }
+          });
+        } catch (error) {
+          const idArray = Array.isArray(id) ? id : [id];
+          console.error("Patient soft delete operation failed:", {
+            operation: "patient_soft_delete",
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+              name: error instanceof Error ? error.constructor.name : "Unknown",
+              stack: error instanceof Error ? error.stack : undefined,
+            },
+            context: {
+              patientId: idArray,
+            },
+            timestamp: new Date().toISOString(),
+          });
+          throw error;
+        }
+      },
+    );
 
-          const dependentTables: TableName[] = [
-            PatientAdditionalAttribute.Table.name,
-            Appointment.Table.name,
-            Prescription.Table.name,
-            Event.Table.name,
-            Visit.Table.name,
-            PrescriptionItem.Table.name,
-            PatientVital.Table.name,
-            PatientProblem.Table.name,
-            PatientObservation.Table.name,
-            // PatientTobaccoHistory.Table.name,
-            // Diagnosis.Table.name,
-            // Observation.Table.name,
-          ];
-
-          for (const tableName of dependentTables) {
-            await softDeleteMatching(trx, tableName, id);
-          }
-
-          // Finally delete the patient record
-          await softDeleteMatching(trx, Patient.Table.name, id, "id");
-        });
-      } catch (error) {
-        const idArray = Array.isArray(id) ? id : [id];
-        console.error("Patient soft delete operation failed:", {
-          operation: "patient_soft_delete",
-          error: {
-            message: error instanceof Error ? error.message : String(error),
-            name: error instanceof Error ? error.constructor.name : "Unknown",
-            stack: error instanceof Error ? error.stack : undefined,
-          },
-          context: {
-            patientId: idArray,
-          },
-          timestamp: new Date().toISOString(),
-        });
-        throw error;
-      }
-    });
-
-    export const DANGEROUSLY_GET_CLINIC_ID_BY_ID = serverOnly(
+    export const DANGEROUSLY_GET_CLINIC_ID_BY_ID = createServerOnlyFn(
       async (id: string) => {
         const patient = await db
           .selectFrom("patients")
@@ -932,7 +908,7 @@ namespace Patient {
     );
   }
 
-  export const getPatientClinicId = serverOnly(async (id: string) => {
+  export const getPatientClinicId = createServerOnlyFn(async (id: string) => {
     const patient = await db
       .selectFrom("patients")
       .select("primary_clinic_id")
@@ -960,12 +936,12 @@ namespace Patient {
   // ];
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (delta: Patient.EncodedT) => {
         await API.DANGEROUS_SYNC_ONLY_upsert(delta);
       },
     );
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       await API.DANGEROUS_SYNC_ONLY_softDelete(id);
     });
   }

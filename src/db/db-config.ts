@@ -1,11 +1,5 @@
 // Add SSL configuration based on environment
 export const getDatabaseSSLConfig = () => {
-  // If we're using DATABASE_URL (production/staging), enable SSL
-  // if (process.env.DATABASE_URL) {
-  //   return true;
-  // }
-
-  // For local development, check if SSL is explicitly enabled
   const sslEnabled =
     process.env.DB_SSL === "true" || process.env.DB_SSL === "1";
   return sslEnabled;
@@ -22,23 +16,20 @@ export const getDatabaseConfig = (): Record<string, any> => {
   let pgPassword: string;
 
   if (databaseUrl) {
-    // Extract connection details from DATABASE_URL
-    const [dbProto, connectionParams] = databaseUrl.split("//");
+    // Use the URL API for safe parsing — handles passwords with @, :, etc.
+    const parsed = new URL(databaseUrl);
 
-    if (dbProto !== "postgresql:") {
+    if (parsed.protocol !== "postgresql:" && parsed.protocol !== "postgres:") {
       throw new Error(
         "Using a non postgresql database. HH only supports PostgreSQL.",
       );
     }
 
-    const [credentials, url] = connectionParams.split("@");
-    const values = url.split("/")[0].split(":");
-
-    pgHost = values[0];
-    pgPort = values.length > 1 ? values[1] : "5432";
-    pgDb = url.split("/")[1];
-    pgUser = credentials.split(":")[0];
-    pgPassword = credentials.split(":")[1];
+    pgHost = parsed.hostname;
+    pgPort = parsed.port || "5432";
+    pgDb = parsed.pathname.slice(1); // remove leading "/"
+    pgUser = decodeURIComponent(parsed.username);
+    pgPassword = decodeURIComponent(parsed.password);
   } else if (databaseUrlAzure) {
     // Extract connection details from Azure connection string
     const connStrParams = Object.fromEntries(
@@ -60,14 +51,21 @@ export const getDatabaseConfig = (): Record<string, any> => {
     pgPassword = process.env.DB_PASSWORD || "postgres";
   }
 
+  const sslEnabled = getDatabaseSSLConfig();
+
   return {
     host: pgHost,
     port: parseInt(pgPort, 10),
     database: pgDb,
     user: pgUser,
     password: pgPassword,
+    // Render.com and similar providers use self-signed certificates.
+    // Set DB_SSL_REJECT_UNAUTHORIZED=true in environments with
+    // properly signed certificates (e.g., AWS RDS, Azure).
     ssl: {
-      rejectUnauthorized: false,
+      rejectUnauthorized: sslEnabled
+        ? process.env.DB_SSL_REJECT_UNAUTHORIZED === "true"
+        : false,
     },
   };
 };

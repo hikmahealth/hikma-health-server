@@ -34,23 +34,20 @@ import type ClinicDepartment from "@/models/clinic-department";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/app/clinics/$/")({
+export const Route = createFileRoute("/app/clinics/$id/")({
   loader: async ({ params }) => {
     // Extract the clinic ID from the splat parameter
-    const clinicId = params._splat;
+    const clinicId = params.id;
     if (!clinicId) {
       throw new Error("Clinic ID is required");
     }
 
-    const { data, error } = await getClinicById({ data: { id: clinicId } });
-    if (error) {
-      throw error;
+    const result = await getClinicById({ data: { id: clinicId } });
+    if (!result.ok) {
+      throw new Error(result.error.message);
     }
 
-    const { clinic, departments } = data as {
-      clinic: Clinic.EncodedT;
-      departments: ClinicDepartment.EncodedT[];
-    };
+    const { clinic, departments } = result.data;
 
     return { clinic, departments };
   },

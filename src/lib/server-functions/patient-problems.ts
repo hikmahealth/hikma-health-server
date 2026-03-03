@@ -4,22 +4,24 @@ import User from "@/models/user";
 import { userRoleTokenHasCapability } from "../auth/request";
 import type { Pagination } from "./builders";
 import * as Sentry from "@sentry/tanstackstart-react";
+import { type Result, ok, err } from "@/lib/utils";
 
 /**
  * Get paginated problems for a patient, most recently updated first.
  */
 const getPatientProblems = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (data: { patientId: string; offset?: number; limit?: number }) => data,
   )
   .handler(
     async ({
       data,
-    }): Promise<{
-      items: PatientProblem.EncodedT[];
-      pagination: Pagination;
-      error: string | null;
-    }> => {
+    }): Promise<
+      Result<{
+        items: PatientProblem.EncodedT[];
+        pagination: Pagination;
+      }>
+    > => {
       const authorized = await userRoleTokenHasCapability([
         User.CAPABILITIES.READ_ALL_PATIENT,
       ]);
@@ -39,21 +41,16 @@ const getPatientProblems = createServerFn({ method: "GET" })
           includeCount: true,
         });
 
-        return {
-          items: result.items,
-          pagination: result.pagination,
-          error: null,
-        };
+        return ok({ items: result.items, pagination: result.pagination });
       } catch (error) {
         Sentry.captureException(error);
-        return {
-          items: [],
-          pagination: { offset: 0, limit: 5, total: 0, hasMore: false },
-          error:
+        return err({
+          _tag: "ServerError" as const,
+          message:
             error instanceof Error
               ? error.message
               : "Failed to fetch patient problems",
-        };
+        });
       }
     },
   );

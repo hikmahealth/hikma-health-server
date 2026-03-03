@@ -6,6 +6,7 @@ import User from "@/models/user";
 import { userRoleTokenHasCapability } from "../auth/request";
 import type { Pagination } from "./builders";
 import * as Sentry from "@sentry/tanstackstart-react";
+import { type Result, ok, err } from "@/lib/utils";
 
 /**
  * Get all prescriptions
@@ -45,7 +46,7 @@ const getAllPrescriptionsWithDetails = createServerFn({
  * @returns {Promise<void>}
  */
 const togglePrescriptionStatus = createServerFn({ method: "POST" })
-  .validator((data: { id: string; status: string }) => data)
+  .inputValidator((data: { id: string; status: string }) => data)
   .handler(async ({ data }): Promise<void> => {
     await Prescription.API.toggleStatus(data.id, data.status);
   });
@@ -54,17 +55,18 @@ const togglePrescriptionStatus = createServerFn({ method: "POST" })
  * Get paginated prescriptions for a patient.
  */
 const getPatientPrescriptions = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (data: { patientId: string; offset?: number; limit?: number }) => data,
   )
   .handler(
     async ({
       data,
-    }): Promise<{
-      items: Prescription.EncodedT[];
-      pagination: Pagination;
-      error: string | null;
-    }> => {
+    }): Promise<
+      Result<{
+        items: Prescription.EncodedT[];
+        pagination: Pagination;
+      }>
+    > => {
       const authorized = await userRoleTokenHasCapability([
         User.CAPABILITIES.READ_ALL_PATIENT,
       ]);
@@ -84,21 +86,16 @@ const getPatientPrescriptions = createServerFn({ method: "GET" })
           includeCount: true,
         });
 
-        return {
-          items: result.items,
-          pagination: result.pagination,
-          error: null,
-        };
+        return ok({ items: result.items, pagination: result.pagination });
       } catch (error) {
         Sentry.captureException(error);
-        return {
-          items: [],
-          pagination: { offset: 0, limit: 10, total: 0, hasMore: false },
-          error:
+        return err({
+          _tag: "ServerError" as const,
+          message:
             error instanceof Error
               ? error.message
               : "Failed to fetch prescriptions",
-        };
+        });
       }
     },
   );

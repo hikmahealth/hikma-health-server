@@ -10,7 +10,7 @@ import UserClinicPermissions from "@/models/user-clinic-permissions";
  * @returns {Promise<string | null>} - The user's ID or null if not authenticated
  */
 export const getCurrentUserId = createServerFn({ method: "GET" })
-  .validator(() => ({}))
+  .inputValidator(() => ({}))
   .handler(async () => {
     const tokenCookie = getCookie("token");
     if (!tokenCookie) return null;
@@ -27,7 +27,7 @@ export const getCurrentUserId = createServerFn({ method: "GET" })
  * @returns {Promise<User.EncodedT | null>} - The user or null if not authenticated
  */
 export const getCurrentUser = createServerFn({ method: "GET" })
-  .validator(() => ({}))
+  .inputValidator(() => ({}))
   .handler(async () => {
     const tokenCookie = getCookie("token");
     if (!tokenCookie) return null;
@@ -56,7 +56,7 @@ export const getCurrentUser = createServerFn({ method: "GET" })
  * @returns {Promise<boolean>} - True if user has all specified permissions, false otherwise
  */
 export const currentUserHasPermissions = createServerFn({ method: "GET" })
-  .validator(
+  .inputValidator(
     (input: {
       clinicId: string;
       permissions: Array<

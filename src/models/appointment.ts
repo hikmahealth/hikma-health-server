@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { Either, Option, Schema } from "effect";
 import {
   type ColumnType,
@@ -152,7 +152,7 @@ namespace Appointment {
   }
 
   export namespace API {
-    export const getAll = serverOnly(async (): Promise<EncodedT[]> => {
+    export const getAll = createServerOnlyFn(async (): Promise<EncodedT[]> => {
       const res = await db
         .selectFrom(Appointment.Table.name)
         .where("is_deleted", "=", false)
@@ -162,7 +162,7 @@ namespace Appointment {
       return res as unknown as EncodedT[];
     });
 
-    export const getById = serverOnly(async (id: string) => {
+    export const getById = createServerOnlyFn(async (id: string) => {
       const res = await db
         .selectFrom(Appointment.Table.name)
         .where("id", "=", id)
@@ -173,14 +173,15 @@ namespace Appointment {
       return res as unknown as EncodedT | null;
     });
 
-    export const getByPatientId = serverOnly(async (patientId: string) => {
-      const res = await db.executeQuery<{
-        appointment: Appointment.EncodedT;
-        patient: Patient.EncodedT;
-        clinic: Clinic.EncodedT;
-        provider: User.EncodedT;
-      }>(
-        sql`
+    export const getByPatientId = createServerOnlyFn(
+      async (patientId: string) => {
+        const res = await db.executeQuery<{
+          appointment: Appointment.EncodedT;
+          patient: Patient.EncodedT;
+          clinic: Clinic.EncodedT;
+          provider: User.EncodedT;
+        }>(
+          sql`
         SELECT
           row_to_json(appointments.*) as appointment,
           row_to_json(patients.*) as patient,
@@ -193,20 +194,21 @@ namespace Appointment {
         WHERE appointments.is_deleted = false
         AND appointments.patient_id = ${patientId}
       `.compile(db),
-      );
+        );
 
-      // const res = await db
-      //   .selectFrom(Appointment.Table.name)
-      //   .where("patient_id", "=", patientId)
-      //   .where("is_deleted", "=", false)
-      //   .selectAll()
-      //   .orderBy("appointments.timestamp", "asc")
-      //   .execute();
+        // const res = await db
+        //   .selectFrom(Appointment.Table.name)
+        //   .where("patient_id", "=", patientId)
+        //   .where("is_deleted", "=", false)
+        //   .selectAll()
+        //   .orderBy("appointments.timestamp", "asc")
+        //   .execute();
 
-      return res.rows || [];
-    });
+        return res.rows || [];
+      },
+    );
 
-    export const getAllWithDetails = serverOnly(async () => {
+    export const getAllWithDetails = createServerOnlyFn(async () => {
       const res = await db.executeQuery<{
         appointment: Appointment.EncodedT;
         patient: Patient.EncodedT;
@@ -233,7 +235,7 @@ namespace Appointment {
       return res.rows;
     });
 
-    export const toggleStatus = serverOnly(
+    export const toggleStatus = createServerOnlyFn(
       async (id: string, status: string) => {
         await db
           .updateTable(Appointment.Table.name)
@@ -247,7 +249,7 @@ namespace Appointment {
       },
     );
 
-    export const save = serverOnly(
+    export const save = createServerOnlyFn(
       async (
         id: string | null,
         appointment: Appointment.EncodedT,
@@ -390,7 +392,7 @@ namespace Appointment {
       },
     );
 
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       return await db
         .updateTable(Table.name)
         .set({
@@ -405,13 +407,13 @@ namespace Appointment {
   }
 
   export namespace Sync {
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (delta: Appointment.EncodedT) => {
         return API.save(delta.id || uuidV1(), delta, "");
       },
     );
 
-    export const deleteFromDelta = serverOnly(async (id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (id: string) => {
       return API.softDelete(id);
     });
   }

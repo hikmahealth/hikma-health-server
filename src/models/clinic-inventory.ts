@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { Option } from "effect";
 import {
   type ColumnType,
@@ -150,7 +150,7 @@ namespace ClinicInventory {
   }
 
   export namespace API {
-    export const getById = serverOnly(
+    export const getById = createServerOnlyFn(
       async (id: string): Promise<EncodedT | undefined> => {
         return (await db
           .selectFrom(Table.name)
@@ -161,7 +161,7 @@ namespace ClinicInventory {
       },
     );
 
-    export const getByClinicAndDrug = serverOnly(
+    export const getByClinicAndDrug = createServerOnlyFn(
       async (
         clinicId: string,
         drugId: string,
@@ -184,7 +184,7 @@ namespace ClinicInventory {
       },
     );
 
-    export const getByClinic = serverOnly(
+    export const getByClinic = createServerOnlyFn(
       async (
         clinicId: string,
         {
@@ -227,7 +227,7 @@ namespace ClinicInventory {
      * @param options.includeZeroStock - Whether to include items with zero quantity (default: false)
      * @returns Array of inventory items grouped by drug with batch information
      */
-    export const getWithDrugInfo = serverOnly(
+    export const getWithDrugInfo = createServerOnlyFn(
       async (
         clinicId: string,
         searchQuery?: string,
@@ -366,7 +366,7 @@ namespace ClinicInventory {
      * Update inventory quantity - this is a server-only operation
      * Use this for receiving stock, dispensing, adjustments, etc.
      */
-    export const updateQuantity = serverOnly(
+    export const updateQuantity = createServerOnlyFn(
       async ({
         clinicId,
         drugId,
@@ -506,7 +506,7 @@ namespace ClinicInventory {
     /**
      * Reserve quantity for pending prescriptions
      */
-    export const reserveQuantity = serverOnly(
+    export const reserveQuantity = createServerOnlyFn(
       async ({
         clinicId,
         drugId,
@@ -543,7 +543,7 @@ namespace ClinicInventory {
     /**
      * Release reserved quantity (e.g., when prescription is cancelled)
      */
-    export const releaseReservedQuantity = serverOnly(
+    export const releaseReservedQuantity = createServerOnlyFn(
       async ({
         clinicId,
         drugId,
@@ -578,7 +578,7 @@ namespace ClinicInventory {
       },
     );
 
-    export const softDelete = serverOnly(async (id: string) => {
+    export const softDelete = createServerOnlyFn(async (id: string) => {
       // Permissions check
       const clinicIds =
         await UserClinicPermissions.API.getClinicIdsWithPermissionFromToken(
@@ -618,7 +618,7 @@ namespace ClinicInventory {
     /**
      * Get inventory for sync to mobile (read-only)
      */
-    export const getForMobileSync = serverOnly(
+    export const getForMobileSync = createServerOnlyFn(
       async (clinicId: string): Promise<EncodedT[]> => {
         const results = await db
           .selectFrom(Table.name)

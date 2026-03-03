@@ -28,6 +28,7 @@ import {
   isValidUUID,
   listToFieldOptions,
   safeJSONParse,
+  getResultData,
 } from "@/lib/utils";
 import { DatePickerInput } from "@/components/date-picker-input";
 import { Separator } from "@/components/ui/separator";
@@ -43,7 +44,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const getFormById = createServerFn({ method: "GET" })
-  .validator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const res = await EventForm.API.getById(data.id);
 
@@ -87,7 +88,7 @@ const getFormById = createServerFn({ method: "GET" })
   });
 
 const saveForm = createServerFn({ method: "POST" })
-  .validator(
+  .inputValidator(
     (d: { form: EventForm.EncodedT; updateFormId: null | string }) => d,
   )
   .handler(async ({ data }) => {
@@ -108,7 +109,7 @@ export const Route = createFileRoute("/app/event-forms/edit/$")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const formId = params._splat;
-    const clinics = await getAllClinics();
+    const clinics = getResultData(await getAllClinics(), []);
     if (!formId || formId === "new") {
       return { form: null, clinics };
     }
@@ -384,14 +385,14 @@ function RouteComponent() {
                 eventFormStore.send({ type: "toggle-form-editable" })
               }
             />
-            <Checkbox
+            {/*<Checkbox
               label="Is Snapshot"
               name="is_snapshot_form"
               checked={formState.is_snapshot_form}
               onCheckedChange={(checked) =>
                 eventFormStore.send({ type: "toggle-form-snapshot" })
               }
-            />
+            />*/}
             {clinics.length > 0 && (
               <div className="space-y-1">
                 <label className="text-sm font-medium">Clinics</label>

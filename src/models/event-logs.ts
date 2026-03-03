@@ -1,5 +1,5 @@
 import db from "@/db";
-import { serverOnly } from "@tanstack/react-start";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import {
   type ColumnType,
   type Generated,
@@ -196,17 +196,19 @@ namespace EventLog {
   }
 
   export namespace API {
-    export const getAll = serverOnly(async (): Promise<EventLog.T[]> => {
-      const res = await db
-        .selectFrom(EventLog.Table.name)
-        .where("is_deleted", "=", false)
-        .selectAll()
-        .execute();
+    export const getAll = createServerOnlyFn(
+      async (): Promise<EventLog.T[]> => {
+        const res = await db
+          .selectFrom(EventLog.Table.name)
+          .where("is_deleted", "=", false)
+          .selectAll()
+          .execute();
 
-      return res as unknown as EventLog.T[];
-    });
+        return res as unknown as EventLog.T[];
+      },
+    );
 
-    export const getById = serverOnly(async (id: string) => {
+    export const getById = createServerOnlyFn(async (id: string) => {
       const res = await db
         .selectFrom(EventLog.Table.name)
         .where("id", "=", id)
@@ -217,7 +219,7 @@ namespace EventLog {
       return res as unknown as EventLog.T | null;
     });
 
-    export const getByTransactionId = serverOnly(
+    export const getByTransactionId = createServerOnlyFn(
       async (transactionId: string) => {
         const res = await db
           .selectFrom(EventLog.Table.name)
@@ -230,19 +232,21 @@ namespace EventLog {
       },
     );
 
-    export const getByTableName = serverOnly(async (tableName: string) => {
-      const res = await db
-        .selectFrom(EventLog.Table.name)
-        .where("table_name", "=", tableName)
-        .where("is_deleted", "=", false)
-        .selectAll()
-        .orderBy("created_at", "desc")
-        .execute();
+    export const getByTableName = createServerOnlyFn(
+      async (tableName: string) => {
+        const res = await db
+          .selectFrom(EventLog.Table.name)
+          .where("table_name", "=", tableName)
+          .where("is_deleted", "=", false)
+          .selectAll()
+          .orderBy("created_at", "desc")
+          .execute();
 
-      return res as unknown as EventLog.T[];
-    });
+        return res as unknown as EventLog.T[];
+      },
+    );
 
-    export const getByRowId = serverOnly(
+    export const getByRowId = createServerOnlyFn(
       async (tableName: string, rowId: string) => {
         const res = await db
           .selectFrom(EventLog.Table.name)
@@ -257,7 +261,7 @@ namespace EventLog {
       },
     );
 
-    export const getByUserId = serverOnly(async (userId: string) => {
+    export const getByUserId = createServerOnlyFn(async (userId: string) => {
       const res = await db
         .selectFrom(EventLog.Table.name)
         .where("user_id", "=", userId)
@@ -274,7 +278,7 @@ namespace EventLog {
      * This is INSERT-ONLY - event logs are immutable and cannot be updated.
      * Uses onConflict to ignore duplicates (idempotent for sync retries).
      */
-    export const insertFromSync = serverOnly(
+    export const insertFromSync = createServerOnlyFn(
       async (eventLog: EventLog.EncodedT) => {
         // Use safeJSONParse to handle malformed JSON from mobile clients gracefully
         const changes = JSON.stringify(safeJSONParse(eventLog.changes, {}));
@@ -324,7 +328,7 @@ namespace EventLog {
      * Note: This is effectively INSERT-ONLY due to immutability triggers.
      * Duplicates are ignored (idempotent for sync retries).
      */
-    export const upsertFromDelta = serverOnly(
+    export const upsertFromDelta = createServerOnlyFn(
       async (delta: EventLog.EncodedT) => {
         return API.insertFromSync(delta);
       },
@@ -335,7 +339,7 @@ namespace EventLog {
      * Event logs are immutable and cannot be deleted.
      * This method exists only to satisfy the sync interface.
      */
-    export const deleteFromDelta = serverOnly(async (_id: string) => {
+    export const deleteFromDelta = createServerOnlyFn(async (_id: string) => {
       // Event logs are immutable - deletes are not permitted.
       // The database trigger will block any actual delete attempts.
       // We silently ignore delete requests from sync.
