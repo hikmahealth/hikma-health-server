@@ -4,6 +4,8 @@
 
 # Hikma Health Server
 
+![Coverage](./badges/coverage.svg)
+
 A full-stack health management system designed for offline-first operation in low-resource settings. Built with modern web technologies and optimized for reliability and performance.
 
 ## Quick Deploy
