@@ -52,29 +52,6 @@ jobs:
       - name: Run unit tests with coverage
         run: pnpm test:coverage
 
-      - name: Generate coverage badge
-        if: github.event_name == 'push'
-        run: |
-          BADGE_INFO=$(node -e "
-            const c = JSON.parse(require('fs').readFileSync('./coverage/coverage-summary.json', 'utf8'));
-            const pct = c.total.lines.pct;
-            const color = pct >= 80 ? 'brightgreen' : pct >= 60 ? 'yellow' : pct >= 40 ? 'orange' : 'red';
-            console.log(pct + ' ' + color);
-          ")
-          COVERAGE=$(echo $BADGE_INFO | cut -d' ' -f1)
-          COLOR=$(echo $BADGE_INFO | cut -d' ' -f2)
-          mkdir -p badges
-          curl -s "https://img.shields.io/badge/coverage-${COVERAGE}%25-${COLOR}" -o ./badges/coverage.svg
-
-      - name: Commit coverage badge
-        if: github.event_name == 'push'
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add badges/coverage.svg
-          git diff --staged --quiet || git commit -m "chore: update coverage badge [skip ci]"
-          git push
-
       - name: Verify build
         run: pnpm build
 
