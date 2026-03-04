@@ -101,6 +101,7 @@
     "react-select": "^5.10.1",
     "rescript": "12.2.0",
     "sonner": "^2.0.6",
+    "srvx": "^0.11.8",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.0.6",
@@ -132,8 +133,8 @@
     "kysely-ctl": "^0.14.0",
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
-    "vitest": "^3.0.5",
     "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^3.0.5",
     "web-vitals": "^4.2.4"
   },
   "overrides": {}

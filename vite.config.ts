@@ -1,13 +1,13 @@
 import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
-import viteTsConfigPaths from "vite-tsconfig-paths";
+// import viteTsConfigPaths from "vite-tsconfig-paths";
 import { devtools } from "@tanstack/devtools-vite";
-// import { nitro } from "nitro/vite";
+import { nitro } from "nitro/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
 
-import { wrapVinxiConfigWithSentry } from "@sentry/tanstackstart-react";
+// import { wrapVinxiConfigWithSentry } from "@sentry/tanstackstart-react";
 import viteReact from "@vitejs/plugin-react";
 
 export default defineConfig({
@@ -21,10 +21,11 @@ export default defineConfig({
   // ],
   plugins: [
     devtools(),
-    // nitro({ rollupConfig: { external: [/^@sentry\//] } }),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     tanstackStart(),
+    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+    // nitro(),
     viteReact(),
     sentryTanstackStart({
       org: process.env.VITE_SENTRY_ORG,
