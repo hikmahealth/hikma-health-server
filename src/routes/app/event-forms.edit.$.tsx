@@ -37,10 +37,14 @@ import { TranslationBadges } from "@/components/form-builder/TranslationBadges";
 import { SelectInput, type SelectOption } from "@/components/select-input";
 import { RadioInput, type RadioOption } from "@/components/radio-input";
 import { MedicineInput } from "@/components/form-builder/MedicineInput";
-import { DiagnosisSelect } from "@/components/form-builder/DiagnosisPicker";
 import { MultiSelect } from "@/components/multi-select";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
+const DiagnosisSelect = lazy(() =>
+  import("@/components/form-builder/DiagnosisPicker").then((m) => ({
+    default: m.DiagnosisSelect,
+  })),
+);
 import { toast } from "sonner";
 
 const getFormById = createServerFn({ method: "GET" })
@@ -534,13 +538,15 @@ function RouteComponent() {
               case "diagnosis":
                 return (
                   <div key={field.id}>
-                    <DiagnosisSelect
-                      name={field.name}
-                      description={field.description}
-                      withAsterisk={field.required}
-                      required={field.required}
-                      multi={field.multi}
-                    />
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <DiagnosisSelect
+                        name={field.name}
+                        description={field.description}
+                        withAsterisk={field.required}
+                        required={field.required}
+                        multi={field.multi}
+                      />
+                    </Suspense>
                   </div>
                 );
               case "text":

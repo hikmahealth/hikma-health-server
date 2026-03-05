@@ -1,13 +1,6 @@
-import { useState } from "react";
-import icd11 from "@/data/icd11-xs.js"; // Importing the extra small ICD10 JSON file
-import EventForm from "@/models/event-form";
-import { MultiSelect } from "@/components/multi-select";
-import { FormLabel, FormDescription } from "../ui/form";
-import Select from "react-select";
+import { useEffect, useRef, useState } from "react";
 import { Label } from "../ui/label";
-import { cn } from "@/lib/utils";
 import AsyncSelect from "react-select/async";
-import { stringSimilarity } from "@/lib/utils";
 import MiniSearch from "minisearch";
 
 type Props = {
@@ -18,21 +11,24 @@ type Props = {
   multi?: boolean;
 };
 
-let miniSearch = new MiniSearch({
-  fields: ["desc", "code"], // fields to index for full-text search
-  storeFields: ["desc", "code"], // fields to return with search results
-  idField: "code",
-  searchOptions: {
-    // prefix: true,
-    fuzzy: 1,
-    boost: {
-      desc: 5,
-      code: 1,
-    },
-  },
-});
+let miniSearch: MiniSearch | null = null;
 
-miniSearch.addAll(icd11);
+async function getMiniSearch() {
+  if (!miniSearch) {
+    const icd11 = (await import("@/data/icd11-xs.js")).default;
+    miniSearch = new MiniSearch({
+      fields: ["desc", "code"],
+      storeFields: ["desc", "code"],
+      idField: "code",
+      searchOptions: {
+        fuzzy: 1,
+        boost: { desc: 5, code: 1 },
+      },
+    });
+    miniSearch.addAll(icd11);
+  }
+  return miniSearch;
+}
 
 export function DiagnosisSelect({
   name,
@@ -48,20 +44,16 @@ export function DiagnosisSelect({
   //   }))
   // );
 
-  const loadOptions = (
-    inputValue: string,
-    callback: (options: { value: string; label: string }[]) => void
-  ) => {
-    callback(
-      miniSearch
-        .search(inputValue)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 25)
-        .map((item) => ({
-          value: `${item.desc} (${item.code})`,
-          label: `${item.desc} (${item.code})`,
-        }))
-    );
+  const loadOptions = async (inputValue: string) => {
+    const search = await getMiniSearch();
+    return search
+      .search(inputValue)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 25)
+      .map((item) => ({
+        value: `${item.desc} (${item.code})`,
+        label: `${item.desc} (${item.code})`,
+      }));
   };
 
   // FIXME: Need to replace the diagnosis picker with new select item from `react-select` with better creatable support
