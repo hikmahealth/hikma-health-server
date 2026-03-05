@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 // import viteTsConfigPaths from "vite-tsconfig-paths";
 import { devtools } from "@tanstack/devtools-vite";
-// import { nitro } from "nitro/vite";
+import { nitro } from "nitro/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
@@ -27,10 +27,10 @@ export default defineConfig({
     //   },
     //   preset: "render_com",
     // }),
+    nitro(),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     tanstackStart(),
-    // nitro(),
     viteReact(),
     sentryTanstackStart({
       org: process.env.VITE_SENTRY_ORG,
