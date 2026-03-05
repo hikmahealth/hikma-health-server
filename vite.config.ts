@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 // import viteTsConfigPaths from "vite-tsconfig-paths";
 import { devtools } from "@tanstack/devtools-vite";
-import { nitro } from "nitro/vite";
+// import { nitro } from "nitro/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
@@ -21,10 +21,15 @@ export default defineConfig({
   // ],
   plugins: [
     devtools(),
+    // nitro({
+    //   rollupConfig: {
+    //     external: [/^@sentry\//, "exceljs", /^echarts/, "zrender"],
+    //   },
+    //   preset: "render_com",
+    // }),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     tanstackStart(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] }, preset: "render_com" }),
     // nitro(),
     viteReact(),
     sentryTanstackStart({

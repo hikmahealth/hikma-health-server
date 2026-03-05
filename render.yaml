@@ -25,6 +25,8 @@ services:
           property: connectionString
       - key: NODE_VERSION
         value: "22.14.0"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=4096"
 
 databases:
   - name: "hikma-health-db"

@@ -42,7 +42,7 @@ import {
 import { truncate } from "es-toolkit/compat";
 import { getCurrentUser } from "@/lib/server-functions/auth";
 
-import ExcelJS from "exceljs";
+import type ExcelJS from "exceljs";
 import Event from "@/models/event";
 import EventForm from "@/models/event-form";
 import { format } from "date-fns";
@@ -307,6 +307,7 @@ function RouteComponent() {
         },
       );
       // Create a new workbook
+      const ExcelJS = (await import("exceljs")).default;
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("Patients List");
 
