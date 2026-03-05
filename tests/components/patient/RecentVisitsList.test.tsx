@@ -158,7 +158,7 @@ describe("EventRow", () => {
       fc.property(eventArb, (event) => {
         const { container, unmount } = render(<EventRow event={event} />);
         const view = within(container);
-        expect(view.getByText(eventSummary(event))).toBeDefined();
+        expect(view.getByText(eventSummary(event), { normalizer: (s) => s })).toBeDefined();
         unmount();
       }),
       { numRuns: 15 },

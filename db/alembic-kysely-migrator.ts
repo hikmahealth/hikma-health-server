@@ -3,7 +3,11 @@ import { createMigrationProviderFromAlembic } from "./utils";
 import { alembicMigrationIds } from "./alembic-mapping";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Migrator, type Kysely } from "kysely";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Following the spec for the migration as required by `defaultConfigProps.migrations.migrator` in
 // `kysely.config.ts`.
