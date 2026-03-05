@@ -24,7 +24,7 @@ export default defineConfig({
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     tanstackStart(),
-    nitro({ rollupConfig: { external: [/^@sentry\//] } }),
+    nitro({ rollupConfig: { external: [/^@sentry\//] }, preset: "render_com" }),
     // nitro(),
     viteReact(),
     sentryTanstackStart({
