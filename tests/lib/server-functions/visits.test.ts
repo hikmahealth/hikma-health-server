@@ -20,7 +20,8 @@ describe("buildVisitInsertValues", () => {
           providerName: fc.option(fc.string(), { nil: null }),
           checkInTimestamp: fc.option(
             fc
-              .date({ min: new Date("1900-01-01"), max: new Date("2100-01-01") })
+              .date({ min: new Date("1900-01-01T00:00:00.000Z"), max: new Date("2099-12-31T23:59:59.999Z") })
+              .filter((d) => !Number.isNaN(d.getTime()))
               .map((d) => d.toISOString()),
             {
               nil: null,
