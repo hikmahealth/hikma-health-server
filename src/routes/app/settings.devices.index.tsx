@@ -28,6 +28,15 @@ import { MoreHorizontal } from "lucide-react";
 
 // ── Server functions ──────────────────────────────────────────────
 
+const getAllDevices = createServerFn({ method: "GET" })
+  .middleware([permissionsMiddleware])
+  .handler(async ({ context }) => {
+    if (context.role !== User.ROLES.SUPER_ADMIN) {
+      return [];
+    }
+    return Device.API.getAll();
+  });
+
 const deleteDevice = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
   .middleware([permissionsMiddleware])
@@ -76,7 +85,7 @@ export const Route = createFileRoute("/app/settings/devices/")({
       data: { role: "super_admin" },
     });
     return {
-      devices: isSuperAdmin ? await Device.API.getAll() : [],
+      devices: isSuperAdmin ? await getAllDevices() : [],
       isSuperAdmin,
     };
   },
