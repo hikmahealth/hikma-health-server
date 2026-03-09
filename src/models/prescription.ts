@@ -273,20 +273,36 @@ namespace Prescription {
       ) => {
         try {
           return await db.transaction().execute(async (trx) => {
-            // Resolve clinic_id for visit creation — fall back to provider's clinic if not provided
+            // Resolve clinic_id for visit creation:
+            // 1. Use currentClinicId if valid
+            // 2. Look up clinic_id from the existing visit
+            // 3. Fall back to provider's clinic_id
             let resolvedClinicId = currentClinicId;
             if (!resolvedClinicId || !isValidUUID(resolvedClinicId)) {
-              const provider = await trx
-                .selectFrom(User.Table.name)
-                .select("clinic_id")
-                .where("id", "=", prescription.provider_id)
-                .executeTakeFirstOrThrow();
-              if (!provider.clinic_id) {
-                throw new Error(
-                  "Provider has no clinic_id and no clinic_id was provided",
-                );
+              if (prescription.visit_id && isValidUUID(prescription.visit_id)) {
+                const existingVisit = await trx
+                  .selectFrom(Visit.Table.name)
+                  .select("clinic_id")
+                  .where("id", "=", prescription.visit_id)
+                  .executeTakeFirst();
+                if (existingVisit?.clinic_id) {
+                  resolvedClinicId = existingVisit.clinic_id;
+                }
               }
-              resolvedClinicId = provider.clinic_id;
+
+              if (!resolvedClinicId || !isValidUUID(resolvedClinicId)) {
+                const provider = await trx
+                  .selectFrom(User.Table.name)
+                  .select("clinic_id")
+                  .where("id", "=", prescription.provider_id)
+                  .executeTakeFirstOrThrow();
+                if (!provider.clinic_id) {
+                  throw new Error(
+                    "Provider has no clinic_id and no clinic_id was provided",
+                  );
+                }
+                resolvedClinicId = provider.clinic_id;
+              }
             }
 
             let visitId =
