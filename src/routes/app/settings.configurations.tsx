@@ -12,8 +12,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getCurrentUser } from "@/lib/server-functions/auth";
-import { permissionsMiddleware } from "@/middleware/auth";
+import { permissionsMiddleware, superAdminMiddleware } from "@/middleware/auth";
 import AppConfig from "@/models/app-config";
+import ServerVariable from "@/models/server_variable";
 import User from "@/models/user";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
@@ -64,11 +65,50 @@ const getAllConfigurations = createServerFn({ method: "GET" })
     return await AppConfig.API.getAll();
   });
 
+const getServerVariable = createServerFn({ method: "GET" })
+  .inputValidator((data: { key: string }) => data)
+  .middleware([superAdminMiddleware])
+  .handler(async ({ data }) => {
+    return await ServerVariable.get(data.key);
+  });
+
+const upsertServerVariable = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: {
+      key: string;
+      value_type: string;
+      description?: string | null;
+      value_data?: Uint8Array | null;
+      value_hash?: string | null;
+    }) => data,
+  )
+  .middleware([superAdminMiddleware])
+  .handler(async ({ data }) => {
+    return await ServerVariable.update(data);
+  });
+
 export const Route = createFileRoute("/app/settings/configurations")({
   component: RouteComponent,
   loader: async ({ params }) => {
-    const config = await getAllConfigurations();
-    return { config, currentUser: await getCurrentUser() };
+    const [config, aiKeyVariable, aiUrlVariable] = await Promise.all([
+      getAllConfigurations(),
+      getServerVariable({
+        data: { key: ServerVariable.Keys.AI_DATA_ANALYSIS_API_KEY },
+      }),
+      getServerVariable({
+        data: { key: ServerVariable.Keys.AI_DATA_ANALYSIS_URL },
+      }),
+    ]);
+    const aiKeyIsSet = aiKeyVariable?.value_data !== null;
+    const aiServiceUrl = aiUrlVariable?.value_data
+      ? new TextDecoder().decode(aiUrlVariable.value_data)
+      : "";
+    return {
+      config,
+      aiKeyIsSet,
+      aiServiceUrl,
+      currentUser: await getCurrentUser(),
+    };
   },
 });
 
@@ -76,7 +116,8 @@ const overrideMobilePermissionsConfirmation =
   "I am sure I want to disable permissions on mobile devices";
 
 function RouteComponent() {
-  const { config, currentUser } = Route.useLoaderData();
+  const { config, aiKeyIsSet, aiServiceUrl, currentUser } =
+    Route.useLoaderData();
   const router = useRouter();
   const [openDialog, setOpenDialog] = useState<{
     title: string;
@@ -107,6 +148,55 @@ function RouteComponent() {
       AppConfig.Namespaces.SYSTEM,
       "operation_mode",
     ) || "user_choice";
+
+  const [aiApiKey, setAiApiKey] = useState("");
+  const [aiUrl, setAiUrl] = useState(aiServiceUrl);
+
+  const handleSaveAiSettings = () => {
+    if (!currentUser) return;
+    const encoder = new TextEncoder();
+    const promises: Promise<unknown>[] = [];
+
+    if (aiApiKey) {
+      promises.push(
+        upsertServerVariable({
+          data: {
+            key: ServerVariable.Keys.AI_DATA_ANALYSIS_API_KEY,
+            value_type: "secret",
+            description: "API key for AI data analysis and reporting",
+            value_data: encoder.encode(aiApiKey),
+          },
+        }),
+      );
+    }
+
+    if (aiUrl !== aiServiceUrl) {
+      promises.push(
+        upsertServerVariable({
+          data: {
+            key: ServerVariable.Keys.AI_DATA_ANALYSIS_URL,
+            value_type: "url",
+            description: "URL for AI data analysis and reporting service",
+            value_data: encoder.encode(aiUrl),
+          },
+        }),
+      );
+    }
+
+    if (promises.length === 0) return;
+
+    Promise.all(promises)
+      .then(() => {
+        toast.success("AI settings saved successfully");
+        setAiApiKey("");
+      })
+      .catch((error) => {
+        toast.error(`Failed to save AI settings: ${error.message}`);
+      })
+      .finally(() => {
+        router.invalidate({ sync: true });
+      });
+  };
 
   const handleOperationModeChange = (value: string | null) => {
     if (!currentUser || !value) return;
@@ -280,6 +370,48 @@ function RouteComponent() {
               { value: "user_choice", label: "User Choice" },
             ]}
           />
+        </div>
+
+        <div className="flex flex-col gap-4 pt-4 border-t">
+          <h2 className="text-lg font-semibold">AI</h2>
+
+          <div className="flex flex-row gap-4 items-end">
+            <Input
+              label="Service URL"
+              description="The URL or IP address of the AI data analysis service"
+              placeholder="https://ai-service.example.com"
+              value={aiUrl}
+              onChange={(e) => setAiUrl(e.target.value)}
+              autoComplete="one-time-code"
+              className="lg:w-md"
+            />
+          </div>
+
+          <div className="flex flex-row gap-4 items-end">
+            <Input
+              label="API Key"
+              description={
+                aiKeyIsSet
+                  ? "A key is currently set. Enter a new value to replace it."
+                  : "Enter the API key for AI-powered data analysis and reporting."
+              }
+              type="password"
+              placeholder={aiKeyIsSet ? "••••••••" : "Enter API key"}
+              value={aiApiKey}
+              onChange={(e) => setAiApiKey(e.target.value)}
+              autoComplete="new-password"
+              className="lg:w-md"
+            />
+          </div>
+
+          <div>
+            <Button
+              onClick={handleSaveAiSettings}
+              disabled={!aiApiKey && aiUrl === aiServiceUrl}
+            >
+              Save
+            </Button>
+          </div>
         </div>
       </div>
       <Dialog

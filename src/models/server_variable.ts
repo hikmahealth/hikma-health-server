@@ -7,8 +7,18 @@ import type {
   Updateable,
   JSONColumnType,
 } from "kysely";
+import { sql } from "kysely";
+import db from "@/db";
+import { createServerOnlyFn } from "@tanstack/react-start";
+import { v1 as uuidV1 } from "uuid";
 
 namespace ServerVariable {
+  /** Well-known server variable keys */
+  export const Keys = {
+    AI_DATA_ANALYSIS_API_KEY: "ai_data_analysis_api_key",
+    AI_DATA_ANALYSIS_URL: "ai_data_analysis_url",
+  } as const;
+
   export type T = {
     id: string;
     key: string;
@@ -50,6 +60,57 @@ namespace ServerVariable {
     export type NewServerVariables = Insertable<T>;
     export type ServerVariablesUpdate = Updateable<T>;
   }
+
+  /** Retrieve a server variable by its unique key. Returns null if not found. */
+  export const get = createServerOnlyFn(
+    async (key: string): Promise<Table.ServerVariables | null> => {
+      const row = await db
+        .selectFrom(Table.name)
+        .where("key", "=", key)
+        .selectAll()
+        .executeTakeFirst();
+      return row ?? null;
+    },
+  );
+
+  /** Upsert a server variable by key. Creates if missing, updates if exists. */
+  export const update = createServerOnlyFn(
+    async (
+      variable: Pick<Table.NewServerVariables, "key" | "value_type"> &
+        Partial<
+          Pick<
+            Table.NewServerVariables,
+            "description" | "value_data" | "value_hash"
+          >
+        >,
+    ): Promise<string> => {
+      const id = uuidV1();
+      const result = await db
+        .insertInto(Table.name)
+        .values({
+          id,
+          key: variable.key,
+          value_type: variable.value_type,
+          description: variable.description ?? null,
+          value_data: variable.value_data ?? null,
+          value_hash: variable.value_hash ?? null,
+        })
+        .onConflict((oc) =>
+          oc.column("key").doUpdateSet({
+            value_type: variable.value_type,
+            description: variable.description ?? null,
+            value_data: variable.value_data ?? null,
+            value_hash: variable.value_hash ?? null,
+            updated_at: sql`now()`,
+          }),
+        )
+        .returning("id")
+        .executeTakeFirstOrThrow();
+
+      return result.id;
+    },
+  );
+
 }
 
 export default ServerVariable;

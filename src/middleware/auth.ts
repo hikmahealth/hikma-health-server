@@ -7,6 +7,29 @@ import UserClinicPermissions from "@/models/user-clinic-permissions";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type Clinic from "@/models/clinic";
 
+/** Middleware that rejects requests from users who are not super_admin. */
+export const superAdminMiddleware = createMiddleware({
+  type: "function",
+}).server(async ({ next }) => {
+  const token = getCookieToken();
+  if (!token) {
+    throw new Error("Unauthorized: no session token");
+  }
+
+  const caller = await Token.getUser(token);
+  const role = Option.map(caller, (c) => c.role);
+
+  if (Option.isNone(role) || role.value !== User.ROLES.SUPER_ADMIN) {
+    throw new Error("Unauthorized: super_admin role required");
+  }
+
+  return next({
+    context: {
+      userId: Option.getOrNull(Option.map(caller, (c) => c.id)),
+    },
+  });
+});
+
 export const authMiddleware = createMiddleware({ type: "function" })
   .inputValidator(
     (data: { capabilities?: (typeof User.CapabilitySchema.Type)[] }) => data,

@@ -30,3 +30,7 @@ count.txt
 *.res.mjs
 *.gen.tsx
 coverage
+
+
+
+QA_TESTING_GUIDE.tsv

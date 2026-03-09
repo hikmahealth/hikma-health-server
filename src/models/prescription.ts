@@ -273,6 +273,22 @@ namespace Prescription {
       ) => {
         try {
           return await db.transaction().execute(async (trx) => {
+            // Resolve clinic_id for visit creation — fall back to provider's clinic if not provided
+            let resolvedClinicId = currentClinicId;
+            if (!resolvedClinicId || !isValidUUID(resolvedClinicId)) {
+              const provider = await trx
+                .selectFrom(User.Table.name)
+                .select("clinic_id")
+                .where("id", "=", prescription.provider_id)
+                .executeTakeFirstOrThrow();
+              if (!provider.clinic_id) {
+                throw new Error(
+                  "Provider has no clinic_id and no clinic_id was provided",
+                );
+              }
+              resolvedClinicId = provider.clinic_id;
+            }
+
             let visitId =
               prescription.visit_id && isValidUUID(prescription.visit_id)
                 ? prescription.visit_id
@@ -286,7 +302,7 @@ namespace Prescription {
                 .values({
                   id: newVisitId,
                   patient_id: prescription.patient_id,
-                  clinic_id: currentClinicId,
+                  clinic_id: resolvedClinicId,
                   provider_id: prescription.provider_id, // the user_id is that of the current user, to a visit that is the provider
                   is_deleted: false,
                   created_at: sql`now()::timestamp with time zone`,
