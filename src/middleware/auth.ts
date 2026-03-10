@@ -1,4 +1,5 @@
 import { createMiddleware } from "@tanstack/react-start";
+import { deleteCookie } from "@tanstack/react-start/server";
 import { getCookieToken } from "@/lib/auth/request";
 import Token from "@/models/token";
 import { Option, pipe } from "effect";
@@ -17,6 +18,11 @@ export const superAdminMiddleware = createMiddleware({
   }
 
   const caller = await Token.getUser(token);
+
+  if (Option.isNone(caller)) {
+    deleteCookie("token");
+  }
+
   const role = Option.map(caller, (c) => c.role);
 
   if (Option.isNone(role) || role.value !== User.ROLES.SUPER_ADMIN) {
@@ -51,6 +57,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
 
     const isAuthorized = Option.match(caller, {
       onNone: () => {
+        deleteCookie("token");
         return false;
       },
       onSome: (caller) => {
@@ -94,7 +101,10 @@ export const capabilitiesMiddleware = createMiddleware({
   }
   const caller = await Token.getUser(token);
   const capabilities = Option.match(caller, {
-    onNone: () => [] as (typeof User.CapabilitySchema.Type)[],
+    onNone: () => {
+      deleteCookie("token");
+      return [] as (typeof User.CapabilitySchema.Type)[];
+    },
     onSome: (caller) => User.ROLE_CAPABILITIES[caller.role] || [],
   });
   return next({
@@ -126,7 +136,10 @@ export const permissionsMiddleware = createMiddleware({
 
       const caller = await Token.getUser(token);
       const permissionsArray = await Option.match(caller, {
-        onNone: async () => [] as UserClinicPermissions.EncodedT[],
+        onNone: async () => {
+          deleteCookie("token");
+          return [] as UserClinicPermissions.EncodedT[];
+        },
         onSome: async (caller) => {
           return await UserClinicPermissions.API.getByUser(caller.id);
         },

@@ -332,13 +332,16 @@ namespace Sync {
      */
     export const persistClientChanges = async (data: PushRequest, peerType?: Device.DeviceTypeT): Promise<void> => {
         console.log("Starting to persist client changes", data);
-        // Process the delta data from the client
-        for (const [tableName, newDeltaJson] of Object.entries(data) as [PostTableName, Sync.DeltaData][]) {
+        // Process the delta data from the client.
+        // Iterate over ENTITIES_TO_PULL_FROM_MOBILE (not Object.entries) to guarantee
+        // dependency order: patients → patient_additional_attributes → visits → events → …
+        for (const entity of ENTITIES_TO_PULL_FROM_MOBILE) {
+            const tableName = entity.Table.name as PostTableName;
+            const newDeltaJson = data[tableName];
+            if (!newDeltaJson) {
+                continue;
+            }
             console.log(`Processing table: ${tableName}`);
-          if (!pushTableNameModelMap[tableName]) {
-            console.log(`Table ${tableName} not found in pushTableNameModelMap - ignoring`);
-            continue;
-          }
             // Get the entity delta values with defaults
             const deltaData = {
                 created: newDeltaJson?.created || [],
@@ -381,6 +384,15 @@ namespace Sync {
                 await pushTableNameModelMap[tableName].Sync.deleteFromDelta(id);
             }
         }
+
+        // Warn about any tables the client sent that we don't recognize
+        const knownTableNames = new Set(ENTITIES_TO_PULL_FROM_MOBILE.map(e => e.Table.name));
+        for (const tableName of Object.keys(data)) {
+            if (!knownTableNames.has(tableName)) {
+                console.warn(`[sync] Table "${tableName}" not found in ENTITIES_TO_PULL_FROM_MOBILE - ignoring`);
+            }
+        }
+
         console.log("Finished persisting client changes");
     };
 }
