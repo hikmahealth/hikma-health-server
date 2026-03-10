@@ -29,21 +29,12 @@ import { getAllClinics } from "@/lib/server-functions/clinics";
 import { getResultData } from "@/lib/utils";
 
 export const Route = createFileRoute("/app")({
-  // beforeLoad: async ({ location }) => {
-  //   // let clinic = Clinic.Table.name;
-  //   console.log("home app.tsx");
-  //   const isValidToken = await fetch(`/api/auth/is-valid-token`, {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //   });
-  //   const data = await isValidToken.json();
-  //   console.log({ isValidToken, data });
-  //   if (!data.isValid) {
-  //     throw redirect({ to: "/", replace: true });
-  //   }
-  // },
+  beforeLoad: async () => {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw redirect({ to: "/", replace: true });
+    }
+  },
   component: RouteComponent,
   loader: async () => {
     const user = await getCurrentUser();
