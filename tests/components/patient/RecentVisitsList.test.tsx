@@ -201,7 +201,8 @@ describe("VisitRow", () => {
           const view = within(container);
           const trimmed = visit.provider_name!.trim();
           if (trimmed) {
-            expect(view.getByText(`Provider: ${trimmed}`)).toBeDefined();
+            const normalized = trimmed.replace(/\s+/g, " ");
+            expect(view.getByText(`Provider: ${normalized}`)).toBeDefined();
           } else {
             expect(view.queryByText(/Provider:/)).toBeNull();
           }
