@@ -1,4 +1,4 @@
-import { createTRPCRouter } from "./init";
+import { createTRPCRouter, createCallerFactory } from "./init";
 import { queryProcedures } from "./routers/queries";
 import { commandProcedures } from "./routers/commands";
 
@@ -15,3 +15,9 @@ const appRouter = createTRPCRouter({
 });
 
 export type AppRouter = typeof appRouter;
+
+/**
+ * Server-side caller for invoking tRPC procedures directly (e.g. from createServerFn).
+ * Pass a TRPCContext with the auth header to get full middleware processing.
+ */
+export const createServerCaller = createCallerFactory(commandAppRouter);

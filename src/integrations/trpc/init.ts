@@ -18,7 +18,7 @@ export type TRPCContext = {
 /**
  * Authenticated context added by the authed middleware.
  */
-type AuthedContext = {
+export type AuthedContext = {
   userId: string;
   role: typeof User.RoleSchema.Type;
   permissions: Record<Clinic.EncodedT["id"], UserClinicPermissions.EncodedT>;
@@ -35,6 +35,7 @@ const t = initTRPC.context<TRPCContext>().create({
 });
 
 export const createTRPCRouter = t.router;
+export const createCallerFactory = t.createCallerFactory;
 export const publicProcedure = t.procedure;
 
 /**
@@ -89,3 +90,38 @@ const authedMiddleware = t.middleware(async ({ ctx, next }) => {
 
 /** Procedure that requires a valid Bearer token */
 export const authedProcedure = t.procedure.use(authedMiddleware);
+
+/**
+ * Assert that the authenticated user holds a specific clinic-level permission.
+ *
+ * When clinicId is provided, checks that exact clinic.
+ * When clinicId is null/undefined, checks that the user holds the permission
+ * on at least one clinic.
+ *
+ * Throws TRPCError FORBIDDEN on failure.
+ */
+export function requireClinicPermission(
+  ctx: AuthedContext,
+  permission: UserClinicPermissions.UserPermissionsT,
+  clinicId: string | null | undefined,
+): void {
+  if (clinicId) {
+    const clinicPerms = ctx.permissions[clinicId];
+    if (!clinicPerms || !clinicPerms[permission]) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `You do not have ${permission} permission for this clinic`,
+      });
+    }
+  } else {
+    const hasPermission = Object.values(ctx.permissions).some(
+      (p) => p[permission],
+    );
+    if (!hasPermission) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `You do not have ${permission} permission for any clinic`,
+      });
+    }
+  }
+}

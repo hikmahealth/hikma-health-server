@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,11 +16,8 @@ import PatientRegistrationForm from "@/models/patient-registration-form";
 import Language from "@/models/language";
 import { createServerFn } from "@tanstack/react-start";
 import { Label } from "@/components/ui/label";
-import Patient from "@/models/patient";
 import upperFirst from "lodash/upperFirst";
-import { Option } from "effect";
 import { v1 as uuidv1 } from "uuid";
-import PatientAdditionalAttribute from "@/models/patient-additional-attribute";
 import { SelectInput } from "@/components/select-input";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import {
@@ -28,19 +25,54 @@ import {
   joinCheckboxValues,
   splitCheckboxValues,
 } from "@/lib/utils";
+import { getCookie } from "@tanstack/react-start/server";
+import { createServerCaller } from "@/integrations/trpc/router";
+
+type RegisterPatientInput = {
+  patient: {
+    id: string;
+    given_name?: string | null;
+    surname?: string | null;
+    date_of_birth?: string | null;
+    sex?: string | null;
+    citizenship?: string | null;
+    hometown?: string | null;
+    phone?: string | null;
+    camp?: string | null;
+    government_id?: string | null;
+    external_patient_id?: string | null;
+    additional_data?: Record<string, any>;
+    metadata?: Record<string, any>;
+    photo_url?: string | null;
+    primary_clinic_id?: string | null;
+  };
+  additional_attributes?: Array<{
+    attribute_id: string;
+    attribute: string;
+    number_value?: number | null;
+    string_value?: string | null;
+    date_value?: string | null;
+    boolean_value?: boolean | null;
+    metadata?: Record<string, any>;
+  }>;
+};
 
 export const createPatient = createServerFn({ method: "POST" })
-  .inputValidator<{
-    baseFields: Patient.T;
-    additionalAttributes: PatientAdditionalAttribute.T[];
-  }>((data) => data)
+  .inputValidator((data: RegisterPatientInput) => data)
   .handler(async ({ data }) => {
-    return Patient.register(
-      data as unknown as {
-        baseFields: Patient.T;
-        additionalAttributes: PatientAdditionalAttribute.T[];
-      },
-    );
+    const token = getCookie("token");
+    if (!token) throw new Error("Unauthorized");
+
+    const caller = createServerCaller({
+      authHeader: `Bearer ${token}`,
+    });
+
+    const result = await caller.register_patient({
+      patient: { ...data.patient },
+      additional_attributes: data.additional_attributes,
+    });
+
+    return { patientId: result.patient_id };
   });
 
 export const getAllPatientRegistrationForms = createServerFn({
@@ -69,81 +101,65 @@ function RouteComponent() {
     // validate: {},
   });
 
-  console.log({ clinicsList });
-
   const onSubmit = async (data: any) => {
-    const patient: Patient.T = {
-      id: uuidv1(),
-      given_name: Option.fromNullable(data.given_name),
-      surname: Option.fromNullable(data.surname),
-      date_of_birth: Option.fromNullable(data.date_of_birth),
-      citizenship: Option.fromNullable(data.citizenship),
-      hometown: Option.fromNullable(data.hometown),
-      phone: Option.fromNullable(data.phone),
-      sex: Option.fromNullable(data.sex),
-      camp: Option.fromNullable(data.camp),
+    const patientId = uuidv1();
+
+    const patient: RegisterPatientInput["patient"] = {
+      id: patientId,
+      given_name: data.given_name ?? null,
+      surname: data.surname ?? null,
+      date_of_birth: data.date_of_birth instanceof Date
+        ? data.date_of_birth.toISOString()
+        : data.date_of_birth ?? null,
+      sex: data.sex ?? null,
+      citizenship: data.citizenship ?? null,
+      hometown: data.hometown ?? null,
+      phone: data.phone ?? null,
+      camp: data.camp ?? null,
+      government_id: data.government_id ?? null,
+      external_patient_id: data.external_patient_id ?? null,
+      photo_url: data.photo_url ?? null,
+      primary_clinic_id: data.primary_clinic_id ?? null,
       additional_data: data.additional_data || {},
-      image_timestamp: Option.fromNullable(data.image_timestamp),
-      is_deleted: false,
-      created_at: new Date(),
-      updated_at: new Date(),
-      last_modified: new Date(),
-      server_created_at: new Date(),
-      deleted_at: Option.none(),
       metadata: {},
-      photo_url: Option.fromNullable(data.photo_url),
-      government_id: Option.fromNullable(data.government_id),
-      external_patient_id: Option.fromNullable(data.external_patient_id),
-      primary_clinic_id: Option.fromNullable(data.primary_clinic_id),
-      last_modified_by: Option.fromNullable(data.last_modified_by),
     };
 
-    const patientBaseData: Record<string, any> = {};
-    const additionalAttributes: PatientAdditionalAttribute.T[] = [];
+    const additional_attributes: NonNullable<
+      RegisterPatientInput["additional_attributes"]
+    > = [];
 
     patientRegistrationForm?.fields
       .filter((field) => field.deleted !== true && field.visible)
       .forEach((field) => {
-        if (field.baseField) {
-          // @ts-ignore
-          patientBaseData[field.column] = data[field.column];
-        } else {
-          const row: PatientAdditionalAttribute.T = {
-            id: uuidv1(),
-            patient_id: "",
+        if (!field.baseField) {
+          additional_attributes.push({
             attribute_id: field.id,
             attribute: field.column,
-            number_value: Option.fromNullable(
+            number_value:
               field.fieldType === "number" ? Number(data[field.column]) : null,
-            ),
-            string_value: Option.fromNullable(
-              ["text", "select", "checkbox"].includes(field.fieldType)
-                ? String(data[field.column] ?? "")
+            string_value: ["text", "select", "checkbox"].includes(
+              field.fieldType,
+            )
+              ? String(data[field.column] ?? "")
+              : null,
+            date_value:
+              field.fieldType === "date" && data[field.column]
+                ? data[field.column] instanceof Date
+                  ? data[field.column].toISOString()
+                  : String(data[field.column])
                 : null,
-            ),
-            date_value: Option.fromNullable(
-              field.fieldType === "date" ? new Date(data[field.column]) : null,
-            ),
-            boolean_value: Option.fromNullable(
+            boolean_value:
               field.fieldType === "boolean"
                 ? Boolean(data[field.column])
                 : null,
-            ),
             metadata: {},
-            is_deleted: false,
-            created_at: new Date(),
-            updated_at: new Date(),
-            last_modified: new Date(),
-            server_created_at: new Date(),
-            deleted_at: Option.none(),
-          };
-          additionalAttributes.push(row);
+          });
         }
       });
 
     try {
       const result = await createPatient({
-        data: { baseFields: patient, additionalAttributes },
+        data: { patient, additional_attributes },
       });
       navigate({ to: `/app/patients/${result.patientId}` });
     } catch (error) {
