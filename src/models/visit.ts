@@ -263,7 +263,7 @@ namespace Visit {
             offset,
             limit,
             total,
-            hasMore: items.length >= limit,
+            hasMore: items.length > limit,
           },
         };
       },

@@ -138,13 +138,13 @@ export function RecentVisitsList({
             {visits.map((visit) => (
               <VisitRow key={visit.id} visit={visit} />
             ))}
-            {pagination.total > 0 && (
-              <PaginationControls
-                pagination={pagination}
-                onPageChange={onPageChange}
-                loading={loading}
-              />
-            )}
+            {/*{pagination.total > 0 && (*/}
+            <PaginationControls
+              pagination={pagination}
+              onPageChange={onPageChange}
+              loading={loading}
+            />
+            {/*)}*/}
           </div>
         )}
       </CardContent>

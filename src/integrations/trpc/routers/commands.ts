@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import type { TRPCRouterRecord } from "@trpc/server";
-import { authedProcedure, publicProcedure } from "../init";
+import { authedProcedure, publicProcedure, requireClinicPermission } from "../init";
 import Patient from "@/models/patient";
 import PatientAdditionalAttribute from "@/models/patient-additional-attribute";
 import Visit from "@/models/visit";
@@ -157,6 +157,8 @@ export const commandProcedures = {
       try {
         const pt = input.patient;
         const patientId = pt.id;
+
+        requireClinicPermission(ctx, "can_register_patients", pt.primary_clinic_id);
 
         await db.transaction().execute(async (trx) => {
           await trx
