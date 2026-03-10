@@ -288,7 +288,7 @@ export function getTopNWithOther(
 
   const result: Record<string, number> = Object.fromEntries(topEntries);
   if (otherSum > 0) {
-    result.other = otherSum;
+    result.other = (result.other ?? 0) + otherSum;
   }
 
   return result;
@@ -450,9 +450,15 @@ export function calculateAge(
 
 /**
  * Separator used for joining multiple checkbox values into a single string.
- * Chosen to avoid conflicts with commas or other common characters in user input.
+ *
+ * Uses the ASCII Unit Separator (U+001F) instead of a printable sequence like ";;".
+ * A printable separator is ambiguous when user-supplied values contain the same
+ * characters — e.g. a value of ";" joined with ";;" produces ";;; " which
+ * splits incorrectly. U+001F is a single non-printable control character that
+ * browsers strip from form input, so it can never appear in real user values,
+ * guaranteeing lossless join/split round-trips.
  */
-export const CHECKBOX_SEPARATOR = ";;";
+export const CHECKBOX_SEPARATOR = "\x1F";
 
 /**
  * Join an array of selected checkbox values into a single string using the custom separator.
