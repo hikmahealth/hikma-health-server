@@ -159,7 +159,7 @@ function reducer(state: State, action: Action) {
         baseField: false,
         fieldType: "text",
         isSearchField: false,
-        column: "",
+        column: encodeURI("New Field " + position),
         label: {
           en: "New Field " + position,
           es: "Nueva Entrada " + position,
@@ -453,7 +453,7 @@ function RouteComponent() {
 
     if (!result.success) {
       console.error(result.error);
-      if (result.error.errors.find((err) => err.path.includes("options"))) {
+      if (result.error.issues.find((err) => err.path.includes("options"))) {
         // ther eis an error with one of the options supported for a select field
         return alert(
           "Please make sure all select fields have at least one option",

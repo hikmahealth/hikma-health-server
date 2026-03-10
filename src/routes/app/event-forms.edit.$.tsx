@@ -178,7 +178,7 @@ function RouteComponent() {
     }
 
     // for the medicine fields, remove the empty strings that might be added or after the semicolon
-    formState.form_fields = formState.form_fields.map((field) => {
+    let cleanedFields = formState.form_fields.map((field) => {
       if (field.options) {
         let cleanedOptions = field.options.map(
           (
@@ -220,10 +220,11 @@ function RouteComponent() {
       return field;
     });
 
-    console.log(formState.form_fields);
-
     // Ensure all field options have IDs for translation keying
-    formState.form_fields = EventForm.ensureOptionIds(formState.form_fields);
+    cleanedFields = EventForm.ensureOptionIds(cleanedFields);
+
+    // Update the store with cleaned fields
+    eventFormStore.send({ type: "set-form-fields", payload: cleanedFields });
 
     const updateFormId = (() => {
       if (typeof formId === "string" && isValidUUID(formId)) {
@@ -234,7 +235,7 @@ function RouteComponent() {
     try {
       setIsSubmitting(true);
       await saveForm({
-        data: { form: formState, updateFormId },
+        data: { form: { ...formState, form_fields: cleanedFields }, updateFormId },
       });
       toast.success("Form saved successfully");
       navigate({ to: "/app/event-forms" });
