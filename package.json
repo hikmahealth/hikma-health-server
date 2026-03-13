@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "db:migrate": "npx dotenv -e .env -- npx kysely migrate latest",
-    "start-only": "node --env-file=.env .output/server/index.mjs",
+    "start-only": "node .output/server/index.mjs",
     "start-dist": "node dist/server/server.js",
-    "start:local-prod": "pnpm run build && DB_SSL=true pnpm start-only",
+    "start:local-prod": "pnpm run build && DB_SSL=true node --env-file=.env .output/server/index.mjs",
     "start": "pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
     "start:with-recovery": "pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
     "build": "rescript && vite build",
