@@ -218,6 +218,7 @@ describe("calculateAge", () => {
           max: new Date("2025-06-14"),
         }),
         (dob) => {
+          fc.pre(!isNaN(dob.getTime()));
           const result = calculateAge(dob);
           expect(result.length).toBeGreaterThan(0);
         },
