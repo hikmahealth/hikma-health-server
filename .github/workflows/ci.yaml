@@ -52,6 +52,11 @@ jobs:
       - name: Run unit tests with coverage
         run: pnpm test:coverage
 
+      - name: Run integration tests
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+        run: pnpm test:integration
+
       - name: Verify build
         run: pnpm build
 
