@@ -340,7 +340,7 @@ export function getFieldOptionsValues(
  * @returns {boolean} True if the string is a valid UUID, false otherwise
  */
 export function isValidUUID(str: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     str,
   );
 }
@@ -473,53 +473,4 @@ export function joinCheckboxValues(values: string[]): string {
 export function splitCheckboxValues(value: string): string[] {
   if (!value) return [];
   return value.split(CHECKBOX_SEPARATOR).filter(Boolean);
-}
-
-/** Result implementation lifted from the mobile react-native application . TODO: Unify when monorepo is live */
-
-// ---------------------------------------------------------------------------
-// Result type — explicit success/failure for all provider operations
-// ---------------------------------------------------------------------------
-
-/** Discriminated union for provider operation errors */
-export type DataError =
-  | { _tag: "NetworkError"; message: string; statusCode?: number }
-  | { _tag: "NotFound"; entity: string; id: string }
-  | { _tag: "ValidationError"; message: string; field?: string }
-  | { _tag: "Unauthorized"; message: string }
-  | { _tag: "ServerError"; message: string }
-  | { _tag: "PermissionDenied"; permission: string; message: string };
-
-/** Result of an operation that can fail */
-export type Result<T, E = DataError> =
-  | { ok: true; data: T }
-  | { ok: false; error: E };
-
-/** Create a success result */
-export const ok = <T>(data: T): Result<T, never> => ({ ok: true, data });
-
-/** Create a failure result */
-export const err = <E extends DataError>(error: E): Result<never, E> => ({
-  ok: false,
-  error,
-});
-
-/** Get the result data value, with option of return a default value */
-export const getResultData = <T, E = DataError>(
-  res: Result<T, E>,
-  fallback: T,
-) => {
-  if (res.ok) {
-    return res.data;
-  } else {
-    return fallback;
-  }
-};
-
-/** Extract a human-readable message from any DataError variant */
-export function dataErrorMessage(e: DataError): string {
-  if (e._tag === "NotFound") return `${e.entity} not found: ${e.id}`;
-  if (e._tag === "PermissionDenied")
-    return `Permission denied: ${e.permission}. ${e.message}`;
-  return e.message || e._tag;
 }

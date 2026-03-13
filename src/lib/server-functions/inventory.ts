@@ -4,7 +4,7 @@ import ClinicInventory from "@/models/clinic-inventory";
 import DrugBatches from "@/models/drug-batches";
 import { createServerFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
-import { type Result, ok, err } from "@/lib/utils";
+import { Result } from "@/lib/result";
 
 export const getClinicInventory = createServerFn({ method: "GET" })
   .inputValidator(
@@ -34,10 +34,10 @@ export const getClinicInventory = createServerFn({ method: "GET" })
           // This avoids an extra query and is more efficient
           const hasMore = items.length === (data.limit ?? 100);
 
-          return ok({ items, hasMore });
+          return Result.ok({ items, hasMore });
         } catch (error) {
           Sentry.captureException(error);
-          return err({
+          return Result.err({
             _tag: "ServerError" as const,
             message:
               error instanceof Error
@@ -57,10 +57,10 @@ export const getClinicInventoryById = createServerFn({ method: "GET" })
       async () => {
         try {
           const item = await ClinicInventory.API.getById(data.id);
-          return ok(item || null);
+          return Result.ok(item || null);
         } catch (error) {
           Sentry.captureException(error);
-          return err({
+          return Result.err({
             _tag: "ServerError" as const,
             message:
               error instanceof Error
@@ -89,10 +89,10 @@ export const getBatchesByDrug = createServerFn({ method: "GET" })
           limit: 100,
         });
 
-        return ok(batches || []);
+        return Result.ok(batches || []);
       } catch (error) {
         Sentry.captureException(error);
-        return err({
+        return Result.err({
           _tag: "ServerError" as const,
           message:
             error instanceof Error ? error.message : "Failed to fetch batches",

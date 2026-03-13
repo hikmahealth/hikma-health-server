@@ -13,7 +13,7 @@ import {
   buildVisitInsertValues,
 } from "./builders";
 import { logAuditEvent } from "./audit";
-import { type Result, ok, err } from "@/lib/utils";
+import { Result } from "@/lib/result";
 
 /** A visit with its associated events pre-loaded. */
 export type VisitWithEvents = Visit.EncodedT & {
@@ -89,10 +89,10 @@ export const getPatientVisits = createServerFn({ method: "GET" })
           items = result.items.map((v) => ({ ...v, events: [] }));
         }
 
-        return ok({ items, pagination: result.pagination });
+        return Result.ok({ items, pagination: result.pagination });
       } catch (error) {
         Sentry.captureException(error);
-        return err({
+        return Result.err({
           _tag: "ServerError" as const,
           message:
             error instanceof Error ? error.message : "Failed to fetch visits",

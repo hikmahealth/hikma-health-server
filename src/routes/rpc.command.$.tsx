@@ -7,9 +7,10 @@ import {
   getClientIp,
   tooManyRequestsResponse,
 } from "@/lib/rate-limiter";
+import { minutesToMilliseconds } from "date-fns";
 
 const rpcLimiter = createRateLimiter({
-  windowMs: 60 * 1000,
+  windowMs: minutesToMilliseconds(1),
   maxRequests: 100,
 });
 

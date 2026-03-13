@@ -24,6 +24,7 @@ namespace Device {
     SYNC_HUB: "sync_hub",
     SERVER: "server",
     OTHER: "other",
+    UNKNOWN: "unknown",
   } as const;
 
   export type DeviceTypeT = (typeof DEVICE_TYPE)[keyof typeof DEVICE_TYPE];

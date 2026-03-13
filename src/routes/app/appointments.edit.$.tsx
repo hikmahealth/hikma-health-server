@@ -28,7 +28,8 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format, formatDate } from "date-fns";
-import { cn, getResultData } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import User from "@/models/user";
 import Clinic from "@/models/clinic";
 import { SelectInput } from "@/components/select-input";
@@ -51,6 +52,7 @@ const saveAppointment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { appointment, id, currentUserName } = data;
+    console.log({ appointment, id, currentUserName });
     return await Appointment.API.save(id, appointment, currentUserName);
   });
 
@@ -86,7 +88,7 @@ export const Route = createFileRoute("/app/appointments/edit/$")({
     }
 
     result.users = (await getAllUsers()) as User.EncodedT[];
-    result.clinics = getResultData(
+    result.clinics = Result.getOrElse(
       await getAllClinics(),
       [],
     ) as Clinic.EncodedT[];
@@ -174,6 +176,7 @@ function RouteComponent() {
 
   console.log({ appointment });
 
+  const [submitting, setSubmitting] = useState(false);
   const [availableDepartments, setAvailableDepartments] = useState<
     ClinicDepartment.EncodedT[]
   >([]);
@@ -189,7 +192,8 @@ function RouteComponent() {
 
   // Handle form submission
   const onSubmit = async (values: Appointment.EncodedT) => {
-    if (!currentUser) return;
+    if (!currentUser || submitting) return;
+    setSubmitting(true);
     try {
       await saveAppointment({
         data: {
@@ -212,6 +216,8 @@ function RouteComponent() {
     } catch (error) {
       console.error("Error saving appointment:", error);
       toast.error("Failed to save appointment");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -611,8 +617,12 @@ function RouteComponent() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">
-                  {isEditing ? "Update Appointment" : "Create Appointment"}
+                <Button type="submit" disabled={submitting}>
+                  {submitting
+                    ? "Saving..."
+                    : isEditing
+                      ? "Update Appointment"
+                      : "Create Appointment"}
                 </Button>
               </div>
             </form>

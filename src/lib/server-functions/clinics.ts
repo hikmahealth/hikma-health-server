@@ -4,7 +4,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import ClinicDepartment from "@/models/clinic-department";
 import { permissionsMiddleware } from "@/middleware/auth";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
-import { type Result, ok, err } from "@/lib/utils";
+import { Result } from "@/lib/result";
 
 /**
  * Get all clinics
@@ -15,10 +15,10 @@ export const getAllClinics = createServerFn({ method: "GET" }).handler(
     return Sentry.startSpan({ name: "Get all clinics" }, async () => {
       try {
         const clinics = await Clinic.getAll();
-        return ok(clinics);
+        return Result.ok(clinics);
       } catch (error) {
         Sentry.captureException(error);
-        return err({
+        return Result.err({
           _tag: "ServerError" as const,
           message:
             error instanceof Error ? error.message : "Failed to fetch clinics",
@@ -39,14 +39,14 @@ export const getClinicById = createServerFn({
         const clinic = await Clinic.getById(clinicId);
         const departments =
           await ClinicDepartment.API.getActiveByClinicId(clinicId);
-        return ok({
+        return Result.ok({
           clinic: clinic as Clinic.EncodedT,
           departments: departments as ClinicDepartment.EncodedT[],
         });
       } catch (error) {
         Sentry.captureException(error);
         console.error("Error fetching clinic:", error);
-        return err({
+        return Result.err({
           _tag: "ServerError" as const,
           message:
             error instanceof Error ? error.message : "Error fetching clinic",

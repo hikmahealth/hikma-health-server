@@ -231,7 +231,7 @@ describe("calculateAge", () => {
         fc.date({
           min: new Date("1900-01-01"),
           max: new Date("2025-06-15"),
-        }),
+        }).filter((d) => !isNaN(d.getTime())),
         (dob) => {
           const result = calculateAge(dob);
           expect(

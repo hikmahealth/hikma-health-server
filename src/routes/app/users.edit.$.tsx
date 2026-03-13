@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import upperFirst from "lodash/upperFirst";
 import { getCurrentUserId } from "@/lib/server-functions/auth";
 import { toast } from "sonner";
@@ -132,7 +132,7 @@ export const Route = createFileRoute("/app/users/edit/$")({
     const userId = params._splat === "new" ? null : params._splat;
     return {
       user: await getUserById({ data: { id: userId } }),
-      clinics: getResultData(await getAllClinics(), []),
+      clinics: Result.getOrElse(await getAllClinics(), []),
       currentUserId: await getCurrentUserId(),
       isSuperAdmin: await currentUserHasRole({ data: { role: "super_admin" } }),
     };

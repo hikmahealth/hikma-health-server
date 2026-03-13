@@ -32,10 +32,11 @@ export const getDatabaseConfig = (): Record<string, any> => {
     pgPassword = decodeURIComponent(parsed.password);
   } else if (databaseUrlAzure) {
     // Extract connection details from Azure connection string
+    // Split on first "=" only so values containing "=" (e.g., passwords) aren't truncated
     const connStrParams = Object.fromEntries(
       databaseUrlAzure.split(" ").map((pair) => {
-        const [key, value] = pair.split("=");
-        return [key, value];
+        const idx = pair.indexOf("=");
+        return [pair.slice(0, idx), pair.slice(idx + 1)];
       }),
     );
 
@@ -59,13 +60,13 @@ export const getDatabaseConfig = (): Record<string, any> => {
     database: pgDb,
     user: pgUser,
     password: pgPassword,
-    // Render.com and similar providers use self-signed certificates.
+    // Only enable SSL when DB_SSL is explicitly set.
     // Set DB_SSL_REJECT_UNAUTHORIZED=true in environments with
     // properly signed certificates (e.g., AWS RDS, Azure).
-    ssl: {
-      rejectUnauthorized: sslEnabled
-        ? process.env.DB_SSL_REJECT_UNAUTHORIZED === "true"
-        : false,
-    },
+    // Render.com and similar providers use self-signed certificates,
+    // so rejectUnauthorized defaults to false when SSL is enabled.
+    ssl: sslEnabled
+      ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === "true" }
+      : undefined,
   };
 };

@@ -24,7 +24,7 @@ services:
           name: hikma-health-db
           property: connectionString
       - key: NODE_VERSION
-        value: "22.14.0"
+        value: "24.14.0"
       - key: NODE_OPTIONS
         value: "--max-old-space-size=5120"
       - key: NITRO_PRESET

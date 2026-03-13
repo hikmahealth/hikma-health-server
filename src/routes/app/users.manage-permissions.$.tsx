@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { getCurrentUserId } from "@/lib/server-functions/auth";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import {
   currentUserHasRole,
   getUserById,
@@ -144,7 +144,7 @@ export const Route = createFileRoute("/app/users/manage-permissions/$")({
     return {
       user,
       userClinicPermissions,
-      clinics: getResultData(await getAllClinics(), []),
+      clinics: Result.getOrElse(await getAllClinics(), []),
       currentUserId: await getCurrentUserId(),
       isSuperAdmin,
     };

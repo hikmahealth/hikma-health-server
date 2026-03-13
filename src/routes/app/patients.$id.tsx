@@ -9,7 +9,7 @@ import {
 } from "@/lib/server-functions/visits";
 import { getPatientPrescriptions } from "@/lib/server-functions/prescriptions";
 import { getPatientProblems } from "@/lib/server-functions/patient-problems";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import { createFileRoute, redirect, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import {
@@ -148,21 +148,21 @@ export const Route = createFileRoute("/app/patients/$id")({
 
       result.appointments = appointmentsRes.data || [];
 
-      const visitsData = getResultData(visitsRes, {
+      const visitsData = Result.getOrElse(visitsRes, {
         items: [] as VisitWithEvents[],
         pagination: emptyPagination,
       });
       result.visits = visitsData.items;
       result.visitsPagination = visitsData.pagination;
 
-      const rxData = getResultData(prescriptionsRes, {
+      const rxData = Result.getOrElse(prescriptionsRes, {
         items: [] as Prescription.EncodedT[],
         pagination: emptyPagination,
       });
       result.prescriptions = rxData.items;
       result.prescriptionsPagination = rxData.pagination;
 
-      const problemsData = getResultData(problemsRes, {
+      const problemsData = Result.getOrElse(problemsRes, {
         items: [] as PatientProblem.EncodedT[],
         pagination: emptyPagination,
       });

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { v4 as uuidv4, v1 as uuidv1, v3 as uuidv3, v5 as uuidv5 } from "uuid";
+import fc from "fast-check";
 import {
   camelCaseKeys,
   cn,
@@ -83,7 +84,8 @@ describe("isValidUUID", () => {
       "123e4567e89b-12d3-a456-426614174000", // missing hyphen
       "123e4567-e89b-12d3-a456_426614174000", // wrong separator
       "123e4567-e89b-12d3-a456-xxxxxxxx0000", // invalid characters
-      "123e4567-e89b-62d3-a456-426614174000", // invalid version (6)
+      "123e4567-e89b-02d3-a456-426614174000", // invalid version (0)
+      "123e4567-e89b-92d3-a456-426614174000", // invalid version (9)
       "123e4567-e89b-12d3-c456-426614174000", // invalid variant
       null, // null
       undefined, // undefined
@@ -95,19 +97,84 @@ describe("isValidUUID", () => {
     });
   });
 
-  it("should correctly validate all supported UUID versions (1-5)", () => {
-    // Test examples of each valid UUID version
+  it("should correctly validate all supported UUID versions (1-8)", () => {
     const validVersionExamples = {
       v1: "6ba7b810-9dad-11d1-80b4-00c04fd430c8",
       v2: "6ba7b810-9dad-21d1-80b4-00c04fd430c8",
       v3: "6ba7b810-9dad-31d1-80b4-00c04fd430c8",
       v4: "6ba7b810-9dad-41d1-80b4-00c04fd430c8",
       v5: "6ba7b810-9dad-51d1-80b4-00c04fd430c8",
+      v6: "6ba7b810-9dad-61d1-80b4-00c04fd430c8",
+      v7: "01902f4b-5be9-7b82-8dbb-9e0a72a05a28",
+      v8: "6ba7b810-9dad-81d1-80b4-00c04fd430c8",
     };
 
     Object.values(validVersionExamples).forEach((uuid) => {
       expect(isValidUUID(uuid)).toBe(true);
     });
+  });
+
+  it("should accept any UUID with version 1-8 and valid variant (property-based)", () => {
+    const hexChar = fc.mapToConstant(
+      { num: 10, build: (v) => String.fromCharCode(0x30 + v) }, // 0-9
+      { num: 6, build: (v) => String.fromCharCode(0x61 + v) },  // a-f
+    );
+    const hexBlock = (len: number) =>
+      fc.array(hexChar, { minLength: len, maxLength: len }).map((c) => c.join(""));
+    const version = fc.integer({ min: 1, max: 8 }).map((v) => v.toString(16));
+    const variant = fc.constantFrom("8", "9", "a", "b");
+
+    const validUuid = fc
+      .tuple(hexBlock(8), hexBlock(4), version, hexBlock(3), variant, hexBlock(3), hexBlock(12))
+      .map(([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`);
+
+    fc.assert(
+      fc.property(validUuid, (uuid) => {
+        expect(isValidUUID(uuid)).toBe(true);
+      }),
+    );
+  });
+
+  it("should reject UUIDs with version 0 or 9+ (property-based)", () => {
+    const hexChar = fc.mapToConstant(
+      { num: 10, build: (v) => String.fromCharCode(0x30 + v) },
+      { num: 6, build: (v) => String.fromCharCode(0x61 + v) },
+    );
+    const hexBlock = (len: number) =>
+      fc.array(hexChar, { minLength: len, maxLength: len }).map((c) => c.join(""));
+    const badVersion = fc.constantFrom("0", "9");
+    const variant = fc.constantFrom("8", "9", "a", "b");
+
+    const invalidUuid = fc
+      .tuple(hexBlock(8), hexBlock(4), badVersion, hexBlock(3), variant, hexBlock(3), hexBlock(12))
+      .map(([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`);
+
+    fc.assert(
+      fc.property(invalidUuid, (uuid) => {
+        expect(isValidUUID(uuid)).toBe(false);
+      }),
+    );
+  });
+
+  it("should reject UUIDs with invalid variant bits (property-based)", () => {
+    const hexChar = fc.mapToConstant(
+      { num: 10, build: (v) => String.fromCharCode(0x30 + v) },
+      { num: 6, build: (v) => String.fromCharCode(0x61 + v) },
+    );
+    const hexBlock = (len: number) =>
+      fc.array(hexChar, { minLength: len, maxLength: len }).map((c) => c.join(""));
+    const version = fc.integer({ min: 1, max: 8 }).map((v) => v.toString(16));
+    const badVariant = fc.constantFrom("0", "1", "2", "3", "4", "5", "6", "7", "c", "d", "e", "f");
+
+    const invalidUuid = fc
+      .tuple(hexBlock(8), hexBlock(4), version, hexBlock(3), badVariant, hexBlock(3), hexBlock(12))
+      .map(([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`);
+
+    fc.assert(
+      fc.property(invalidUuid, (uuid) => {
+        expect(isValidUUID(uuid)).toBe(false);
+      }),
+    );
   });
 
   // Edge cases for UUID validation
