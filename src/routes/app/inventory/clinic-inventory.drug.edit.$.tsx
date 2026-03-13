@@ -45,7 +45,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn, getResultData } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import {
   Table,
   TableBody,
@@ -107,7 +108,7 @@ export const Route = createFileRoute(
       result.drug = drugData || null;
 
       if (drugData) {
-        result.batches = getResultData(
+        result.batches = Result.getOrElse(
           await getBatchesByDrug({
             data: { drugId: drugData.id, onlyAvailable: false },
           }),
@@ -117,7 +118,7 @@ export const Route = createFileRoute(
     }
 
     result.currentUser = (await getCurrentUser()) as User.EncodedT | null;
-    result.clinics = getResultData(await getAllClinics(), []) as Clinic.EncodedT[];
+    result.clinics = Result.getOrElse(await getAllClinics(), []) as Clinic.EncodedT[];
 
     return result;
   },
@@ -175,7 +176,7 @@ function RouteComponent() {
       const batchesResult = await getBatchesByDrug({
         data: { drugId: drug.id, onlyAvailable: false },
       });
-      setExistingBatches(getResultData(batchesResult, []));
+      setExistingBatches(Result.getOrElse(batchesResult, []));
     } else {
       setExistingBatches([]);
     }
@@ -233,7 +234,7 @@ function RouteComponent() {
         const batchesResult = await getBatchesByDrug({
           data: { drugId: selectedDrug.id, onlyAvailable: false },
         });
-        setExistingBatches(getResultData(batchesResult, []));
+        setExistingBatches(Result.getOrElse(batchesResult, []));
       } else {
         toast.error(result?.error || "Failed to create batch");
       }

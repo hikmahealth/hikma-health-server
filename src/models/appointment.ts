@@ -21,6 +21,9 @@ import {
 import Patient from "./patient";
 import User from "./user";
 import Clinic from "./clinic";
+import type { RequestCaller } from "@/types";
+import { match, P } from "ts-pattern";
+import { uuidv7 } from "uuidv7";
 
 namespace Appointment {
   export const StatusSchema = Schema.Union(
@@ -231,7 +234,6 @@ namespace Appointment {
             `.compile(db),
       );
 
-      console.log({ appoins: res.rows });
       return res.rows;
     });
 
@@ -254,8 +256,35 @@ namespace Appointment {
         id: string | null,
         appointment: Appointment.EncodedT,
         currentUserName: string,
+        fallbackUserId?: string | null,
+        fallbackClinicId?: string | null,
       ) => {
+        console.warn("Checking for", appointment.patient_id);
         try {
+          // Resolve required UUID fields, falling back to caller-provided values when the appointment data is invalid
+          const resolvedClinicId = isValidUUID(appointment.clinic_id)
+            ? appointment.clinic_id
+            : fallbackClinicId;
+          const resolvedUserId = isValidUUID(appointment.user_id)
+            ? appointment.user_id
+            : fallbackUserId;
+
+          if (!resolvedClinicId || !isValidUUID(resolvedClinicId)) {
+            throw new Error(
+              `Invalid or missing clinic_id: "${appointment.clinic_id}" is not a valid UUID and no fallback available`,
+            );
+          }
+          if (!isValidUUID(appointment.patient_id)) {
+            throw new Error(
+              `Invalid or missing patient_id: "${appointment.patient_id}" is not a valid UUID`,
+            );
+          }
+          if (!resolvedUserId || !isValidUUID(resolvedUserId)) {
+            throw new Error(
+              `Invalid or missing user_id: "${appointment.user_id}" is not a valid UUID and no fallback available`,
+            );
+          }
+
           return await db.transaction().execute(async (trx) => {
             let visitId =
               appointment.current_visit_id &&
@@ -269,8 +298,8 @@ namespace Appointment {
                 .values({
                   id: visitId,
                   patient_id: appointment.patient_id,
-                  clinic_id: appointment.clinic_id,
-                  provider_id: appointment.user_id, // the user_id is that of the current user, to a visit that is the provider
+                  clinic_id: resolvedClinicId,
+                  provider_id: resolvedUserId, // the user_id is that of the current user, to a visit that is the provider
                   is_deleted: false,
                   created_at: sql`now()::timestamp with time zone`,
                   updated_at: sql`now()::timestamp with time zone`,
@@ -283,7 +312,6 @@ namespace Appointment {
                 .returningAll()
                 .executeTakeFirstOrThrow();
 
-              console.log({ visit, oldVisitId: visitId });
               visitId = visit.id;
             }
 
@@ -291,9 +319,9 @@ namespace Appointment {
               .insertInto(Appointment.Table.name)
               .values({
                 id: id || appointment.id || uuidV1(),
-                clinic_id: appointment.clinic_id,
+                clinic_id: resolvedClinicId,
                 patient_id: appointment.patient_id,
-                user_id: appointment.user_id,
+                user_id: resolvedUserId,
                 current_visit_id: visitId,
                 created_at: sql`${toSafeDateString(
                   appointment.created_at,
@@ -334,7 +362,7 @@ namespace Appointment {
               .onConflict((oc) => {
                 return oc.column("id").doUpdateSet({
                   id: (eb) => eb.ref("excluded.id"),
-                  clinic_id: appointment.clinic_id,
+                  clinic_id: resolvedClinicId,
                   patient_id: (eb) => eb.ref("excluded.patient_id"),
                   user_id: (eb) => eb.ref("excluded.user_id"),
                   current_visit_id: (eb) => eb.ref("excluded.current_visit_id"),
@@ -372,7 +400,11 @@ namespace Appointment {
               })
               .executeTakeFirstOrThrow();
 
-            return res;
+            return {
+              numInsertedOrUpdatedRows: Number(
+                res.numInsertedOrUpdatedRows ?? 0,
+              ),
+            };
           });
         } catch (error) {
           console.error("Appointment upsert operation failed:", {
@@ -408,8 +440,28 @@ namespace Appointment {
 
   export namespace Sync {
     export const upsertFromDelta = createServerOnlyFn(
-      async (delta: Appointment.EncodedT) => {
-        return API.save(delta.id || uuidV1(), delta, "");
+      async (delta: Appointment.EncodedT, caller: RequestCaller) => {
+        const { currentUserName, fallbackUserId, fallbackClinicId } = match(
+          caller,
+        )
+          .with({ device: P.select() }, (_) => ({
+            currentUserName: "",
+            fallbackUserId: null as string | null,
+            fallbackClinicId: null as string | null,
+          }))
+          .with({ user: P.select() }, (user) => ({
+            currentUserName: user.name,
+            fallbackUserId: user.id,
+            fallbackClinicId: user.clinic_id,
+          }))
+          .exhaustive();
+        return API.save(
+          delta.id || uuidv7(),
+          delta,
+          currentUserName,
+          fallbackUserId,
+          fallbackClinicId,
+        );
       },
     );
 

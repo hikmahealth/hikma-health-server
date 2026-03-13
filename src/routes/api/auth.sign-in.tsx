@@ -7,10 +7,11 @@ import {
   getClientIp,
   tooManyRequestsResponse,
 } from "@/lib/rate-limiter";
+import { minutesToMilliseconds } from "date-fns";
 
 const authLimiter = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
-  maxRequests: 10,
+  windowMs: minutesToMilliseconds(15),
+  maxRequests: 30,
 });
 
 export const Route = createFileRoute("/api/auth/sign-in")({
@@ -57,12 +58,15 @@ export const Route = createFileRoute("/api/auth/sign-in")({
           );
         } catch (error) {
           console.error("[sign-in error]", error);
-          return new Response(JSON.stringify({ error: "Invalid credentials" }), {
-            headers: {
-              "Content-Type": "application/json",
+          return new Response(
+            JSON.stringify({ error: "Invalid credentials" }),
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+              status: 401,
             },
-            status: 401,
-          });
+          );
         }
       },
     },

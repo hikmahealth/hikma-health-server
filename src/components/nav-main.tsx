@@ -17,7 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 
 export function NavMain({
   items,
@@ -35,6 +35,11 @@ export function NavMain({
   }[];
   handleSignOut: () => void;
 }) {
+  const { pathname } = useLocation();
+
+  const normalize = (p: string) => (p.endsWith("/") ? p.slice(0, -1) : p);
+  const isActiveUrl = (url: string) => normalize(pathname) === normalize(url);
+
   return (
     <SidebarGroup>
       {/* <SidebarGroupLabel>Platform</SidebarGroupLabel> */}
@@ -60,7 +65,7 @@ export function NavMain({
                     <SidebarMenuSub>
                       {item.items.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton asChild>
+                          <SidebarMenuSubButton asChild isActive={isActiveUrl(subItem.url)}>
                             <Link to={subItem.url}>
                               <span>{subItem.title}</span>
                             </Link>
@@ -71,7 +76,7 @@ export function NavMain({
                   </CollapsibleContent>
                 </>
               ) : (
-                <SidebarMenuButton asChild tooltip={item.title}>
+                <SidebarMenuButton asChild tooltip={item.title} isActive={isActiveUrl(item.url)}>
                   <Link to={item.url}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>

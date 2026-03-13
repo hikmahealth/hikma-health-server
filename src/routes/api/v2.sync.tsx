@@ -2,15 +2,21 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import User from "@/models/user";
 import Sync from "@/models/sync";
+import { match, P } from "ts-pattern";
 import Device from "@/models/device";
 import {
   createRateLimiter,
   getClientIp,
   tooManyRequestsResponse,
 } from "@/lib/rate-limiter";
+import type { RequestCaller } from "@/types";
+import Clinic from "@/models/clinic";
+import { Option } from "@/lib/option";
+import { Result } from "@/lib/result";
+import { minutesToMilliseconds } from "date-fns";
 
 const syncLimiter = createRateLimiter({
-  windowMs: 60 * 1000,
+  windowMs: minutesToMilliseconds(1),
   maxRequests: 60,
 });
 
@@ -23,14 +29,6 @@ export const Route = createFileRoute("/api/v2/sync")({
         if (!limit.allowed) return tooManyRequestsResponse(limit.retryAfterMs);
 
         try {
-          const { user, device } = await authenticateRequest(request);
-          if (!user && !device) {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), {
-              headers: { "Content-Type": "application/json" },
-              status: 401,
-            });
-          }
-
           const url = new URL(request.url);
           const last_synced_at = Number(
             url.searchParams.get("last_pulled_at") ||
@@ -41,45 +39,62 @@ export const Route = createFileRoute("/api/v2/sync")({
           const migration = url.searchParams.get("migration");
           const peerType: Device.DeviceTypeT =
             (url.searchParams.get("peerType") as Device.DeviceTypeT) ||
-            "android"; // Get the peer type or else return "android"
+            "unknown"; // Get the peer type or else return "unknown". Unknown is treated as a mobile to be a safe fallback.
 
-          // Capture timestamp before running queries so the client's next sync
-          // covers any records created/modified while these queries execute.
-          const syncTimestamp = Date.now();
-
-          const dbChangeSet = await Sync.getDeltaRecords(
-            last_synced_at,
+          const authenticatedCaller = await authenticateRequest(
+            request,
             peerType,
           );
+          return match(authenticatedCaller)
+            .with({ ok: false }, () => {
+              // not a valid caller
+              return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                headers: { "Content-Type": "application/json" },
+                status: 401,
+              });
+            })
+            .with({ ok: true }, async ({ data: caller }) => {
+              // Ignore the device check for now, many of the users are actually not authenticated. this should only be checked for sync against the local hub syncs
+              // Capture timestamp before running queries so the client's next sync
+              const syncTimestamp = Date.now();
 
-          const changeSetSize = Object.values(dbChangeSet)
-            .map(
-              (entry) =>
-                entry.created.length +
-                entry.updated.length +
-                entry.deleted.length,
-            )
-            .reduce((a, b) => a + b, 0);
+              // covers any records created/modified while these queries execute.
+              const dbChangeSet = await Sync.getDeltaRecords(
+                last_synced_at,
+                peerType,
+                caller,
+              );
+              const changeSetSize = Object.values(dbChangeSet)
+                .map(
+                  (entry) =>
+                    entry.created.length +
+                    entry.updated.length +
+                    entry.deleted.length,
+                )
+                .reduce((a, b) => a + b, 0);
+              console.log({
+                timestamp: syncTimestamp,
+                dataPulled: changeSetSize,
+              });
 
-          console.log({
-            timestamp: syncTimestamp,
-            dataPulled: changeSetSize,
-          });
-
-          return new Response(
-            JSON.stringify({
-              success: true,
-              changes: dbChangeSet,
-              timestamp: syncTimestamp,
-            }),
-            {
-              headers: { "Content-Type": "application/json" },
-              status: 200,
-            },
-          );
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  changes: dbChangeSet,
+                  timestamp: syncTimestamp,
+                }),
+                {
+                  headers: { "Content-Type": "application/json" },
+                  status: 200,
+                },
+              );
+            })
+            .exhaustive();
         } catch (error) {
-          const message = error instanceof Error ? error.message : "Internal server error";
-          const isAuthError = message.includes("Unauthorized") ||
+          const message =
+            error instanceof Error ? error.message : "Internal server error";
+          const isAuthError =
+            message.includes("Unauthorized") ||
             message.includes("Authorization header") ||
             message.includes("Invalid credentials");
           return new Response(JSON.stringify({ error: message }), {
@@ -91,38 +106,51 @@ export const Route = createFileRoute("/api/v2/sync")({
       POST: async ({ request }) => {
         const postIp = getClientIp(request);
         const postLimit = syncLimiter.check(postIp);
-        if (!postLimit.allowed)
+        if (!postLimit.allowed) {
           return tooManyRequestsResponse(postLimit.retryAfterMs);
+        }
 
         try {
-          const { user, device } = await authenticateRequest(request);
-          if (!user && !device) {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), {
-              headers: { "Content-Type": "application/json" },
-              status: 401,
-            });
-          }
-
           const url = new URL(request.url);
           const last_synced_at = Number(
             url.searchParams.get("last_pulled_at") || 0,
           );
           const schemaVersion = url.searchParams.get("schemaVersion");
           const migration = url.searchParams.get("migration");
+          const peerType: Device.DeviceTypeT =
+            (url.searchParams.get("peerType") as Device.DeviceTypeT) ||
+            "unknown"; // Get the peer type or else return "android"
+          const authenticatedCaller = await authenticateRequest(
+            request,
+            peerType,
+          );
 
-          // expected body structure
-          // { [s in 'events' | 'patients' | ....]: { "created": Array<dict[str, any]>, "updated": Array<dict[str, any]>, deleted: []str }}
-          const body = (await request.json()) as Sync.PushRequest;
-          await Sync.persistClientChanges(body);
+          return match(authenticatedCaller)
+            .with({ ok: false }, () => {
+              // not a valid caller
+              return new Response(JSON.stringify({ error: "Unauthorized" }), {
+                headers: { "Content-Type": "application/json" },
+                status: 401,
+              });
+            })
+            .with({ ok: true }, async ({ data: caller }) => {
+              // { [s in 'events' | 'patients' | ....]: { "created": Array<dict[str, any]>, "updated": Array<dict[str, any]>, deleted: []str }}
+              const body = (await request.json()) as Sync.PushRequest;
 
-          return new Response(JSON.stringify({ success: true }), {
-            headers: { "Content-Type": "application/json" },
-            status: 200,
-          });
+              // expected body structure
+              await Sync.persistClientChanges(body, peerType, caller);
+              return new Response(JSON.stringify({ success: true }), {
+                headers: { "Content-Type": "application/json" },
+                status: 200,
+              });
+            })
+            .exhaustive();
         } catch (error) {
           console.error(error);
-          const message = error instanceof Error ? error.message : "Internal server error";
-          const isAuthError = message.includes("Unauthorized") ||
+          const message =
+            error instanceof Error ? error.message : "Internal server error";
+          const isAuthError =
+            message.includes("Unauthorized") ||
             message.includes("Authorization header") ||
             message.includes("Invalid credentials");
           const isBadRequest = error instanceof SyntaxError; // JSON.parse failure
@@ -137,35 +165,68 @@ export const Route = createFileRoute("/api/v2/sync")({
   },
 });
 
-const authenticateRequest = createServerOnlyFn(async (request: Request) => {
-  const authHeader = request.headers.get("Authorization");
-  const isBearerToken = authHeader?.startsWith("Bearer ");
-  if (!authHeader || (!authHeader.startsWith("Basic ") && !isBearerToken)) {
-    throw new Error("Authorization header missing or invalid");
-  }
+const authenticateRequest = createServerOnlyFn(
+  async (
+    request: Request,
+    peerType: Device.DeviceTypeT,
+  ): Promise<Result<RequestCaller>> => {
+    try {
+      const authHeader = request.headers.get("Authorization");
+      const isBearerToken = authHeader?.startsWith("Bearer ");
+      if (!authHeader || (!authHeader.startsWith("Basic ") && !isBearerToken)) {
+        throw new Error("Authorization header missing or invalid");
+      }
 
-  const encodedCredentials = authHeader.split(" ")[1];
+      const encodedCredentials = authHeader.split(" ")[1];
 
-  let device;
-  let user;
+      // if the sync is coming from a sync_hub, then we must validate that its a valid device
+      if (isBearerToken && peerType === Device.DEVICE_TYPE.SYNC_HUB) {
+        // token is the secret API Key that we can validate with the server to make sure its valid.
+        const deviceResult = await Device.API.getByApiKey(encodedCredentials);
+        if (!deviceResult) {
+          return Result.err({
+            _tag: "PermissionDenied",
+            permission: "Connection to server Refused",
+            message: "Invalid device credentials",
+          });
+        } else {
+          return Result.ok({
+            device: deviceResult,
+          });
+        }
+      }
 
-  if (isBearerToken) {
-    // token is the secret API Key that we can validate with the server to make sure its valid.
-    device = await Device.API.getByApiKey(encodedCredentials);
-    console.log({ device, encodedCredentials });
-  } else {
-    const decodedCredentials = Buffer.from(
-      encodedCredentials,
-      "base64",
-    ).toString();
-    user = getAuthenticatedUserFromCredentials(decodedCredentials);
-  }
+      // Now we are syncing with a device by a user account
+      const decodedCredentials = Buffer.from(
+        encodedCredentials,
+        "base64",
+      ).toString();
+      const user =
+        await getAuthenticatedUserFromCredentials(decodedCredentials);
+      let clinic: Option<Clinic.EncodedT> = Option.none;
 
-  return {
-    device,
-    user,
-  };
-});
+      if (user && user.user && user.user.clinic_id) {
+        const userClinicResult = await Clinic.getById(user.user.clinic_id);
+        clinic = Option.some(userClinicResult);
+      }
+
+      return Result.ok({
+        user: user.user,
+        clinic,
+        token: user.token,
+      });
+    } catch (error: any) {
+      console.error(
+        "[authenticatedRequest] Error authenticating a request. Error: ",
+        error,
+      );
+      return Result.err({
+        _tag: "Unauthorized",
+        message: error?.message || "Permission Denied",
+      });
+    }
+  },
+);
 
 const getAuthenticatedUserFromCredentials = createServerOnlyFn(
   async (credentials: string) => {

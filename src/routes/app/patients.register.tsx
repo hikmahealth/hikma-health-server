@@ -21,10 +21,10 @@ import { v1 as uuidv1 } from "uuid";
 import { SelectInput } from "@/components/select-input";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import {
-  getResultData,
   joinCheckboxValues,
   splitCheckboxValues,
 } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import { getCookie } from "@tanstack/react-start/server";
 import { createServerCaller } from "@/integrations/trpc/router";
 
@@ -85,7 +85,7 @@ export const Route = createFileRoute("/app/patients/register")({
   component: RouteComponent,
   loader: async () => {
     const patientRegistrationForm = await getAllPatientRegistrationForms();
-    const clinicsList = getResultData(await getAllClinics(), []);
+    const clinicsList = Result.getOrElse(await getAllClinics(), []);
     return { patientRegistrationForm: patientRegistrationForm[0], clinicsList };
   },
 });

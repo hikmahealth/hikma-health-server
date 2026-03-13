@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import { cn, getResultData, isValidUUID } from "@/lib/utils";
+import { cn, isValidUUID } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import { SelectInput } from "@/components/select-input";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { getAllUsers } from "@/lib/server-functions/users";
@@ -100,7 +101,7 @@ export const Route = createFileRoute("/app/prescriptions/edit/$")({
     }
 
     result.users = (await getAllUsers()) as User.EncodedT[];
-    result.clinics = getResultData(
+    result.clinics = Result.getOrElse(
       await getAllClinics(),
       [],
     ) as Clinic.EncodedT[];

@@ -21,7 +21,7 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { getEventForms } from "@/lib/server-functions/event-forms";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 
 const deleteForm = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
@@ -55,7 +55,7 @@ export const Route = createFileRoute("/app/event-forms/")({
   loader: async () => {
     const [forms, clinics] = await Promise.all([
       getEventForms({ data: { includeDeleted: false } }),
-      getAllClinics().then((r) => getResultData(r, [])),
+      getAllClinics().then((r) => Result.getOrElse(r, [])),
     ]);
     return { forms, clinics };
   },

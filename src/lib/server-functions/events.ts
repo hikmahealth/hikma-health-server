@@ -12,7 +12,7 @@ import {
   buildEventInsertValues,
 } from "./builders";
 import { logAuditEvent } from "./audit";
-import { type Result, ok, err } from "@/lib/utils";
+import { Result } from "@/lib/result";
 
 /**
  * Get all events by form id with pagination
@@ -83,10 +83,10 @@ export const getVisitEvents = createServerFn({ method: "GET" })
 
       try {
         const items = await Event.API.getByVisitId(data.visitId);
-        return ok({ items });
+        return Result.ok({ items });
       } catch (error) {
         Sentry.captureException(error);
-        return err({
+        return Result.err({
           _tag: "ServerError" as const,
           message:
             error instanceof Error ? error.message : "Failed to fetch events",

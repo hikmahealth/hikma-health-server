@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import { currentUserHasRole } from "@/lib/server-functions/users";
 import { permissionsMiddleware } from "@/middleware/auth";
 import { toast } from "sonner";
@@ -114,7 +114,7 @@ export const Route = createFileRoute("/app/settings/devices/edit/$")({
     });
     return {
       device: deviceId ? await getDeviceById({ data: { id: deviceId } }) : null,
-      clinics: getResultData(await getAllClinics(), []),
+      clinics: Result.getOrElse(await getAllClinics(), []),
       isSuperAdmin,
     };
   },

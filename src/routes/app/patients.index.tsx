@@ -562,6 +562,16 @@ function RouteComponent() {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {patientsList.length === 0 && searchQuery.trim().length > 0 && !loading && (
+              <TableRow>
+                <TableCell
+                  colSpan={headers.length + 2}
+                  className="px-6 py-8 text-center text-gray-500"
+                >
+                  No results found matching your search
+                </TableCell>
+              </TableRow>
+            )}
             {patientsList?.map((patient) => (
               <TableRow
                 className="hover:bg-gray-100 cursor-pointer"

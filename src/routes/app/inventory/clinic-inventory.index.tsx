@@ -32,7 +32,7 @@ import {
 import { toast } from "sonner";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { getClinicInventory } from "@/lib/server-functions/inventory";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import { LucidePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -41,7 +41,7 @@ const ITEMS_PER_PAGE = 100;
 export const Route = createFileRoute("/app/inventory/clinic-inventory/")({
   component: RouteComponent,
   loader: async () => {
-    const clinics = getResultData(await getAllClinics(), []);
+    const clinics = Result.getOrElse(await getAllClinics(), []);
     return {
       clinics,
       initialInventory: { items: [], hasMore: false },
@@ -91,7 +91,7 @@ function RouteComponent() {
           offset,
         },
       });
-      setInventory(getResultData(result, { items: [], hasMore: false }));
+      setInventory(Result.getOrElse(result, { items: [], hasMore: false }));
       setCurrentPage(page);
     } catch (error) {
       console.error("Error loading inventory:", error);

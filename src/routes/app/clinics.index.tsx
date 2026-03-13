@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import { Link } from "@tanstack/react-router";
 
 const deleteClinic = createServerFn({ method: "POST" })
@@ -40,7 +40,7 @@ export const archiveClinic = createServerFn({ method: "POST" })
 export const Route = createFileRoute("/app/clinics/")({
   component: RouteComponent,
   loader: async () => {
-    const clinics = getResultData(await getAllClinics(), []);
+    const clinics = Result.getOrElse(await getAllClinics(), []);
     return { clinics };
   },
 });

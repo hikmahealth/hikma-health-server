@@ -28,8 +28,8 @@ import {
   isValidUUID,
   listToFieldOptions,
   safeJSONParse,
-  getResultData,
 } from "@/lib/utils";
+import { Result } from "@/lib/result";
 import { DatePickerInput } from "@/components/date-picker-input";
 import { Separator } from "@/components/ui/separator";
 import { InputsConfiguration } from "@/components/form-builder/InputsConfiguration";
@@ -113,7 +113,7 @@ export const Route = createFileRoute("/app/event-forms/edit/$")({
   component: RouteComponent,
   loader: async ({ params }) => {
     const formId = params._splat;
-    const clinics = getResultData(await getAllClinics(), []);
+    const clinics = Result.getOrElse(await getAllClinics(), []);
     if (!formId || formId === "new") {
       return { form: null, clinics };
     }

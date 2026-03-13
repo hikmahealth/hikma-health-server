@@ -4,7 +4,7 @@ import User from "@/models/user";
 import { userRoleTokenHasCapability } from "../auth/request";
 import type { Pagination } from "./builders";
 import * as Sentry from "@sentry/tanstackstart-react";
-import { type Result, ok, err } from "@/lib/utils";
+import { Result } from "@/lib/result";
 
 /**
  * Get paginated problems for a patient, most recently updated first.
@@ -41,10 +41,10 @@ const getPatientProblems = createServerFn({ method: "GET" })
           includeCount: true,
         });
 
-        return ok({ items: result.items, pagination: result.pagination });
+        return Result.ok({ items: result.items, pagination: result.pagination });
       } catch (error) {
         Sentry.captureException(error);
-        return err({
+        return Result.err({
           _tag: "ServerError" as const,
           message:
             error instanceof Error

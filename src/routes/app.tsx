@@ -26,7 +26,7 @@ import React from "react";
 // import { createServerFileRoute } from '@tanstack/react-start/server'
 import { getCurrentUser } from "@/lib/server-functions/auth";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import { getResultData } from "@/lib/utils";
+import { Result } from "@/lib/result";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -40,7 +40,7 @@ export const Route = createFileRoute("/app")({
     const user = await getCurrentUser();
     return {
       currentUser: user,
-      clinics: getResultData(await getAllClinics(), []),
+      clinics: Result.getOrElse(await getAllClinics(), []),
     };
   },
 });

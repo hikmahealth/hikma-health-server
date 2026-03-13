@@ -19,6 +19,10 @@ import { v1 as uuidV1 } from "uuid";
 import Visit from "./visit";
 import type { PrescriptionItemValues } from "@/components/prescription-form";
 import PrescriptionItem from "./prescription-items";
+import type { RequestCaller } from "@/types";
+import { match, P } from "ts-pattern";
+import { Option as HHOption } from "@/lib/option";
+import Device from "./device";
 
 namespace Prescription {
   export const PrioritySchema = Schema.Union(
@@ -482,8 +486,22 @@ namespace Prescription {
 
   export namespace Sync {
     export const upsertFromDelta = createServerOnlyFn(
-      async (delta: Prescription.EncodedT) => {
-        return API.save(delta.id || uuidV1(), delta, [], "", "");
+      async (delta: Prescription.EncodedT, caller: RequestCaller) => {
+        const { userId, clinicId } = match(caller)
+          .with({ device: P.select() }, (_) => ({ userId: "", clinicId: "" }))
+          .with({ user: P.select() }, (user) => ({
+            userId: user.id,
+            clinicId: user.clinic_id,
+          }))
+          .exhaustive();
+
+        return API.save(
+          delta.id || uuidV1(),
+          delta,
+          [],
+          userId || "",
+          clinicId || "",
+        );
       },
     );
 
