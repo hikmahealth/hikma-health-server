@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { DatePickerInput } from "@/components/date-picker-input";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import PatientRegistrationForm from "@/models/patient-registration-form";
 import Language from "@/models/language";
@@ -94,11 +95,10 @@ function RouteComponent() {
   const { patientRegistrationForm, clinicsList } = Route.useLoaderData();
   const navigate = Route.useNavigate();
 
-  const { formState, handleSubmit, register, watch, setValue } = useForm({
-    mode: "all",
-    // initialValues: {},
+  const [lang, setLang] = useState<string>("en");
 
-    // validate: {},
+  const { formState, handleSubmit, register, watch, setValue } = useForm({
+    mode: "onSubmit",
   });
 
   const onSubmit = async (data: any) => {
@@ -190,9 +190,28 @@ function RouteComponent() {
     <div className="pb-4">
       <form onSubmit={handleSubmit(onSubmit)}>
         <div style={{ maxWidth: 500 }} className="space-y-4">
+          <div className="space-y-2">
+            <Label className="text-muted-foreground">Language</Label>
+            <Select value={lang} onValueChange={setLang}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Language.supportedLanguages.map((code) => (
+                  <SelectItem key={code} value={code}>
+                    {Language.friendlyLang(code)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {patientRegistrationForm?.fields
             .filter((field) => field.visible && field.deleted !== true)
             .map((field, idx) => {
+              const fieldLabel = Language.getTranslation(field.label, lang);
+              const fieldError = formState.errors[field.column];
+
               if (
                 field.fieldType === "text" &&
                 field.column !== "primary_clinic_id"
@@ -203,15 +222,20 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {Language.getTranslation(field.label, "en")}
+                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
                     </Label>
                     <Input
                       data-testid={"register-patient-" + idx}
                       data-inputtype={"text"}
                       data-column={field.column}
                       key={field.id}
-                      {...register(field.column)}
+                      {...register(field.column, {
+                        required: field.required && `${fieldLabel} is required`,
+                      })}
                     />
+                    {fieldError && (
+                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                    )}
                   </div>
                 );
               }
@@ -222,14 +246,20 @@ function RouteComponent() {
                       className="w-full"
                       data-testid={"register-patient-" + idx}
                       data-inputtype={"select"}
-                      label={Language.getTranslation(field.label, "en")}
+                      label={field.required ? `${fieldLabel} *` : fieldLabel}
                       data={clinicsList.map((clinic) => ({
                         label: clinic.name,
                         value: clinic.id,
                       }))}
                       value={watch(field.column)}
-                      onChange={(v) => setValue(field.column, v)}
+                      onChange={(v) => setValue(field.column, v, { shouldValidate: true })}
                     />
+                    <input type="hidden" {...register(field.column, {
+                      required: field.required && `${fieldLabel} is required`,
+                    })} />
+                    {fieldError && (
+                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                    )}
                   </div>
                 );
               }
@@ -240,14 +270,19 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {Language.getTranslation(field.label, "en")}
+                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
                     </Label>
                     <Input
                       data-inputtype={"number"}
                       data-testid={"register-patient-" + idx}
                       key={field.id}
-                      {...register(field.column)}
+                      {...register(field.column, {
+                        required: field.required && `${fieldLabel} is required`,
+                      })}
                     />
+                    {fieldError && (
+                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                    )}
                   </div>
                 );
               }
@@ -258,28 +293,24 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {Language.getTranslation(field.label, "en")}
+                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
                     </Label>
                     <Select
                       key={field.id}
-                      {...register(field.column)}
                       value={watch(field.column)}
                       data-inputtype="select"
                       data-testid={"register-patient-" + idx}
-                      onValueChange={(value) => setValue(field.column, value)}
+                      onValueChange={(value) => setValue(field.column, value, { shouldValidate: true })}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue
-                          placeholder={`Select ${Language.getTranslation(
-                            field.label,
-                            "en",
-                          )}`}
+                          placeholder={`Select ${fieldLabel}`}
                         />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectLabel>
-                            {Language.getTranslation(field.label, "en")}
+                            {fieldLabel}
                           </SelectLabel>
                           {field.options.map((opt) => (
                             <SelectItem
@@ -287,12 +318,18 @@ function RouteComponent() {
                               data-testid={Language.getTranslation(opt, "en")}
                               value={Language.getTranslation(opt, "en")}
                             >
-                              {upperFirst(Language.getTranslation(opt, "en"))}
+                              {upperFirst(Language.getTranslation(opt, lang))}
                             </SelectItem>
                           ))}
                         </SelectGroup>
                       </SelectContent>
                     </Select>
+                    <input type="hidden" {...register(field.column, {
+                      required: field.required && `${fieldLabel} is required`,
+                    })} />
+                    {fieldError && (
+                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                    )}
                   </div>
                 );
               }
@@ -305,11 +342,12 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {Language.getTranslation(field.label, "en")}
+                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
                     </Label>
                     <div className="space-y-1">
                       {field.options.map((opt) => {
                         const optValue = Language.getTranslation(opt, "en");
+                        const optDisplay = Language.getTranslation(opt, lang);
                         const isChecked = selectedValues.includes(optValue);
                         return (
                           <div
@@ -331,6 +369,7 @@ function RouteComponent() {
                                 setValue(
                                   field.column,
                                   joinCheckboxValues(next),
+                                  { shouldValidate: true },
                                 );
                               }}
                             />
@@ -338,12 +377,18 @@ function RouteComponent() {
                               htmlFor={`${field.column}-${optValue}`}
                               className="text-sm"
                             >
-                              {upperFirst(optValue)}
+                              {upperFirst(optDisplay)}
                             </label>
                           </div>
                         );
                       })}
                     </div>
+                    <input type="hidden" {...register(field.column, {
+                      required: field.required && `${fieldLabel} is required`,
+                    })} />
+                    {fieldError && (
+                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                    )}
                   </div>
                 );
               }
@@ -354,20 +399,22 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {Language.getTranslation(field.label, "en")}
+                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
                     </Label>
                     <DatePickerInput
-                      // valueFormat="YYYY MMM DD"
-                      // description={''}
-                      //   label={Language.getTranslation(field.label, "en")}
                       required={field.required}
                       placeholder="Pick date"
                       data-testid={"register-patient-" + idx}
                       data-inputtype="date"
-                      {...register(field.column)}
                       value={watch(field.column)}
-                      onChange={(date) => setValue(field.column, date)}
+                      onChange={(date) => setValue(field.column, date, { shouldValidate: true })}
                     />
+                    <input type="hidden" {...register(field.column, {
+                      required: field.required && `${fieldLabel} is required`,
+                    })} />
+                    {fieldError && (
+                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                    )}
                   </div>
                 );
               }

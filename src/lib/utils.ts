@@ -249,10 +249,13 @@ export function toSafeDateString(
     // Handle numeric values (assume milliseconds if > 1e12, seconds otherwise)
     if (
       typeof value === "number" ||
-      (typeof value === "string" && /^\d+$/.test(value.trim()))
+      (typeof value === "string" && /^-?\d+$/.test(value.trim()))
     ) {
       const num = typeof value === "number" ? value : parseInt(value, 10);
-      date = new Date(num > 1e12 ? num : num * 1000);
+      // Negative values are pre-1970 dates (e.g. birthdays) — always in ms.
+      // Positive: >1e12 means ms, otherwise seconds.
+      const ms = num < 0 ? num : num > 1e12 ? num : num * 1000;
+      date = new Date(ms);
     } else {
       date = new Date(value);
     }
@@ -335,7 +338,7 @@ export function getFieldOptionsValues(
 }
 
 /**
- * Checks if a string is a valid UUID. Checks for uuid v1 and v5
+ * Checks if a string is a valid UUID. Checks for uuid v1 to v8
  * @param {string} str - The string to check
  * @returns {boolean} True if the string is a valid UUID, false otherwise
  */

@@ -142,6 +142,14 @@ export const MultiSelect = React.forwardRef<
     const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
     const [isAnimating, setIsAnimating] = React.useState(false);
 
+    // Sync internal state when the parent provides new default values
+    // (e.g. after loading form data from the database).
+    // Uses JSON serialization to avoid re-running on every render due to new array references.
+    const defaultValueKey = JSON.stringify(defaultValue);
+    React.useEffect(() => {
+      setSelectedValues(defaultValue);
+    }, [defaultValueKey]);
+
     const handleInputKeyDown = (
       event: React.KeyboardEvent<HTMLInputElement>
     ) => {
