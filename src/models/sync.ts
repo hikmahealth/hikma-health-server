@@ -27,10 +27,11 @@ import DevicePinCode from "./device-pin-code";
 import UserClinicPermissions from "./user-clinic-permissions";
 import type { RequestCaller } from "@/types";
 
-/** Returns true if the value looks like a raw epoch timestamp (10-13 digit numeric string or number). */
+/** Returns true if the value looks like a raw epoch timestamp (10-13 digit numeric string or number, possibly negative for pre-1970 dates). */
 export const isEpochTimestamp = (value: unknown): boolean =>
-  (typeof value === "string" && /^\d{10,13}$/.test(value.trim())) ||
-  (typeof value === "number" && value > 1e9 && value < 1e14);
+  (typeof value === "string" && /^-?\d{10,13}$/.test(value.trim())) ||
+  (typeof value === "number" &&
+    ((value > 1e9 && value < 1e14) || (value < -1e9 && value > -1e14)));
 
 /** Returns true if a column name looks like a date/timestamp column. */
 export const isDateColumn = (name: string): boolean =>

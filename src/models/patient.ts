@@ -20,7 +20,13 @@ import Appointment from "./appointment";
 import Prescription from "./prescription";
 import Visit from "./visit";
 import Event from "./event";
-import { safeJSONParse, safeStringify, toSafeDateString } from "@/lib/utils";
+import {
+  isValidUUID,
+  safeJSONParse,
+  safeStringify,
+  toSafeDateString,
+} from "@/lib/utils";
+import { uuidv7 } from "uuidv7";
 import UserClinicPermissions from "./user-clinic-permissions";
 import PrescriptionItem from "./prescription-items";
 import PatientVital from "./patient-vital";
@@ -725,11 +731,13 @@ namespace Patient {
      */
     const upsert_core = createServerOnlyFn(
       async (patient: Patient.EncodedT) => {
+        const patientId =
+          patient.id && isValidUUID(patient.id) ? patient.id : uuidv7();
         try {
           return await db
             .insertInto(Patient.Table.name)
             .values({
-              id: patient.id,
+              id: patientId,
               given_name: patient.given_name,
               surname: patient.surname,
               date_of_birth: patient.date_of_birth
