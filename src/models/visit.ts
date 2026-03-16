@@ -204,9 +204,12 @@ namespace Visit {
             is_deleted: (eb) => eb.ref("excluded.is_deleted"),
             updated_at: sql`now()::timestamp with time zone`,
             last_modified: sql`now()::timestamp with time zone`,
-          }),
+          })
+          // Only update if the incoming record is newer than what's already stored
+          .where(sql<boolean>`excluded.updated_at > visits.updated_at`),
         )
-        .executeTakeFirstOrThrow();
+        .executeTakeFirst();
+      // InsertResult is undefined when the updated_at guard skips a stale record
     });
 
     /**

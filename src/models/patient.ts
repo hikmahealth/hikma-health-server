@@ -795,9 +795,12 @@ namespace Patient {
                   patient.updated_at,
                 )}::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
-              }),
+              })
+              // Only update if the incoming record is newer than what's already stored
+              .where(sql<boolean>`excluded.updated_at > patients.updated_at`),
             )
-            .executeTakeFirstOrThrow();
+            .executeTakeFirst();
+          // InsertResult is undefined when the updated_at guard skips a stale record
         } catch (error) {
           console.error("Patient upsert operation failed:", {
             operation: "patient_upsert",

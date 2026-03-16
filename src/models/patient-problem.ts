@@ -423,7 +423,9 @@ namespace PatientProblem {
             oc.column("id").doUpdateSet((eb) => ({
               ...row,
               server_created_at: eb.ref("patient_problems.server_created_at"),
-            })),
+            }))
+            // Only update if the incoming record is newer than what's already stored
+            .where(sql<boolean>`excluded.updated_at > patient_problems.updated_at`),
           )
           .execute();
       },

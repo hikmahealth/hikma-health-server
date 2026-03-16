@@ -385,11 +385,19 @@ namespace DispensingRecord {
               metadata: (eb) => eb.ref("excluded.metadata"),
               updated_at: sql`now()::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
-            }),
+            })
+            // Only update if the incoming record is newer than what's already stored
+            .where(sql<boolean>`excluded.updated_at > dispensing_records.updated_at`),
           )
           .returningAll()
-          .executeTakeFirstOrThrow();
+          .executeTakeFirst();
 
+        if (!result) {
+          console.info(
+            `[sync] Skipped stale upsert for dispensing_record ${id}`,
+          );
+          return null;
+        }
         return fromDbRecord(result);
       },
     );

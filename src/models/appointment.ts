@@ -193,9 +193,10 @@ namespace Appointment {
         FROM appointments
         INNER JOIN patients ON appointments.patient_id = patients.id
         INNER JOIN clinics ON appointments.clinic_id = clinics.id
-        INNER JOIN users ON appointments.provider_id = users.id
+        LEFT JOIN users ON appointments.provider_id = users.id
         WHERE appointments.is_deleted = false
         AND appointments.patient_id = ${patientId}
+        ORDER BY appointments.timestamp DESC
       `.compile(db),
         );
 
@@ -396,13 +397,22 @@ namespace Appointment {
                     isValidUUID(appointment.provider_id)
                       ? appointment.provider_id
                       : null,
-                });
+                })
+                // Only update if the incoming record is newer than what's already stored
+                .where(sql<boolean>`excluded.updated_at > appointments.updated_at`);
               })
-              .executeTakeFirstOrThrow();
+              .executeTakeFirst();
+
+            if (!res) {
+              // Stale record skipped by the updated_at guard
+              console.info(
+                `[sync] Skipped stale upsert for appointment ${appointment.id}`,
+              );
+            }
 
             return {
               numInsertedOrUpdatedRows: Number(
-                res.numInsertedOrUpdatedRows ?? 0,
+                res?.numInsertedOrUpdatedRows ?? 0,
               ),
             };
           });

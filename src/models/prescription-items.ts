@@ -16,7 +16,7 @@ import {
   sql,
   Transaction,
 } from "kysely";
-import { isValidUUID } from "@/lib/utils";
+import { isValidUUID, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import { v1 as uuidV1 } from "uuid";
 
@@ -290,7 +290,7 @@ namespace PrescriptionItem {
     );
 
     const buildUpsertValues = (
-      item: Partial<ApiPrescriptionItem>,
+      item: Partial<ApiPrescriptionItem> & { created_at?: string; updated_at?: string },
       id: string,
     ) => ({
       id,
@@ -305,6 +305,12 @@ namespace PrescriptionItem {
       refills_used: item.refills_used ?? 0,
       item_status: item.item_status ?? "active",
       notes: item.notes ?? null,
+      created_at: item.created_at
+        ? sql`${toSafeDateString(item.created_at)}::timestamp with time zone`
+        : sql`now()::timestamp with time zone`,
+      updated_at: item.updated_at
+        ? sql`${toSafeDateString(item.updated_at)}::timestamp with time zone`
+        : sql`now()::timestamp with time zone`,
     });
 
     const executeCoreUpsert = async (
@@ -331,12 +337,19 @@ namespace PrescriptionItem {
               refills_used: eb.ref("excluded.refills_used"),
               item_status: eb.ref("excluded.item_status"),
               notes: eb.ref("excluded.notes"),
-            })),
+            }))
+            // Only update if the incoming record is newer than what's already stored
+            .where(sql<boolean>`excluded.updated_at > prescription_items.updated_at`),
           )
           .returning("id")
-          .executeTakeFirstOrThrow();
+          .executeTakeFirst();
 
-        return result;
+        if (!result) {
+          console.info(
+            `[sync] Skipped stale upsert for prescription_item ${id}`,
+          );
+        }
+        return result ?? { id };
       } catch (error) {
         console.error("Error: ", error);
         throw new DatabaseError("Upsert failed", error);

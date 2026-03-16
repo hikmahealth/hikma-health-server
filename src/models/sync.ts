@@ -454,7 +454,37 @@ namespace Sync {
   };
 
   /**
-   * Persist the delta data from the client
+   * Checks whether a record is authorized for a hub to push, based on
+   * the record's clinic association and the hub's authorized clinic IDs.
+   * Returns true if the table has no direct clinic column (indirectly associated).
+   */
+  function isRecordAuthorizedForClinic(
+    record: Record<string, any>,
+    tableName: string,
+    authorizedClinicIds: Set<string>,
+  ): boolean {
+    const clinicColumn = CLINIC_COLUMN_BY_TABLE[tableName];
+    if (!clinicColumn) return true;
+
+    const recordClinicId = record[clinicColumn];
+    // Null/undefined clinic — allow (e.g. patients with no primary_clinic_id yet)
+    if (!recordClinicId) return true;
+
+    return authorizedClinicIds.has(recordClinicId);
+  }
+
+  /**
+   * Persist the delta data from the client.
+   *
+   * **Clock-skew assumption**: Each model's upsert uses a WHERE guard
+   * (`excluded.updated_at > <table>.updated_at`) to reject stale records.
+   * `excluded.updated_at` is the *client-provided* timestamp from the INSERT
+   * VALUES clause, while the stored value may be either client-provided or
+   * server-set (`now()`) depending on the model. This means a client whose
+   * clock is significantly behind the server could have legitimate updates
+   * silently dropped. Callers (mobile apps / hubs) should keep their clocks
+   * reasonably synchronised (e.g. via NTP).
+   *
    * @param entity
    * @param deltaData
    */
@@ -473,6 +503,12 @@ namespace Sync {
       (typeof ENTITIES_TO_PULL_FROM_HUB)[number]
     > = isHub ? hubPushTableNameModelMap : pushTableNameModelMap;
 
+    // Hub authorization: build a set of allowed clinic IDs for fast lookups
+    const hubAuthorizedClinicIds: Set<string> | null =
+      isHub && "device" in caller
+        ? new Set((caller.device.clinic_ids as unknown as string[]) ?? [])
+        : null;
+
     // Process the delta data from the client.
     // Iterate over the entity list (not Object.entries) to guarantee
     // dependency order: patients → patient_additional_attributes → visits → events → …
@@ -489,8 +525,6 @@ namespace Sync {
         updated: newDeltaJson?.updated || [],
         deleted: newDeltaJson?.deleted || [],
       };
-
-      // console.log(`${tableName} - Records to create: ${deltaData.created.length}, update: ${deltaData.updated.length}, delete: ${deltaData.deleted.length}`);
 
       const knownColumns = new Set(
         Object.keys(tableModelMap[tableName].Table.columns),
@@ -525,6 +559,24 @@ namespace Sync {
               return [key, value];
             }),
         );
+
+        // Hub authorization: reject records targeting clinics the hub isn't assigned to
+        if (
+          hubAuthorizedClinicIds &&
+          !isRecordAuthorizedForClinic(
+            cleaned,
+            tableName,
+            hubAuthorizedClinicIds,
+          )
+        ) {
+          const clinicColumn = CLINIC_COLUMN_BY_TABLE[tableName];
+          console.warn(
+            `[sync] Hub not authorized to push "${tableName}" record ${cleaned.id} — ` +
+              `clinic ${cleaned[clinicColumn!]} not in hub's authorized clinics`,
+          );
+          continue;
+        }
+
         await tableModelMap[tableName].Sync.upsertFromDelta(
           cleaned as any,
           caller,
@@ -532,7 +584,6 @@ namespace Sync {
       }
 
       for (const id of deltaData.deleted) {
-        // console.log(`Deleting ${tableName} record:`, id);
         await tableModelMap[tableName].Sync.deleteFromDelta(id);
       }
     }

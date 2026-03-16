@@ -3,7 +3,6 @@ import {
   DatabaseError,
   executeQuery,
   executeQueryTakeFirst,
-  executeQueryTakeFirstOrThrow,
   NotFoundError,
   UnauthorizedError,
   ValidationError,
@@ -354,7 +353,8 @@ namespace DrugCatalogue {
       const id = drug.id || uuidV1();
       const values = buildUpsertValues(drug, id);
 
-      return executeQueryTakeFirstOrThrow(
+      // executeQueryTakeFirst returns undefined when the WHERE guard skips a stale record
+      return pipe(executeQueryTakeFirst(
         trx
           .insertInto(Table.name)
           .values({
@@ -400,10 +400,17 @@ namespace DrugCatalogue {
               deleted_at: drug.deleted_at
                 ? sql`${toSafeDateString(drug.deleted_at)}::timestamp with time zone`
                 : eb.ref("excluded.deleted_at"),
-            })),
+            }))
+            // Only update if the incoming record is newer than what's already stored
+            .where(sql<boolean>`excluded.updated_at > drug_catalogue.updated_at`),
           )
           .returning("id"),
-      );
+      ), Effect.map((result) => {
+        if (!result) {
+          console.info(`[sync] Skipped stale upsert for drug_catalogue ${id}`);
+        }
+        return result ?? { id };
+      }));
     };
 
     const withTransaction = <T>(

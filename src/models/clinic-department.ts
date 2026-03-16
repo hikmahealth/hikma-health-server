@@ -10,7 +10,7 @@ import {
 } from "kysely";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
-import { safeJSONParse } from "@/lib/utils";
+import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 
 namespace ClinicDepartment {
   // Status constants
@@ -168,12 +168,13 @@ namespace ClinicDepartment {
         department: Omit<
           ClinicDepartment.EncodedT,
           | "id"
-          | "created_at"
-          | "updated_at"
           | "last_modified"
           | "server_created_at"
           | "deleted_at"
-        >,
+        > &
+          Partial<
+            Pick<ClinicDepartment.EncodedT, "created_at" | "updated_at">
+          >,
       ): Promise<ClinicDepartment.EncodedT["id"] | null> => {
         const departmentId = uuidV1();
 
@@ -196,8 +197,12 @@ namespace ClinicDepartment {
               safeJSONParse(department.metadata, {}),
             )}::jsonb`,
             is_deleted: department.is_deleted || false,
-            created_at: sql`now()`,
-            updated_at: sql`now()`,
+            created_at: department.created_at
+              ? sql`${toSafeDateString(department.created_at)}::timestamp with time zone`
+              : sql`now()::timestamp with time zone`,
+            updated_at: department.updated_at
+              ? sql`${toSafeDateString(department.updated_at)}::timestamp with time zone`
+              : sql`now()::timestamp with time zone`,
             last_modified: sql`now()`,
             server_created_at: sql`now()`,
             deleted_at: null,
@@ -221,7 +226,9 @@ namespace ClinicDepartment {
               is_deleted: department.is_deleted || false,
               updated_at: sql`now()::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
-            }),
+            })
+            // Only update if the incoming record is newer than what's already stored
+            .where(sql<boolean>`excluded.updated_at > clinic_departments.updated_at`),
           )
           .execute();
 

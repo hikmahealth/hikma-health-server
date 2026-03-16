@@ -416,9 +416,19 @@ namespace Prescription {
                     prescription.updated_at,
                   )}::timestamp with time zone`,
                   last_modified: sql`now()::timestamp with time zone`,
-                });
+                })
+                // Only update if the incoming record is newer than what's already stored
+                .where(sql<boolean>`excluded.updated_at > prescriptions.updated_at`);
               })
-              .executeTakeFirstOrThrow();
+              .executeTakeFirst();
+
+            if (!res) {
+              // Stale record skipped by the updated_at guard — don't upsert items either
+              console.info(
+                `[sync] Skipped stale upsert for prescription ${prescriptionId}`,
+              );
+              return { numInsertedOrUpdatedRows: BigInt(0) };
+            }
 
             if (prescription_items.length > 0) {
               const itemsRes = await trx
