@@ -16,6 +16,13 @@ Deploy the project quickly by clicking on one of these services:
 
 [![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new)
 
+
+
+### 💥 Default credentials 💥
+To get the default credentials, please email the maintainer at ally[at]hikmahealth.org.
+
+This is a temporary fix, a more permanent fix is coming soon with wordpress style "set up your own admin credentials" coming soon!
+
 ---
 
 <details>
