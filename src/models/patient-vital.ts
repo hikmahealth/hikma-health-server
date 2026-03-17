@@ -135,7 +135,7 @@ namespace PatientVital {
      * @returns {Promise<EncodedT>} - The created vital record
      */
     export const save = createServerOnlyFn(
-      async (vital: Table.NewPatientVitals): Promise<EncodedT> => {
+      async (vital: Table.NewPatientVitals): Promise<EncodedT | undefined> => {
         const id = vital.id || uuidV1();
         const result = await db
           .insertInto(Table.name)
@@ -206,10 +206,18 @@ namespace PatientVital {
               updated_at: sql`now()::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
               deleted_at: vital.deleted_at,
-            }),
+            })
+            // Only update if the incoming record is newer than what's already stored
+            .where(sql<boolean>`excluded.updated_at > patient_vitals.updated_at`),
           )
           .returningAll()
-          .executeTakeFirstOrThrow();
+          .executeTakeFirst();
+
+        if (!result) {
+          console.info(
+            `[sync] Skipped stale upsert for patient_vital ${id}`,
+          );
+        }
 
         return result;
       },
