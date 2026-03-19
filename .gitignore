@@ -45,3 +45,5 @@ old.*
 # moon
 .moon/cache
 .moon/docker
+
+.server

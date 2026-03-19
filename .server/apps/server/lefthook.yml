@@ -1,5 +1,0 @@
-pre-commit:
-  jobs:
-    - name: badge
-      run: bash scripts/update-coverage-badge.sh
-      stage_fixed: true
