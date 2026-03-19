@@ -1,7 +1,10 @@
 set export := true
 
-[no-cd]
 build-server:
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    export MOON_TOOLCHAIN_FORCE_GLOBALS=true
+
     # prepare the web project
     moon docker scaffold server
 
@@ -16,10 +19,9 @@ build-server:
 
     mv ./.moon/docker/sources/* "./$APP_FOLDER"
 
-    cd $APP_FOLDER && pnpm install
+    cd $APP_FOLDER
+    pnpm install
     moon server:build
 
-[no-cd]
 start-server:
-    cd $APP_FOLDER
-    moon server:start
+    cd $APP_FOLDER && moon server:start
