@@ -11,6 +11,8 @@ tasks:
       - ui:build
     outputs:
       - .output/**/*
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
   dev:
     command: pnpm run dev
     deps:
