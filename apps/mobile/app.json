@@ -2,7 +2,7 @@
   "name": "Hikma Health",
   "slug": "hikma-health-mobile",
   "scheme": "hikma-health-mobile",
-  "version": "1.3.3",
+  "version": "1.5.6",
   "orientation": "default",
   "userInterfaceStyle": "light",
   "icon": "./assets/images/app-icon-all.png",
@@ -23,8 +23,8 @@
     },
     "allowBackup": false,
     "edgeToEdgeEnabled": true,
-    "versionCode": 44,
-    "versionName": "0.4.4"
+    "versionCode": 56,
+    "versionName": "1.5.6"
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
@@ -62,16 +62,22 @@
       "expo-build-properties",
       {
         "ios": {
+          "infoPlist": {
+            "NSAppTransportSecurity": {
+              "NSAllowsLocalNetworking": true
+            }
+          },
           "extraPods": [
             {
               "name": "simdjson",
               "configurations": ["Debug", "Release"],
-              "path": "../../../node_modules/@nozbe/simdjson",
+              "path": "../node_modules/@nozbe/simdjson",
               "modular_headers": true
             }
           ]
         },
         "android": {
+          "usesCleartextTraffic": true,
           "packagingOptions": {
             "pickFirst": ["**/libc++_shared.so"]
           }
@@ -87,6 +93,7 @@
     "expo-secure-store",
     "expo-localization",
     "expo-font",
+    "expo-sharing",
     [
       "expo-splash-screen",
       {

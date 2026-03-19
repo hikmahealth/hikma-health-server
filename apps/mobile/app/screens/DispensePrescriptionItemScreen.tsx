@@ -13,22 +13,29 @@ import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { View } from "@/components/View"
 import database from "@/db"
+import { usePermissionGuard } from "@/hooks/usePermissionGuard"
 import ClinicInventory from "@/models/ClinicInventory"
 import PrescriptionItem from "@/models/PrescriptionItem"
 import { PharmacyNavigatorParamList } from "@/navigators/PharmacyNavigator"
 import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 // import { useNavigation } from "@react-navigation/native"
 
-interface DispensePrescriptionItemScreenProps
-  extends NativeStackScreenProps<PharmacyNavigatorParamList, "DispensePrescriptionItem"> {}
+interface DispensePrescriptionItemScreenProps extends NativeStackScreenProps<
+  PharmacyNavigatorParamList,
+  "DispensePrescriptionItem"
+> {}
 
 export const DispensePrescriptionItemScreen: FC<DispensePrescriptionItemScreenProps> = ({
   route,
   navigation,
 }) => {
   const { prescriptionItemId } = route.params
+  const { paddingTop: safeAreaPaddingTop } = useSafeAreaInsetsStyle(["top"])
+
   const { id: providerId } = useSelector(providerStore, (state) => state.context)
+  const { can } = usePermissionGuard()
   const [prescriptionItem, setPrescriptionItem] = useState<PrescriptionItem.DB.T | null>(null)
   const [clinicInventory, setClinicInventory] = useState<ClinicInventory.DB.T[]>([])
 
@@ -127,6 +134,12 @@ export const DispensePrescriptionItemScreen: FC<DispensePrescriptionItemScreenPr
     if (!prescriptionItem) {
       return
     }
+    if (!can("prescription:dispense")) {
+      return Toast.show("You do not have permission to dispense medications", {
+        duration: Toast.durations.SHORT,
+        position: Toast.positions.BOTTOM,
+      })
+    }
     if (totalAllocated === 0) {
       return Toast.show("Cannot dispense 0 drugs", {
         duration: Toast.durations.SHORT,
@@ -212,6 +225,10 @@ export const DispensePrescriptionItemScreen: FC<DispensePrescriptionItemScreenPr
           zIndex={990000}
           zIndexInverse={990000}
           listMode="MODAL"
+          modalContentContainerStyle={[
+            $modalContentContainerStyle,
+            { paddingTop: safeAreaPaddingTop },
+          ]}
           mode="BADGE"
           items={inventoryOptions}
           multiple
@@ -262,6 +279,16 @@ const $root: ViewStyle = {
 
 const $dropDownPickerStyle: ViewStyle = {
   marginTop: 2,
+  borderWidth: 1,
+  borderRadius: 4,
+  backgroundColor: colors.palette.neutral200,
+  borderColor: colors.palette.neutral400,
+  zIndex: 990000,
+  flex: 1,
+}
+
+const $modalContentContainerStyle: ViewStyle = {
+  marginTop: 4,
   borderWidth: 1,
   borderRadius: 4,
   backgroundColor: colors.palette.neutral200,

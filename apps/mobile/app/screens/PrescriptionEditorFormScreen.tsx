@@ -32,6 +32,7 @@ import { View } from "@/components/View"
 import database from "@/db"
 import { useDBClinicsList } from "@/hooks/useDBClinicsList"
 import { usePatientRecord } from "@/hooks/usePatientRecord"
+import { usePermissionGuard } from "@/hooks/usePermissionGuard"
 import ClinicInventory from "@/models/ClinicInventory"
 import DrugCatalogue from "@/models/DrugCatalogue"
 import Patient from "@/models/Patient"
@@ -58,6 +59,7 @@ export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps>
     name: providerName,
   } = useSelector(providerStore, (state) => state.context)
   const { theme } = useAppTheme()
+  const { can } = usePermissionGuard()
 
   const providerClinicId = Option.getOrUndefined(clinic_id)
 
@@ -189,6 +191,13 @@ export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps>
   }
 
   const onSubmit = async (submission: Prescription.T) => {
+    if (!can("prescription:create")) {
+      Toast.show("You do not have permission to create prescriptions", {
+        duration: Toast.durations.SHORT,
+        position: Toast.positions.BOTTOM,
+      })
+      return
+    }
     // Making sure the data is complete and that the defaults are sane
     const data: Prescription.T = {
       ...submission,
@@ -212,25 +221,31 @@ export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps>
 
     try {
       setIsLoading(true)
-      const { prescriptionId: prescriptionIdResult, visitId } = await Prescription.DB.create(
-        prescriptionId || null,
-        data,
-        items,
-        {
-          clinicId: providerClinicId || "",
-          id: providerId,
-          name: providerName,
-        },
-        shouldCreateNewVisit || true,
-      )
+      const { prescriptionId: prescriptionIdResult, visitId: createdVisitId } =
+        await Prescription.DB.create(
+          prescriptionId || null,
+          data,
+          items,
+          {
+            clinicId: providerClinicId || "",
+            id: providerId,
+            name: providerName,
+          },
+          shouldCreateNewVisit,
+        )
 
       // If there is no visitId and we are not creating a new visit, just go back
-      if (!visitId && shouldCreateNewVisit === false) {
+      if (!createdVisitId && !shouldCreateNewVisit) {
         navigation.goBack()
-      } else if (visitId) {
+      } else if (createdVisitId) {
         navigation.goBack()
       } else {
-        navigation.popTo("NewVisit", { patientId, visitDate, visitId: res.visitId })
+        // Visit creation was expected but failed
+        Toast.show("Error: visit was not created", {
+          position: Toast.positions.BOTTOM,
+          duration: Toast.durations.LONG,
+        })
+        navigation.goBack()
       }
     } catch (error) {
       console.error(error)

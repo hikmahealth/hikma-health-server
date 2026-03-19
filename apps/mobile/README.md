@@ -10,7 +10,18 @@ This app is built using React Native with Expo and can be compiled for either iO
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 
-![check-code-coverage](https://img.shields.io/badge/code--coverage-11.41%25-red)
+![check-code-coverage](./badges/coverage.svg)
+
+
+## 💥 HOT TIP 💥
+We recommend using the Hikma Health mobile applications found on the play stores instead of bundling your own and distributing it to your users.
+
+We actively maintain the Hikma Health applications found in both the apple and google stores (apple is often 2 - 3 versions behind given our primary userbase) and stay ahead of store compliance, security and updates.
+
+If you do choose to deploy your own version based on this open source repo, please rename the application and package names so as not to confuse your healthcare providers and users.
+
+
+
 
 ## Quick Start
 

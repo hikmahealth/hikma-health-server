@@ -141,3 +141,31 @@ export function getPrescriptionItemStatusColor(
       return ["#374151", "#ffffff"] // gray-700
   }
 }
+
+/**
+ * Check if a given URL is accessible over the network
+ * @param {string} url - URL or IP address
+ * @param {number} timeoutMs - Timeout in milliseconds before aborting the request
+ * @returns {Promise<boolean>} whether or not it is reachable over the network
+ */
+export const checkUrl = async (url: string, timeoutMs: number): Promise<boolean> => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { method: "HEAD", signal: controller.signal })
+    return res.ok
+  } catch {
+    return false
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+/**
+ * Checks if a string is a valid UUID. Checks for uuid v1 to v8
+ * @param {string} str - The string to check
+ * @returns {boolean} True if the string is a valid UUID, false otherwise
+ */
+export function isValidUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str)
+}

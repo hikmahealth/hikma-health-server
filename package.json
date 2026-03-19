@@ -2,14 +2,12 @@
   "name": "hhmammoth",
   "private": true,
   "scripts": {
-    "build:web": "moon web:build",
-    "start:web": "moon web:start",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "build": "moon web:build",
+    "start": "moon web:start"
   },
   "devDependencies": {
     "@moonrepo/cli": "^1.41.7",
     "prettier": "^3.7.4",
-    "turbo": "^2.7.1",
     "typescript": "5.9.2"
   },
   "packageManager": "pnpm@10.28.1",
@@ -17,10 +15,6 @@
     "node": ">=22.20.0"
   },
   "pnpm": {
-    "allowUnusedPatches": true,
-    "patchedDependencies": {
-      "react-native-date-picker": ".patches/react-native-date-picker+5.0.13.patch"
-    },
     "onlyBuiltDependencies": [
       "@sentry/cli",
       "@swc/core",

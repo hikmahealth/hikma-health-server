@@ -222,6 +222,7 @@ type FormField = {
   baseField: boolean
   options: Language.TranslationObject[]
   column: PatientRegistrationForm.BaseColumn | string
+  required: boolean
 }
 
 type PatientRecordEditorState = {
@@ -249,7 +250,7 @@ export function usePatientRecordEditor(
     values: {},
     fields: [],
   })
-  const [isLoadingPatient, setIsLoadingPatient] = useState<boolean>(true)
+  const [isLoadingPatient, setIsLoadingPatient] = useState<boolean>(!!patientId)
   // const [formFields, setFormFields] = useState<PatientRecordEditorState["formFields"]>([])
 
   useEffect(() => {
@@ -266,7 +267,7 @@ export function usePatientRecordEditor(
           setPatientRecord(record)
         })
         .catch((error) => {
-          console.warn("Error fetching a patient with the id: ", patientId)
+          console.warn("Error fetching a patient with the id: ", patientId, ". [Error]: ", error)
           setPatientRecord(record)
         })
         .finally(() => {
@@ -286,9 +287,11 @@ export function usePatientRecordEditor(
       .observe()
       .subscribe((res) => {
         if (res.length === 0) {
-          console.error("There are no patient registration forms. This could be an error")
+          console.info("There are no patient registration forms. This could be an error")
           console.warn("Overriding absent form with default form")
-          return setRegistrationForm(initialFormState as unknown as RegistrationFormModel)
+          setRegistrationForm(initialFormState as unknown as RegistrationFormModel)
+          setIsLoadingForm(false)
+          return
         }
         if (res.length > 1) {
           console.warn(
@@ -324,6 +327,7 @@ export function usePatientRecordEditor(
           options: field.options || [],
           baseField: field.baseField,
           column: field.column,
+          required: field.required,
         }
       })
       .filter((field) => field.visible)

@@ -7,6 +7,7 @@ import { Option } from "effect"
 import { upperFirst } from "es-toolkit/compat"
 import { LucideArrowRight } from "lucide-react-native"
 import DropDownPicker from "react-native-dropdown-picker"
+import Toast from "react-native-root-toast"
 
 import { Button } from "@/components/Button"
 import { DateOfBirthInput } from "@/components/DateOfBirthInput"
@@ -15,21 +16,32 @@ import { If } from "@/components/If"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { Checkbox } from "@/components/Toggle/Checkbox"
 import { Radio } from "@/components/Toggle/Radio"
 import { View } from "@/components/View"
 import { useClinics } from "@/hooks/useClinicsList"
+import { useCreatePatient } from "@/hooks/useCreatePatient"
 import { useDebounce } from "@/hooks/useDebounce"
 import { getBaseFieldByColumn, usePatientRecordEditor } from "@/hooks/usePatientRecordEditor"
+import { usePermissionGuard } from "@/hooks/usePermissionGuard"
 import { useSimilarPatientsSearch } from "@/hooks/useSimilarPatientsSearch"
+import { useUpdatePatient } from "@/hooks/useUpdatePatient"
 import { translate } from "@/i18n/translate"
 import Patient from "@/models/Patient"
+import PatientRegistrationForm from "@/models/PatientRegistrationForm"
 import { PatientStackScreenProps } from "@/navigators/PatientNavigator"
+import { useDataAccess } from "@/providers/DataAccessProvider"
+import {
+  patientRecordToCreateInput,
+  patientRecordToUpdateInput,
+} from "@/providers/transformers/patientRecordToInput"
 import { languageStore } from "@/store/language"
 import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
 import { parseYYYYMMDD } from "@/utils/date"
-import { getTranslation } from "@/utils/parsers"
-import UserClinicPermissions from "@/models/UserClinicPermissions"
+import { toggleStringInArray, isValidUUID } from "@/utils/misc"
+import { getTranslation, splitCheckboxValues, joinCheckboxValues } from "@/utils/parsers"
+import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
 // import { useNavigation } from "@react-navigation/native"
 
 interface PatientRecordEditorScreenProps extends PatientStackScreenProps<"PatientRecordEditor"> {}
@@ -46,8 +58,15 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
     name: providerName,
   } = useSelector(providerStore, (state) => state.context)
   const editPatientId = route?.params?.editPatientId
+  const { isOnline } = useDataAccess()
+  const { can } = usePermissionGuard()
+  const createPatientMutation = useCreatePatient()
+  const updatePatientMutation = useUpdatePatient()
 
   const [existingGovtId, setExistingGovtId] = useState<boolean>(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const { paddingTop: safeAreaPaddingTop } = useSafeAreaInsetsStyle(["top"])
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { clinics, isLoading: isLoadingClinics } = useClinics()
@@ -142,8 +161,33 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
   }
 
   const onSubmit = async () => {
-    if (existingGovtId) return
-    // TODO: Confirm that all the required fields are filled in
+    if (existingGovtId || isSubmitting) return
+
+    // Validate required fields before submission
+    const missingFields = PatientRegistrationForm.getMissingRequiredFields({
+      fields: patientRecord.fields,
+      values: patientRecord.values,
+    })
+    if (missingFields.length > 0) {
+      Alert.alert(
+        translate("common:error"),
+        translate("newPatient:requiredFieldsMissing", {
+          fields: missingFields.join(", "),
+        }),
+      )
+      return
+    }
+
+    const operation = editPatientId ? "patient:edit" : "patient:register"
+    if (!can(operation)) {
+      Toast.show(
+        editPatientId
+          ? "You do not have permission to edit patient records"
+          : "You do not have permission to register new patients",
+        { position: Toast.positions.BOTTOM },
+      )
+      return
+    }
 
     const provider = {
       id: providerId,
@@ -153,70 +197,88 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
       id: Option.getOrElse(clinicId, () => "Unknown"),
       name: Option.getOrElse(clinicName, () => "Unknown"),
     }
-    const primaryClinicId =
-      Patient.getPatientFieldByName(patientRecord, "primary_clinic_id", "") || clinic.id
-    const viewHistoryClinicIds = await UserClinicPermissions.DB.getClinicIdsWithPermission(
-      provider.id,
-      "canEditRecords",
-    )
 
-    if (!viewHistoryClinicIds.includes(primaryClinicId)) {
-      Alert.alert("Unauthorized", "You do not have permission to edit this patient's record.", [
-        { text: "OK", onPress: () => navigation.goBack() },
+    const onSuccess = (patientId: string | undefined) => {
+      const redirectPatientId = patientId ?? editPatientId
+      if (redirectPatientId === undefined) {
+        return navigation.goBack()
+      }
+      Alert.alert(translate("common:success"), translate("newPatient:successfulSave"), [
+        {
+          text: translate("newPatient:done"),
+          onPress: () => navigation.goBack(),
+        },
+        {
+          text: translate("newPatient:continueToVisits"),
+          onPress: () => {
+            return navigation.replace("NewVisit", {
+              patientId: redirectPatientId,
+              visitDate: new Date().getTime(),
+              visitId: null,
+            })
+          },
+        },
       ])
-      return
     }
 
-    let req
-    if (editPatientId && editPatientId.length > 5) {
-      // patient exists
-      req = Patient.DB.updateById(editPatientId, patientRecord, provider, clinic)
-    } else {
-      req = Patient.DB.register(patientRecord, provider, clinic)
+    const onError = (error: unknown) => {
+      console.error(error)
+      if (typeof captureException === "function") {
+        captureException(error as Error, {
+          tags: {
+            section: "patient_record_editor",
+            action: editPatientId ? "update_patient" : "register_patient",
+          },
+          extra: {
+            providerId,
+            clinicId: Option.getOrElse(clinicId, () => "Unknown"),
+            editPatientId,
+            patientRecord: JSON.stringify(patientRecord.values),
+          },
+        })
+      }
+      Alert.alert(translate("common:error"), translate("newPatient:errorSaving"))
     }
-    req
-      .then((patientId) => {
-        const redirectPatientId = patientId ?? editPatientId
-        if (redirectPatientId === undefined) {
-          // if there is no patient Id, there is no need to navigate elsewhere.
-          return navigation.goBack()
+
+    const isUpdate = typeof editPatientId === "string" && isValidUUID(editPatientId)
+
+    setIsSubmitting(true)
+    try {
+      if (isOnline) {
+        if (isUpdate) {
+          const input = patientRecordToUpdateInput(patientRecord)
+          console.log(
+            "[PatientEditor] Online update — id:",
+            editPatientId,
+            "input:",
+            JSON.stringify(input, null, 2),
+          )
+          await updatePatientMutation.mutateAsync({ id: editPatientId, data: input })
+          onSuccess(editPatientId)
+        } else {
+          const input = patientRecordToCreateInput(
+            patientRecord,
+            Option.getOrElse(clinicId, () => "Unknown"),
+          )
+          console.log("[PatientEditor] Online create — input:", JSON.stringify(input, null, 2))
+          const result = await createPatientMutation.mutateAsync(input)
+          onSuccess(result.id)
         }
-        Alert.alert(translate("common:success"), translate("newPatient:successfulSave"), [
-          {
-            text: translate("newPatient:done"),
-            onPress: () => navigation.goBack(),
-          },
-          {
-            text: translate("newPatient:continueToVisits"),
-            onPress: () => {
-              return navigation.replace("NewVisit", {
-                patientId: redirectPatientId,
-                visitDate: new Date().getTime(),
-                visitId: null,
-              })
-            },
-          },
-        ])
-      })
-      .catch((error) => {
-        console.error(error)
-        // Report error to Sentry
-        if (typeof captureException === "function") {
-          captureException(error, {
-            tags: {
-              section: "patient_record_editor",
-              action: editPatientId ? "update_patient" : "register_patient",
-            },
-            extra: {
-              providerId,
-              clinicId: Option.getOrElse(clinicId, () => "Unknown"),
-              editPatientId,
-              patientRecord: JSON.stringify(patientRecord.values),
-            },
-          })
+      } else {
+        if (isUpdate) {
+          await Patient.DB.updateById(editPatientId, patientRecord, provider, clinic)
+          onSuccess(editPatientId)
+        } else {
+          const patientId = await Patient.DB.register(patientRecord, provider, clinic)
+          onSuccess(patientId)
         }
-        Alert.alert(translate("common:error"), translate("newPatient:errorSaving"))
-      })
+      }
+    } catch (error) {
+      console.error("[PatientEditor] Submit error:", error)
+      onError(error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const $rtl = isRTL ? $rtlStyle : {}
@@ -236,6 +298,7 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
                     value={String(value)}
                     onChangeText={(t) => updateField(field.id, type === "number" ? Number(t) : t)}
                     label={label}
+                    required={field.required}
                     testID={`patient_form_input__${field.type}__${field.column}`}
                     inputWrapperStyle={
                       field.column === "government_id" && existingGovtId
@@ -251,32 +314,40 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
                 </If>
 
                 <If condition={field.column === "primary_clinic_id"}>
-                  <Text preset="formLabel" text={label} />
-                  <DropDownPicker
-                    open={openDropdown === field.column}
-                    setOpen={(open) => {
-                      if (open as unknown as boolean) setOpenDropdown(field.column as any)
-                      else setOpenDropdown(null)
-                    }}
-                    testID={`patient_form_input__${field.type}__${field.column}`}
-                    modalTitle="Primary Clinic"
-                    style={$dropDownPickerStyle}
-                    zIndex={990000}
-                    zIndexInverse={990000}
-                    listMode="MODAL"
-                    items={clinicOptionsList}
-                    value={value}
-                    setValue={(cb) => {
-                      const data = cb(value)
-                      updateField(field.id, data)
-                    }}
-                  />
+                  <View>
+                    <Text preset="formLabel" text={label} withAsterisk={field.required} />
+                    <DropDownPicker
+                      open={openDropdown === field.column}
+                      setOpen={(open) => {
+                        if (open as unknown as boolean) setOpenDropdown(field.column as any)
+                        else setOpenDropdown(null)
+                      }}
+                      testID={`patient_form_input__${field.type}__${field.column}`}
+                      modalTitle="Primary Clinic"
+                      rtl={isRTL}
+                      style={$dropDownPickerStyle}
+                      zIndex={990000}
+                      zIndexInverse={990000}
+                      listMode="MODAL"
+                      modalContentContainerStyle={[
+                        $modalContentContainerStyle,
+                        { paddingTop: safeAreaPaddingTop },
+                      ]}
+                      items={clinicOptionsList}
+                      value={value}
+                      setValue={(cb) => {
+                        const data = cb(value)
+                        updateField(field.id, data)
+                      }}
+                    />
+                  </View>
                 </If>
 
                 {type === "date" && field.column === "date_of_birth" && (
-                  <View style={$rtl}>
+                  <View>
                     <DateOfBirthInput
                       label={label}
+                      required={field.required}
                       testId={`patient_form_input__${field.type}__${field.column}`}
                       date={parseYYYYMMDD(value, new Date())}
                       onChangeDate={(d) => {
@@ -292,9 +363,9 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
                 {type === "date" && field.column !== "date_of_birth" && (
                   <View>
                     <View style={$rtl}>
-                      <Text text={label} preset="formLabel" />
+                      <Text text={label} preset="formLabel" withAsterisk={field.required} />
                     </View>
-                    <View style={$rtl}>
+                    <View>
                       <DatePickerButton
                         locale="en-US"
                         modal
@@ -316,9 +387,9 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
                 {type === "select" && (
                   <View>
                     <View style={$rtl}>
-                      <Text text={label} preset="formLabel" />
+                      <Text text={label} preset="formLabel" withAsterisk={field.required} />
                     </View>
-                    <View style={$rtl} gap={6} pt={6}>
+                    <View gap={6} pt={6}>
                       {field.options.map((fieldOption) => (
                         <Radio
                           key={fieldOption.en}
@@ -331,6 +402,33 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
                           }}
                         />
                       ))}
+                    </View>
+                  </View>
+                )}
+
+                {type === "checkbox" && (
+                  <View>
+                    <View style={$rtl}>
+                      <Text text={label} preset="formLabel" withAsterisk={field.required} />
+                    </View>
+                    <View gap={6} pt={6}>
+                      {field.options.map((fieldOption) => {
+                        const optionLabel = getTranslation(fieldOption, language)
+                        const selected = splitCheckboxValues(typeof value === "string" ? value : "")
+                        return (
+                          <Checkbox
+                            key={fieldOption.en}
+                            label={upperFirst(optionLabel)}
+                            value={selected.includes(optionLabel)}
+                            onValueChange={() => {
+                              updateField(
+                                field.id,
+                                joinCheckboxValues(toggleStringInArray(optionLabel, selected)),
+                              )
+                            }}
+                          />
+                        )
+                      })}
                     </View>
                   </View>
                 )}
@@ -363,11 +461,11 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
 
         <Button
           preset="default"
-          disabled={existingGovtId}
+          disabled={existingGovtId || isSubmitting}
           onPress={() => onSubmit()}
           testID="submit"
         >
-          {translate("common:save")}
+          {isSubmitting ? translate("common:loading") : translate("common:save")}
         </Button>
       </View>
 
@@ -407,6 +505,16 @@ const $rtlStyle: ViewStyle = { flexDirection: "row-reverse" }
 
 const $dropDownPickerStyle: ViewStyle = {
   marginTop: 2,
+  borderWidth: 1,
+  borderRadius: 4,
+  backgroundColor: colors.palette.neutral200,
+  borderColor: colors.palette.neutral400,
+  zIndex: 990000,
+  flex: 1,
+}
+
+const $modalContentContainerStyle: ViewStyle = {
+  marginTop: 4,
   borderWidth: 1,
   borderRadius: 4,
   backgroundColor: colors.palette.neutral200,
