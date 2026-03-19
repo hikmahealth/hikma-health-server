@@ -88,6 +88,11 @@ export const getDatabaseConfig = (): Record<string, any> => {
 
   // console.log({ migration_mode, dbmigration });
 
+  const defaultSSlFALSEVALUE =
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false;
+
   return {
     ...opts,
     host: pgHost,
@@ -95,6 +100,6 @@ export const getDatabaseConfig = (): Record<string, any> => {
     database: pgDb,
     user: pgUser,
     password: pgPassword,
-    ssl: migration_mode ? { rejectUnauthorized: false } : opts.ssl,
+    ssl: migration_mode ? defaultSSlFALSEVALUE : opts.ssl,
   };
 };
