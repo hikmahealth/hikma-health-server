@@ -8,5 +8,7 @@ dependsOn:
     scope: peer
 tasks:
   build:
+    args: "run build"
+    command: pnpm
     outputs:
       - dist/**/*

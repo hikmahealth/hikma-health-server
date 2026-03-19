@@ -4,6 +4,7 @@ build-server:
     #!/usr/bin/env bash
     set -euxo pipefail
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
+    export MOON_DEBUG_PROCESS_ENV=true
 
     # prepare the web project
     moon docker scaffold server
@@ -20,6 +21,7 @@ build-server:
     mv ./.moon/docker/sources/* "./$APP_FOLDER"
 
     cd $APP_FOLDER
+    pwd
     pnpm install
     moon server:build
 
