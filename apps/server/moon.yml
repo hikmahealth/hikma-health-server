@@ -19,6 +19,8 @@ tasks:
       - database:dev
     preset: server
   start:
+    inputs:
+      - .output/**/*
     command: pnpm run start
     # should ensure the migration runs successfully before starting the service
     deps:

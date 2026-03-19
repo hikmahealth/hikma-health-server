@@ -21,9 +21,11 @@ build-server:
     mv ./.moon/docker/sources/* "./$APP_FOLDER"
 
     cd $APP_FOLDER
-    pwd
     pnpm install
     moon server:build
 
 start-server:
-    cd $APP_FOLDER && moon server:start
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    cd $APP_FOLDER
+    moon server:start
