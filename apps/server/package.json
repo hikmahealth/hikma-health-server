@@ -10,7 +10,7 @@
     "start-dist": "node dist/server/server.js",
     "start:local-prod": "pnpm run build && DB_SSL=true node --env-file=.env .output/server/index.mjs",
     "start": "pnpm run recovery:permissions && pnpm run start-only",
-    "start:with-recovery": "pnpm run recovery:permissions && pnpm run start-only",
+    "start:with-recovery": "pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
     "build": "rescript && vite build",
     "serve": "vite preview",
     "test": "rescript && vitest run --workspace vitest.workspace.ts",
