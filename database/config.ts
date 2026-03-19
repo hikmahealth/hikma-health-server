@@ -9,7 +9,7 @@ export const getDatabaseConfig = (): Record<string, any> => {
   let pgPassword: string;
   let opts: Record<string, any> = {};
 
-  console.log({ databaseUrl });
+  // console.log({ databaseUrl });
   if (databaseUrl) {
     const dburl = new URL(databaseUrl);
     // Extract connection details from DATABASE_URL
@@ -86,7 +86,7 @@ export const getDatabaseConfig = (): Record<string, any> => {
     }
   }
 
-  console.log({ migration_mode, dbmigration });
+  // console.log({ migration_mode, dbmigration });
 
   return {
     ...opts,
