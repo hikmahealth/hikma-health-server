@@ -30,7 +30,13 @@ export const getDatabaseConfig = (): Record<string, any> => {
       try {
         opts[k] = JSON.parse(v);
       } catch {
-        opts[k] = v;
+        if (v === "true") {
+          opts[k] = true;
+        } else if (v === "false") {
+          opts[k] = false;
+        } else {
+          opts[k] = v;
+        }
       }
     }
   } else if (databaseUrlAzure) {
@@ -89,6 +95,6 @@ export const getDatabaseConfig = (): Record<string, any> => {
     database: pgDb,
     user: pgUser,
     password: pgPassword,
-    ssl: migration_mode ? false : opts.ssl,
+    ssl: migration_mode ? { rejectUnauthorized: false } : opts.ssl,
   };
 };
