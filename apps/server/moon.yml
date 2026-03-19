@@ -22,6 +22,8 @@ tasks:
     command: pnpm run recovery:permissions
     deps:
       - database:migrate
+    env:
+      DB_MIGRATION: true
   start:
     inputs:
       - .output/**/*
