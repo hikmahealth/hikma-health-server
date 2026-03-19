@@ -1,0 +1,19 @@
+{
+  "name": "hikma-health-server",
+  "sources": {
+    "dir": "src",
+    "subdirs": true
+  },
+  "package-specs": {
+    "module": "esmodule",
+    "in-source": true
+  },
+  "gentypeconfig": {
+    "module": "esmodule",
+    "moduleResolution": "bundler",
+    "generatedFileExtension": ".gen.tsx"
+  },
+  "suffix": ".res.mjs",
+  "bs-dependencies": [],
+  "bsc-flags": []
+}

@@ -1,0 +1,18 @@
+{
+  "focusedProjects": [
+    "typescript-config",
+    "database",
+    "server",
+    "eslint-config",
+    "ui"
+  ],
+  "unfocusedProjects": [
+    "web",
+    "common",
+    "aiproxy",
+    "hh-forms",
+    "mobile",
+    "client-native",
+    "data"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@hh/typescript-config",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "echo 'nothing to build';"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

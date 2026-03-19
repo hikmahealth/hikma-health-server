@@ -1,0 +1,21 @@
+{
+  "include": ["*.ts", "**/*.ts"],
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "NodeNext",
+
+    /* Bundler mode */
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": false,
+    "noEmit": true,
+
+    /* Linting */
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+  },
+}
