@@ -18,10 +18,14 @@ tasks:
     deps:
       - database:dev
     preset: server
+  recovery:
+    command: pnpm run recovery:permissions
+    deps:
+      - database:migrate
   start:
     inputs:
       - .output/**/*
-    command: pnpm run start
+    command: pnpm run start-only
     # should ensure the migration runs successfully before starting the service
     deps:
-      - database:migrate
+      - server:recovery
