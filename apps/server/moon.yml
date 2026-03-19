@@ -23,7 +23,7 @@ tasks:
     deps:
       - database:migrate
     env:
-      DB_MIGRATION: true
+      DB_MIGRATION: "true"
   start:
     inputs:
       - .output/**/*
