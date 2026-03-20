@@ -21,8 +21,6 @@
  */
 
 import { Kysely, PostgresDialect, sql } from "kysely";
-import { Pool } from "pg";
-import { getDatabaseConfig } from "../src/db/db-config";
 import type { Database } from "../src/db/index";
 import "dotenv/config";
 import UserClinicPermissions from "../src/models/user-clinic-permissions";

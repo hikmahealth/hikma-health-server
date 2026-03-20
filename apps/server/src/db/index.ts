@@ -84,7 +84,7 @@ enum EnvironmentType {
   Docker = "dev_docker",
 }
 
-import { getDatabaseConfig } from "./db-config";
+import { getDatabaseConfig } from "database/config";
 
 // Application environment configuration
 const appEnv = (process.env.APP_ENV as EnvironmentType) || EnvironmentType.Prod;
