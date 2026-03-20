@@ -5,12 +5,19 @@
   "main": "index.js",
   "keywords": [],
   "exports": {
-    "./schema/*": "./schema/hh/*.d.ts",
-    "./config": "./config.ts"
+    "./schema/*": {
+      "default": "./dist/schema/*/types.d.ts",
+      "types": "./dist/schema/*/types.d.ts"
+    },
+    "./config": {
+      "import": "./dist/config.js",
+      "types": "./dist/config.d.ts"
+    }
   },
   "author": "",
   "license": "ISC",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "migrate:dev": "dotenv -e ../.env -- npx kysely migrate latest",
     "migrate:prod": "DB_MIGRATION=true npx kysely migrate latest",
     "create_schema": "dotenv -e ../.env -- npx kysely-codegen --dialect postgres --config-file=web.kysely-codegen.json"
@@ -25,6 +32,8 @@
     "kysely-codegen": "^0.19.0",
     "kysely-ctl": "^0.19.0",
     "pg": "^8.16.3",
+    "tsc-alias": "^1.8.16",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3"
   }
 }

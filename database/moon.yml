@@ -5,7 +5,11 @@ tasks:
     command: pnpm migrate:prod
     options:
       cache: false
-  dev:
-    command: pnpm create_schema
+  build:
+    command: pnpm build
     outputs:
-      - /apps/web/src/db/types.d.ts
+      - dist/**/*
+  # dev:
+  #   command: pnpm create_schema
+  #   outputs:
+  #     - /apps/web/src/db/types.d.ts

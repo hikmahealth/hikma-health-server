@@ -1,14 +1,17 @@
 {
-  "include": ["*.ts", "**/*.ts"],
-  "exclude": ["node_modules"],
+  "include": ["config.ts", "schema/*/*.ts"],
+  "exclude": ["node_modules", "alembic", "migrations"],
   "compilerOptions": {
     "target": "ES6",
-    "module": "NodeNext",
+    "module": "ES6",
 
     /* Bundler mode */
     // "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": false,
-    "noEmit": true,
+    "noEmit": false,
+    "moduleDetection": "auto",
+    "moduleResolution": "Bundler",
+    "allowSyntheticDefaultImports": true,
 
     /* Linting */
     "skipLibCheck": true,
@@ -19,5 +22,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
+    "outDir": "./dist",
   },
 }

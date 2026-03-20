@@ -10,11 +10,11 @@ tasks:
       - ui:build
     outputs:
       - .output/**/*
-  dev:
-    command: pnpm run dev
-    deps:
-      - database:dev
-    preset: server
+  # dev:
+  #   command: pnpm run dev
+  #   deps:
+  #     - database:dev
+  #   preset: server
   start:
     command: pnpm run start
     # # should ensure the migration runs successfully before starting the service

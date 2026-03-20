@@ -9,15 +9,16 @@ tasks:
     command: pnpm
     deps:
       - ui:build
+      - database:build
     outputs:
       - .output/**/*
     env:
       NODE_OPTIONS: --max-old-space-size=4096
-  dev:
-    command: pnpm run dev
-    deps:
-      - database:dev
-    preset: server
+  # dev:
+  #   command: pnpm run dev
+  #   deps:
+  #     - database:dev
+  #   preset: server
   recovery:
     command: pnpm run recovery:permissions
     deps:
