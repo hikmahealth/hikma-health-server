@@ -93,6 +93,10 @@ export const getDatabaseConfig = (): Record<string, any> => {
       ? { rejectUnauthorized: false }
       : false;
 
+  // since we can't include this line on the database url,
+  // this is a way around that
+  opts.ssl = { rejectUnauthorized: false };
+
   return {
     ...opts,
     host: pgHost,
