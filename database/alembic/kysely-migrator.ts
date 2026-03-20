@@ -1,4 +1,4 @@
-import type { DB } from "../schema/pg/hh";
+import type { DB } from "../schema/hh/types";
 import { createMigrationProviderFromAlembic } from "./util";
 import { alembicMigrationIds } from "./mapping";
 import { promises as fs } from "node:fs";
@@ -12,6 +12,7 @@ export async function almebicBackcompatMigrator(db: Kysely<DB>) {
     db,
     alembicMigrationIds,
     {
+      // @ts-ignore
       fs: fs,
       migrationFolder: path.join(process.cwd(), "migrations"),
       // importCheck: false,

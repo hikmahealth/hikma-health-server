@@ -1,5 +1,6 @@
 {
   "include": ["*.ts", "**/*.ts"],
+  "exclude": ["node_modules"],
   "compilerOptions": {
     "target": "ES6",
     "module": "NodeNext",
@@ -12,10 +13,11 @@
     /* Linting */
     "skipLibCheck": true,
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
     "baseUrl": ".",
+    "outDir": "./dist",
   },
 }

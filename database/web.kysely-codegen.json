@@ -1,5 +1,5 @@
 {
-  "outFile": "../apps/web/src/db/types.d.ts",
+  "outFile": "./schema/hh/types.d.ts",
   "dialect": "postgres",
   "url": "env(DATABASE_URL)",
   "defaultSchemas": ["public"]
