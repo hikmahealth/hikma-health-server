@@ -90,6 +90,7 @@
     "exceljs": "^4.4.0",
     "immer": "^10.1.1",
     "kysely": "^0.28.2",
+    "ldapts": "^8.1.7",
     "lodash": "^4.17.21",
     "lucide-react": "^0.576.0",
     "minisearch": "^7.1.2",
