@@ -242,6 +242,11 @@ describe("Patient upsert (sync path)", () => {
   it("inserts then updates a patient via upsert", async () => {
     const patientId = await insertPatient({ given_name: "Original" });
 
+    // Fetch the DB clock after the insert so updated_at in the upsert is
+    // definitively ahead of the stored value, regardless of JS/DB clock skew.
+    const { rows: [{ dbNow }] } = await sql<{ dbNow: Date }>`SELECT now() AS "dbNow"`.execute(testDb);
+    const futureDate = new Date(dbNow.getTime() + 100);
+
     // Upsert with updated name — should update, not duplicate
     await Patient.API.DANGEROUS_SYNC_ONLY_upsert({
       id: patientId,
@@ -260,10 +265,10 @@ describe("Patient upsert (sync path)", () => {
       government_id: null,
       external_patient_id: null,
       is_deleted: false,
-      created_at: new Date(),
-      updated_at: new Date(),
-      last_modified: new Date(),
-      server_created_at: new Date(),
+      created_at: futureDate,
+      updated_at: futureDate,
+      last_modified: futureDate,
+      server_created_at: futureDate,
       deleted_at: null,
       primary_clinic_id: null,
       last_modified_by: null,

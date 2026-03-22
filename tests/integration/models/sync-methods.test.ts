@@ -150,7 +150,10 @@ describe("Sync.getDeltaRecords (integration)", () => {
     const userId = await insertUser(clinicId);
     const caller = makeMobileCaller(userId, clinicId);
 
-    const beforeInsert = Date.now();
+    // Use the DB clock so the boundary is in the same clock domain as
+    // server_created_at set by PostgreSQL NOW().
+    const { rows: [{ t0 }] } = await sql<{ t0: Date }>`SELECT now() AS t0`.execute(testDb);
+    const beforeInsert = t0.getTime();
     await new Promise((r) => setTimeout(r, 50));
 
     await insertPatient();
@@ -178,7 +181,10 @@ describe("Sync.getDeltaRecords (integration)", () => {
     const patientId = await insertPatient();
 
     await new Promise((r) => setTimeout(r, 50));
-    const afterCreate = Date.now();
+    // Use the DB clock so the boundary is in the same clock domain as
+    // server_created_at / last_modified set by PostgreSQL NOW().
+    const { rows: [{ t }] } = await sql<{ t: Date }>`SELECT now() AS t`.execute(testDb);
+    const afterCreate = t.getTime();
     await new Promise((r) => setTimeout(r, 50));
 
     // Update the patient
@@ -204,7 +210,10 @@ describe("Sync.getDeltaRecords (integration)", () => {
     const patientId = await insertPatient();
 
     await new Promise((r) => setTimeout(r, 50));
-    const afterCreate = Date.now();
+    // Use the DB clock so the boundary is in the same clock domain as
+    // deleted_at set by PostgreSQL NOW().
+    const { rows: [{ t1 }] } = await sql<{ t1: Date }>`SELECT now() AS t1`.execute(testDb);
+    const afterCreate = t1.getTime();
     await new Promise((r) => setTimeout(r, 50));
 
     // Soft delete
@@ -252,7 +261,10 @@ describe("Sync.getDeltaRecords (integration)", () => {
     const userId = await insertUser(clinicId);
     const caller = makeMobileCaller(userId, clinicId);
 
-    const beforeInsert = Date.now();
+    // Use the DB clock so the boundary is in the same clock domain as
+    // server_created_at set by PostgreSQL NOW().
+    const { rows: [{ t2 }] } = await sql<{ t2: Date }>`SELECT now() AS t2`.execute(testDb);
+    const beforeInsert = t2.getTime();
     await new Promise((r) => setTimeout(r, 50));
 
     const patientId = await insertPatient();
@@ -502,7 +514,10 @@ describe("Sync round-trip (integration)", () => {
     const userId = await insertUser(clinicId);
     const caller = makeMobileCaller(userId, clinicId);
 
-    const beforePush = Date.now();
+    // Use the DB clock so the boundary is in the same clock domain as
+    // server_created_at set by PostgreSQL NOW() inside persistClientChanges.
+    const { rows: [{ t3 }] } = await sql<{ t3: Date }>`SELECT now() AS t3`.execute(testDb);
+    const beforePush = t3.getTime();
     await new Promise((r) => setTimeout(r, 50));
 
     const patientId = uuidV1();
