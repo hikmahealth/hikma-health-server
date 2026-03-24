@@ -149,6 +149,7 @@ pnpm start
 | `pnpm start` | Run production server (with migrations) |
 | `pnpm test` | Run unit tests |
 | `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:integration` | Run integration tests |
 | `pnpm test:e2e` | Run end-to-end tests |
 | `pnpm test:e2e:ui` | Run E2E tests with UI |
 | `pnpm db:migrate` | Run database migrations |
@@ -156,6 +157,14 @@ pnpm start
 | `pnpm format` | Format code with Biome |
 | `pnpm lint` | Lint code with Biome |
 | `pnpm check` | Run Biome checks (format + lint) |
+
+
+> **Note:** Integration tests require the `TEST_DATABASE_URL` environment variable to be set in your `.env` file pointing to a test database. See `.env.example` for reference.
+
+> **`DB_SSL` environment variable:** Most npm scripts set `DB_SSL=true` by default because production and staging databases require SSL connections. If you are developing locally against a PostgreSQL instance that does not use SSL (e.g., a plain `localhost` database), override this by setting `DB_SSL=false` in your `.env` file or prepending it to your command: `DB_SSL=false pnpm dev`.
+
+> **`VITE_ADMIN_EMAIL` / `VITE_ADMIN_PASS`:** These variables (defined in `.env.example`) are prefixed with `VITE_` and therefore exposed to the client bundle. They exist solely for local development convenience and must never be set to real credentials in staging or production environments.
+
 
 ---
 

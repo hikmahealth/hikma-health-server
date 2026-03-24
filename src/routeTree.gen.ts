@@ -9,16 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as EducationRouteImport } from './routes/education'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EducationIndexRouteImport } from './routes/education/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as RpcHeartbeatRouteImport } from './routes/rpc/heartbeat'
+import { Route as EducationIdRouteImport } from './routes/education/$id'
 import { Route as ApiLoginRouteImport } from './routes/api/login'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users.index'
 import { Route as AppReportsIndexRouteImport } from './routes/app/reports/index'
 import { Route as AppPrescriptionsIndexRouteImport } from './routes/app/prescriptions.index'
 import { Route as AppPatientsIndexRouteImport } from './routes/app/patients.index'
 import { Route as AppEventFormsIndexRouteImport } from './routes/app/event-forms.index'
+import { Route as AppEducationIndexRouteImport } from './routes/app/education/index'
 import { Route as AppClinicsIndexRouteImport } from './routes/app/clinics.index'
 import { Route as AppAppointmentsIndexRouteImport } from './routes/app/appointments.index'
 import { Route as RpcQuerySplatRouteImport } from './routes/rpc.query.$'
@@ -30,6 +34,7 @@ import { Route as AppPatientsCustomizeRegistrationFormRouteImport } from './rout
 import { Route as AppPatientsIdRouteImport } from './routes/app/patients.$id'
 import { Route as AppDataEventsRouteImport } from './routes/app/data.events'
 import { Route as ApiV2SyncRouteImport } from './routes/api/v2.sync'
+import { Route as ApiResourcesIdRouteImport } from './routes/api/resources.$id'
 import { Route as ApiHubVerifyKeyRouteImport } from './routes/api/hub.verify-key'
 import { Route as ApiAuthSignOutRouteImport } from './routes/api/auth.sign-out'
 import { Route as ApiAuthSignInRouteImport } from './routes/api/auth.sign-in'
@@ -43,12 +48,18 @@ import { Route as AppUsersEditSplatRouteImport } from './routes/app/users.edit.$
 import { Route as AppReportsIdEditRouteImport } from './routes/app/reports/$id.edit'
 import { Route as AppPrescriptionsEditSplatRouteImport } from './routes/app/prescriptions.edit.$'
 import { Route as AppEventFormsEditSplatRouteImport } from './routes/app/event-forms.edit.$'
+import { Route as AppEducationIdEditorRouteImport } from './routes/app/education/$id.editor'
 import { Route as AppClinicsEditSplatRouteImport } from './routes/app/clinics.edit.$'
 import { Route as AppAppointmentsEditSplatRouteImport } from './routes/app/appointments.edit.$'
 import { Route as AppSettingsDevicesEditSplatRouteImport } from './routes/app/settings.devices.edit.$'
 import { Route as AppInventoryDrugCatalogueEditSplatRouteImport } from './routes/app/inventory/drug-catalogue.edit.$'
 import { Route as AppInventoryClinicInventoryDrugEditSplatRouteImport } from './routes/app/inventory/clinic-inventory.drug.edit.$'
 
+const EducationRoute = EducationRouteImport.update({
+  id: '/education',
+  path: '/education',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -59,6 +70,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EducationIndexRoute = EducationIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => EducationRoute,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -68,6 +84,11 @@ const RpcHeartbeatRoute = RpcHeartbeatRouteImport.update({
   id: '/rpc/heartbeat',
   path: '/rpc/heartbeat',
   getParentRoute: () => rootRouteImport,
+} as any)
+const EducationIdRoute = EducationIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => EducationRoute,
 } as any)
 const ApiLoginRoute = ApiLoginRouteImport.update({
   id: '/api/login',
@@ -97,6 +118,11 @@ const AppPatientsIndexRoute = AppPatientsIndexRouteImport.update({
 const AppEventFormsIndexRoute = AppEventFormsIndexRouteImport.update({
   id: '/event-forms/',
   path: '/event-forms/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEducationIndexRoute = AppEducationIndexRouteImport.update({
+  id: '/education/',
+  path: '/education/',
   getParentRoute: () => AppRoute,
 } as any)
 const AppClinicsIndexRoute = AppClinicsIndexRouteImport.update({
@@ -155,6 +181,11 @@ const AppDataEventsRoute = AppDataEventsRouteImport.update({
 const ApiV2SyncRoute = ApiV2SyncRouteImport.update({
   id: '/api/v2/sync',
   path: '/api/v2/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiResourcesIdRoute = ApiResourcesIdRouteImport.update({
+  id: '/api/resources/$id',
+  path: '/api/resources/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHubVerifyKeyRoute = ApiHubVerifyKeyRouteImport.update({
@@ -226,6 +257,11 @@ const AppEventFormsEditSplatRoute = AppEventFormsEditSplatRouteImport.update({
   path: '/event-forms/edit/$',
   getParentRoute: () => AppRoute,
 } as any)
+const AppEducationIdEditorRoute = AppEducationIdEditorRouteImport.update({
+  id: '/education/$id/editor',
+  path: '/education/$id/editor',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppClinicsEditSplatRoute = AppClinicsEditSplatRouteImport.update({
   id: '/clinics/edit/$',
   path: '/clinics/edit/$',
@@ -259,13 +295,17 @@ const AppInventoryClinicInventoryDrugEditSplatRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/education': typeof EducationRouteWithChildren
   '/api/login': typeof ApiLoginRoute
+  '/education/$id': typeof EducationIdRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
+  '/education/': typeof EducationIndexRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
   '/api/auth/sign-in': typeof ApiAuthSignInRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
   '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
+  '/api/resources/$id': typeof ApiResourcesIdRoute
   '/api/v2/sync': typeof ApiV2SyncRoute
   '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/$id': typeof AppPatientsIdRoute
@@ -277,6 +317,7 @@ export interface FileRoutesByFullPath {
   '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments/': typeof AppAppointmentsIndexRoute
   '/app/clinics/': typeof AppClinicsIndexRoute
+  '/app/education/': typeof AppEducationIndexRoute
   '/app/event-forms/': typeof AppEventFormsIndexRoute
   '/app/patients/': typeof AppPatientsIndexRoute
   '/app/prescriptions/': typeof AppPrescriptionsIndexRoute
@@ -284,6 +325,7 @@ export interface FileRoutesByFullPath {
   '/app/users/': typeof AppUsersIndexRoute
   '/app/appointments/edit/$': typeof AppAppointmentsEditSplatRoute
   '/app/clinics/edit/$': typeof AppClinicsEditSplatRoute
+  '/app/education/$id/editor': typeof AppEducationIdEditorRoute
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/reports/$id/edit': typeof AppReportsIdEditRoute
@@ -300,12 +342,15 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/login': typeof ApiLoginRoute
+  '/education/$id': typeof EducationIdRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app': typeof AppIndexRoute
+  '/education': typeof EducationIndexRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
   '/api/auth/sign-in': typeof ApiAuthSignInRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
   '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
+  '/api/resources/$id': typeof ApiResourcesIdRoute
   '/api/v2/sync': typeof ApiV2SyncRoute
   '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/$id': typeof AppPatientsIdRoute
@@ -317,6 +362,7 @@ export interface FileRoutesByTo {
   '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments': typeof AppAppointmentsIndexRoute
   '/app/clinics': typeof AppClinicsIndexRoute
+  '/app/education': typeof AppEducationIndexRoute
   '/app/event-forms': typeof AppEventFormsIndexRoute
   '/app/patients': typeof AppPatientsIndexRoute
   '/app/prescriptions': typeof AppPrescriptionsIndexRoute
@@ -324,6 +370,7 @@ export interface FileRoutesByTo {
   '/app/users': typeof AppUsersIndexRoute
   '/app/appointments/edit/$': typeof AppAppointmentsEditSplatRoute
   '/app/clinics/edit/$': typeof AppClinicsEditSplatRoute
+  '/app/education/$id/editor': typeof AppEducationIdEditorRoute
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/reports/$id/edit': typeof AppReportsIdEditRoute
@@ -341,13 +388,17 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/education': typeof EducationRouteWithChildren
   '/api/login': typeof ApiLoginRoute
+  '/education/$id': typeof EducationIdRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
+  '/education/': typeof EducationIndexRoute
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
   '/api/auth/sign-in': typeof ApiAuthSignInRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
   '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
+  '/api/resources/$id': typeof ApiResourcesIdRoute
   '/api/v2/sync': typeof ApiV2SyncRoute
   '/app/data/events': typeof AppDataEventsRoute
   '/app/patients/$id': typeof AppPatientsIdRoute
@@ -359,6 +410,7 @@ export interface FileRoutesById {
   '/rpc/query/$': typeof RpcQuerySplatRoute
   '/app/appointments/': typeof AppAppointmentsIndexRoute
   '/app/clinics/': typeof AppClinicsIndexRoute
+  '/app/education/': typeof AppEducationIndexRoute
   '/app/event-forms/': typeof AppEventFormsIndexRoute
   '/app/patients/': typeof AppPatientsIndexRoute
   '/app/prescriptions/': typeof AppPrescriptionsIndexRoute
@@ -366,6 +418,7 @@ export interface FileRoutesById {
   '/app/users/': typeof AppUsersIndexRoute
   '/app/appointments/edit/$': typeof AppAppointmentsEditSplatRoute
   '/app/clinics/edit/$': typeof AppClinicsEditSplatRoute
+  '/app/education/$id/editor': typeof AppEducationIdEditorRoute
   '/app/event-forms/edit/$': typeof AppEventFormsEditSplatRoute
   '/app/prescriptions/edit/$': typeof AppPrescriptionsEditSplatRoute
   '/app/reports/$id/edit': typeof AppReportsIdEditRoute
@@ -384,13 +437,17 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/education'
     | '/api/login'
+    | '/education/$id'
     | '/rpc/heartbeat'
     | '/app/'
+    | '/education/'
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
     | '/api/hub/verify-key'
+    | '/api/resources/$id'
     | '/api/v2/sync'
     | '/app/data/events'
     | '/app/patients/$id'
@@ -402,6 +459,7 @@ export interface FileRouteTypes {
     | '/rpc/query/$'
     | '/app/appointments/'
     | '/app/clinics/'
+    | '/app/education/'
     | '/app/event-forms/'
     | '/app/patients/'
     | '/app/prescriptions/'
@@ -409,6 +467,7 @@ export interface FileRouteTypes {
     | '/app/users/'
     | '/app/appointments/edit/$'
     | '/app/clinics/edit/$'
+    | '/app/education/$id/editor'
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
     | '/app/reports/$id/edit'
@@ -425,12 +484,15 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/login'
+    | '/education/$id'
     | '/rpc/heartbeat'
     | '/app'
+    | '/education'
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
     | '/api/hub/verify-key'
+    | '/api/resources/$id'
     | '/api/v2/sync'
     | '/app/data/events'
     | '/app/patients/$id'
@@ -442,6 +504,7 @@ export interface FileRouteTypes {
     | '/rpc/query/$'
     | '/app/appointments'
     | '/app/clinics'
+    | '/app/education'
     | '/app/event-forms'
     | '/app/patients'
     | '/app/prescriptions'
@@ -449,6 +512,7 @@ export interface FileRouteTypes {
     | '/app/users'
     | '/app/appointments/edit/$'
     | '/app/clinics/edit/$'
+    | '/app/education/$id/editor'
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
     | '/app/reports/$id/edit'
@@ -465,13 +529,17 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/education'
     | '/api/login'
+    | '/education/$id'
     | '/rpc/heartbeat'
     | '/app/'
+    | '/education/'
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
     | '/api/hub/verify-key'
+    | '/api/resources/$id'
     | '/api/v2/sync'
     | '/app/data/events'
     | '/app/patients/$id'
@@ -483,6 +551,7 @@ export interface FileRouteTypes {
     | '/rpc/query/$'
     | '/app/appointments/'
     | '/app/clinics/'
+    | '/app/education/'
     | '/app/event-forms/'
     | '/app/patients/'
     | '/app/prescriptions/'
@@ -490,6 +559,7 @@ export interface FileRouteTypes {
     | '/app/users/'
     | '/app/appointments/edit/$'
     | '/app/clinics/edit/$'
+    | '/app/education/$id/editor'
     | '/app/event-forms/edit/$'
     | '/app/prescriptions/edit/$'
     | '/app/reports/$id/edit'
@@ -507,12 +577,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  EducationRoute: typeof EducationRouteWithChildren
   ApiLoginRoute: typeof ApiLoginRoute
   RpcHeartbeatRoute: typeof RpcHeartbeatRoute
   ApiAuthIsValidTokenRoute: typeof ApiAuthIsValidTokenRoute
   ApiAuthSignInRoute: typeof ApiAuthSignInRoute
   ApiAuthSignOutRoute: typeof ApiAuthSignOutRoute
   ApiHubVerifyKeyRoute: typeof ApiHubVerifyKeyRoute
+  ApiResourcesIdRoute: typeof ApiResourcesIdRoute
   ApiV2SyncRoute: typeof ApiV2SyncRoute
   RpcCommandSplatRoute: typeof RpcCommandSplatRoute
   RpcQuerySplatRoute: typeof RpcQuerySplatRoute
@@ -520,6 +592,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/education': {
+      id: '/education'
+      path: '/education'
+      fullPath: '/education'
+      preLoaderRoute: typeof EducationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -534,6 +613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/education/': {
+      id: '/education/'
+      path: '/'
+      fullPath: '/education/'
+      preLoaderRoute: typeof EducationIndexRouteImport
+      parentRoute: typeof EducationRoute
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -547,6 +633,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/rpc/heartbeat'
       preLoaderRoute: typeof RpcHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/education/$id': {
+      id: '/education/$id'
+      path: '/$id'
+      fullPath: '/education/$id'
+      preLoaderRoute: typeof EducationIdRouteImport
+      parentRoute: typeof EducationRoute
     }
     '/api/login': {
       id: '/api/login'
@@ -588,6 +681,13 @@ declare module '@tanstack/react-router' {
       path: '/event-forms'
       fullPath: '/app/event-forms/'
       preLoaderRoute: typeof AppEventFormsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/education/': {
+      id: '/app/education/'
+      path: '/education'
+      fullPath: '/app/education/'
+      preLoaderRoute: typeof AppEducationIndexRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/clinics/': {
@@ -665,6 +765,13 @@ declare module '@tanstack/react-router' {
       path: '/api/v2/sync'
       fullPath: '/api/v2/sync'
       preLoaderRoute: typeof ApiV2SyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/resources/$id': {
+      id: '/api/resources/$id'
+      path: '/api/resources/$id'
+      fullPath: '/api/resources/$id'
+      preLoaderRoute: typeof ApiResourcesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/hub/verify-key': {
@@ -758,6 +865,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppEventFormsEditSplatRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/education/$id/editor': {
+      id: '/app/education/$id/editor'
+      path: '/education/$id/editor'
+      fullPath: '/app/education/$id/editor'
+      preLoaderRoute: typeof AppEducationIdEditorRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/clinics/edit/$': {
       id: '/app/clinics/edit/$'
       path: '/clinics/edit/$'
@@ -806,6 +920,7 @@ interface AppRouteChildren {
   AppSettingsRegisterMobileAppRoute: typeof AppSettingsRegisterMobileAppRoute
   AppAppointmentsIndexRoute: typeof AppAppointmentsIndexRoute
   AppClinicsIndexRoute: typeof AppClinicsIndexRoute
+  AppEducationIndexRoute: typeof AppEducationIndexRoute
   AppEventFormsIndexRoute: typeof AppEventFormsIndexRoute
   AppPatientsIndexRoute: typeof AppPatientsIndexRoute
   AppPrescriptionsIndexRoute: typeof AppPrescriptionsIndexRoute
@@ -813,6 +928,7 @@ interface AppRouteChildren {
   AppUsersIndexRoute: typeof AppUsersIndexRoute
   AppAppointmentsEditSplatRoute: typeof AppAppointmentsEditSplatRoute
   AppClinicsEditSplatRoute: typeof AppClinicsEditSplatRoute
+  AppEducationIdEditorRoute: typeof AppEducationIdEditorRoute
   AppEventFormsEditSplatRoute: typeof AppEventFormsEditSplatRoute
   AppPrescriptionsEditSplatRoute: typeof AppPrescriptionsEditSplatRoute
   AppReportsIdEditRoute: typeof AppReportsIdEditRoute
@@ -838,6 +954,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRegisterMobileAppRoute: AppSettingsRegisterMobileAppRoute,
   AppAppointmentsIndexRoute: AppAppointmentsIndexRoute,
   AppClinicsIndexRoute: AppClinicsIndexRoute,
+  AppEducationIndexRoute: AppEducationIndexRoute,
   AppEventFormsIndexRoute: AppEventFormsIndexRoute,
   AppPatientsIndexRoute: AppPatientsIndexRoute,
   AppPrescriptionsIndexRoute: AppPrescriptionsIndexRoute,
@@ -845,6 +962,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppUsersIndexRoute: AppUsersIndexRoute,
   AppAppointmentsEditSplatRoute: AppAppointmentsEditSplatRoute,
   AppClinicsEditSplatRoute: AppClinicsEditSplatRoute,
+  AppEducationIdEditorRoute: AppEducationIdEditorRoute,
   AppEventFormsEditSplatRoute: AppEventFormsEditSplatRoute,
   AppPrescriptionsEditSplatRoute: AppPrescriptionsEditSplatRoute,
   AppReportsIdEditRoute: AppReportsIdEditRoute,
@@ -863,15 +981,31 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface EducationRouteChildren {
+  EducationIdRoute: typeof EducationIdRoute
+  EducationIndexRoute: typeof EducationIndexRoute
+}
+
+const EducationRouteChildren: EducationRouteChildren = {
+  EducationIdRoute: EducationIdRoute,
+  EducationIndexRoute: EducationIndexRoute,
+}
+
+const EducationRouteWithChildren = EducationRoute._addFileChildren(
+  EducationRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  EducationRoute: EducationRouteWithChildren,
   ApiLoginRoute: ApiLoginRoute,
   RpcHeartbeatRoute: RpcHeartbeatRoute,
   ApiAuthIsValidTokenRoute: ApiAuthIsValidTokenRoute,
   ApiAuthSignInRoute: ApiAuthSignInRoute,
   ApiAuthSignOutRoute: ApiAuthSignOutRoute,
   ApiHubVerifyKeyRoute: ApiHubVerifyKeyRoute,
+  ApiResourcesIdRoute: ApiResourcesIdRoute,
   ApiV2SyncRoute: ApiV2SyncRoute,
   RpcCommandSplatRoute: RpcCommandSplatRoute,
   RpcQuerySplatRoute: RpcQuerySplatRoute,
