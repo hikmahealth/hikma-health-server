@@ -9,6 +9,8 @@ jobs:
     if: false # Temporarily disabled
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      NODE_OPTIONS: "--max-old-space-size=5120"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

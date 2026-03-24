@@ -564,7 +564,12 @@ namespace User {
       async (id: string): Promise<void> => {
         await db
           .updateTable(Table.name)
-          .set({ is_deleted: true })
+          .set({
+            is_deleted: true,
+            deleted_at: sql`now()::timestamp with time zone`,
+            updated_at: sql`now()::timestamp with time zone`,
+            last_modified: sql`now()::timestamp with time zone`,
+          })
           .where("id", "=", id)
           .execute();
       },

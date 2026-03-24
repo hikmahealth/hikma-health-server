@@ -14,6 +14,8 @@ count.txt
 
 
 .env.*
+!.env.example
+*.local.*
 
 
 .tanstack/*
@@ -34,3 +36,6 @@ coverage
 
 
 QA_TESTING_GUIDE.tsv
+
+# Uploaded assets and resources in "disk upload" mode.
+data/
