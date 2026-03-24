@@ -387,6 +387,29 @@ namespace PatientProblem {
     },
   );
 
+  export type EncodedWithPatientName = EncodedT & {
+    given_name: string | null;
+    surname: string | null;
+  };
+
+  /**
+   * Get all non-deleted patient problems with patient name
+   */
+  export const getAll = createServerOnlyFn(
+    async (): Promise<EncodedWithPatientName[]> => {
+      const result = await db
+        .selectFrom("patient_problems")
+        .innerJoin("patients", "patients.id", "patient_problems.patient_id")
+        .where("patient_problems.is_deleted", "=", false)
+        .orderBy("patient_problems.created_at", "desc")
+        .selectAll("patient_problems")
+        .select(["patients.given_name", "patients.surname"])
+        .execute();
+
+      return result as unknown as EncodedWithPatientName[];
+    },
+  );
+
   export namespace Sync {
     /** Pick only known DB columns from incoming delta, stripping WatermelonDB metadata like _status, _changed. */
     const pickColumns = (

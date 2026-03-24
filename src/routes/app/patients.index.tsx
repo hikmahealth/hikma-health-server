@@ -48,6 +48,7 @@ import EventForm from "@/models/event-form";
 import { format } from "date-fns";
 import User from "@/models/user";
 import { toast } from "sonner";
+import PatientProblem from "@/models/patient-problem";
 import PatientVital from "@/models/patient-vital";
 import { safeJSONParse } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,7 +71,8 @@ const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
     const eventForms = await EventForm.API.getAll({ includeDeleted: true });
     const exportEvents = await Event.API.getAllForExport();
     const vitals = await PatientVital.API.getAll();
-    return { patients, exportEvents, eventForms, vitals };
+    const problems = await PatientProblem.getAll();
+    return { patients, exportEvents, eventForms, vitals, problems };
   },
 );
 
@@ -297,6 +299,58 @@ function RouteComponent() {
     return vitalsWorksheet;
   };
 
+  const addProblemsWorksheet = (
+    workbook: ExcelJS.Workbook,
+    problems: PatientProblem.EncodedWithPatientName[],
+  ): ExcelJS.Worksheet => {
+    const worksheet = workbook.addWorksheet("Patient Problems");
+    const headerRow = [
+      "ID",
+      "Patient ID",
+      "Given Name",
+      "Surname",
+      "Visit ID",
+      "Code System",
+      "Code",
+      "Label",
+      "Clinical Status",
+      "Verification Status",
+      "Severity Score",
+      "Onset Date",
+      "End Date",
+      "Recorded By User ID",
+      "Created At",
+      "Updated At",
+    ];
+    worksheet.addRow(headerRow);
+    worksheet.getRow(1).font = { bold: true };
+
+    const rows: unknown[][] = [];
+    problems.forEach((p) => {
+      rows.push([
+        p.id,
+        p.patient_id,
+        p.given_name ?? "",
+        p.surname ?? "",
+        p.visit_id,
+        p.problem_code_system,
+        p.problem_code,
+        p.problem_label,
+        p.clinical_status,
+        p.verification_status,
+        p.severity_score,
+        p.onset_date,
+        p.end_date,
+        p.recorded_by_user_id,
+        p.created_at,
+        p.updated_at,
+      ]);
+    });
+
+    worksheet.addRows(rows);
+    return worksheet;
+  };
+
   const handleExport = async () => {
     try {
       toast(
@@ -324,7 +378,11 @@ function RouteComponent() {
         patients: allPatients,
         exportEvents,
         eventForms,
+        problems: patientProblems,
       } = await getAllPatientsForExport({});
+
+      // add Patient Problems
+      addProblemsWorksheet(workbook, patientProblems);
 
       // add Vitals
       addVitalsWorksheet(workbook, patientVitals);
@@ -336,7 +394,7 @@ function RouteComponent() {
         const worksheetName = `${isDeletedPrefix}${truncate(eventForm.name, {
           length: 18,
           omission: "..",
-        })}(#${worksheetIdSuffix})`;
+        })}(#${worksheetIdSuffix})`.replace(/[*?:\\/\[\]]/g, "-");
 
         const worksheet = workbook.addWorksheet(worksheetName);
         const extraColumns = {
