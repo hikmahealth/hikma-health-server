@@ -116,6 +116,12 @@ function RouteComponent() {
 
   const [selectedPatients, actions] = useMap<string, string>(); // [patientId, patientName]
 
+  // Sync local state when loader data changes (e.g. after invalidation)
+  useEffect(() => {
+    setPatientsList(patients);
+    setPaginationResults({ pagination });
+  }, [patients, pagination]);
+
   // on mount page, invalidate the data
   useEffect(() => {
     route.invalidate({ sync: true });
