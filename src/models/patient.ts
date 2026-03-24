@@ -882,6 +882,7 @@ namespace Patient {
               // @ts-ignore
               .set({
                 is_deleted: true,
+                deleted_at: sql`now()::timestamp with time zone`,
                 updated_at: sql`now()::timestamp with time zone`,
                 last_modified: sql`now()::timestamp with time zone`,
               })

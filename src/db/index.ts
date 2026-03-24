@@ -36,6 +36,7 @@ import type PatientObservation from "@/models/patient-observation";
 import type EventLog from "@/models/event-logs";
 import type Device from "@/models/device";
 import type DevicePinCode from "@/models/device-pin-code";
+import type EducationContent from "@/models/education-content";
 import { Pool } from "pg";
 import type { StringId, StringContent } from "@/models/string-content";
 import "dotenv/config";
@@ -71,6 +72,7 @@ export type Database = {
   event_logs: EventLog.Table.T;
   devices: Device.Table.T;
   device_pin_codes: DevicePinCode.Table.T;
+  education_content: EducationContent.Table.T;
 };
 
 // The table names in the database

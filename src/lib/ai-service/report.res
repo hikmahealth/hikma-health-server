@@ -85,7 +85,7 @@ type reportComponent = {
   prqlSource: string,
   compiledSql: string,
   compiledAt: string,
-  compilerVersion: string,
+  compilerVersion: string, // using calver TODO: add distint type
   position: gridPosition,
   display: componentDisplay,
 }
@@ -93,7 +93,7 @@ type reportComponent = {
 // ── Report ─────────────────────────────────────────────────
 
 @genType
-type layoutConfig = {columns: int}
+type layoutConfig = {columns: int} // Capped at 12. TODO: Update docs and put a type literals
 
 @genType
 type report = {

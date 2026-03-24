@@ -7,8 +7,12 @@ import type {
   Updateable,
   JSONColumnType,
 } from "kysely";
+import db from "@/db";
+import { createServerOnlyFn } from "@tanstack/react-start";
 
 namespace Resource {
+  // TODO: Consider adding is_deleted column support in a future migration
+  // for soft-delete consistency with other syncable tables.
   export type T = {
     id: string;
     description: Option.Option<string>;
@@ -71,6 +75,29 @@ namespace Resource {
     export type NewResources = Insertable<T>;
     export type ResourcesUpdate = Updateable<T>;
   }
+
+  /** Insert a new resource row. */
+  export const insert = createServerOnlyFn(
+    async (resource: Table.NewResources): Promise<Table.Resources> => {
+      return db
+        .insertInto(Table.name)
+        .values(resource)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+    },
+  );
+
+  /** Retrieve a resource by its primary key. Returns null if not found. */
+  export const getById = createServerOnlyFn(
+    async (id: string): Promise<Table.Resources | null> => {
+      const row = await db
+        .selectFrom(Table.name)
+        .where("id", "=", id)
+        .selectAll()
+        .executeTakeFirst();
+      return row ?? null;
+    },
+  );
 }
 
 export default Resource;
