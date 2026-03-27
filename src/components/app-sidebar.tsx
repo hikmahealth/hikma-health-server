@@ -203,7 +203,7 @@ export const navData = {
       isActive: true,
       items: [
         {
-          title: "Reports (?)",
+          title: "Reports 🧪",
           url: "/app/reports",
           icon: BarChart3,
         },

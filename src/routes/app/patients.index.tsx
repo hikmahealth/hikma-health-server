@@ -6,6 +6,7 @@ import {
   LucideCalculator,
   LucideCalendar,
   LucideCalendarPlus,
+  LucideChevronDown,
   LucideDownload,
   LucideTrash,
 } from "lucide-react";
@@ -28,6 +29,9 @@ import {
   searchPatients,
   softDeletePatientsByIds,
 } from "@/lib/server-functions/patients";
+import { getAllClinics } from "@/lib/server-functions/clinics";
+import { Result } from "@/lib/result";
+import type Clinic from "@/models/clinic";
 import PatientRegistrationForm from "@/models/patient-registration-form";
 import { createServerFn } from "@tanstack/react-start";
 import {
@@ -54,8 +58,17 @@ import { safeJSONParse } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useMap } from "usehooks-ts";
 import If from "@/components/if";
+import { DatePickerInput } from "@/components/date-picker-input";
+import Select from "react-select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
 import { forEach } from "ramda";
 import { useEffect } from "react";
+import { useImmerReducer } from "use-immer";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
@@ -80,18 +93,69 @@ export const Route = createFileRoute("/app/patients/")({
   component: RouteComponent,
   loader: async () => {
     const { patients, pagination, error } = await getAllPatients();
+    const clinicsResult = await getAllClinics();
+    const clinics = Result.isOk(clinicsResult) ? clinicsResult.data : [];
 
     return {
       currentUser: await getCurrentUser(),
       patients: patients,
       pagination,
+      clinics,
       patientRegistrationForm: await getPatientRegistrationForm(),
     };
   },
 });
 
+type SearchState = {
+  searchQuery: string;
+  clinicIds: string[];
+  registrationDate: [Date | null, Date | null]; // Start date, End date
+  visitsInDateRange: [Date | null, Date | null];
+};
+
+const initialSearchState: SearchState = {
+  searchQuery: "",
+  clinicIds: [],
+  registrationDate: [null, null],
+  visitsInDateRange: [null, null],
+};
+
+type SearchAction =
+  | { type: "update-search-query"; payload: string }
+  | { type: "update-clinic-ids"; payload: string[] }
+  | { type: "update-registration-date-start"; payload: Date | null }
+  | { type: "update-registration-date-end"; payload: Date | null }
+  | { type: "update-visits-date-start"; payload: Date | null }
+  | { type: "update-visits-date-end"; payload: Date | null }
+  | { type: "reset" };
+
+function searchReducer(draft: SearchState, action: SearchAction) {
+  switch (action.type) {
+    case "update-search-query":
+      draft.searchQuery = action.payload;
+      break;
+    case "update-clinic-ids":
+      draft.clinicIds = action.payload;
+      break;
+    case "update-registration-date-start":
+      draft.registrationDate[0] = action.payload;
+      break;
+    case "update-registration-date-end":
+      draft.registrationDate[1] = action.payload;
+      break;
+    case "update-visits-date-start":
+      draft.visitsInDateRange[0] = action.payload;
+      break;
+    case "update-visits-date-end":
+      draft.visitsInDateRange[1] = action.payload;
+      break;
+    case "reset":
+      return initialSearchState;
+  }
+}
+
 function RouteComponent() {
-  const { currentUser, patients, pagination, patientRegistrationForm } =
+  const { currentUser, patients, pagination, patientRegistrationForm, clinics } =
     Route.useLoaderData();
 
   const [patientsList, setPatientsList] =
@@ -111,7 +175,10 @@ function RouteComponent() {
   const navigate = Route.useNavigate();
   const route = useRouter();
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchState, dispatchSearchAction] = useImmerReducer(
+    searchReducer,
+    initialSearchState,
+  );
   const [loading, setLoading] = React.useState(false);
 
   const [selectedPatients, actions] = useMap<string, string>(); // [patientId, patientName]
@@ -150,9 +217,21 @@ function RouteComponent() {
 
     searchPatients({
       data: {
-        searchQuery,
+        searchQuery: searchState.searchQuery,
         offset,
         limit: pageSize,
+        registrationDateStart:
+          searchState.registrationDate[0]?.toISOString() ?? undefined,
+        registrationDateEnd:
+          searchState.registrationDate[1]?.toISOString() ?? undefined,
+        visitsDateStart:
+          searchState.visitsInDateRange[0]?.toISOString() ?? undefined,
+        visitsDateEnd:
+          searchState.visitsInDateRange[1]?.toISOString() ?? undefined,
+        clinicIds:
+          searchState.clinicIds.length > 0
+            ? searchState.clinicIds
+            : undefined,
       },
     })
       .then((res) => {
@@ -160,7 +239,6 @@ function RouteComponent() {
           setPatientsList(res.patients);
           setPaginationResults(res);
           setCurrentPage(page);
-          // scroll to the top
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       })
@@ -557,26 +635,145 @@ function RouteComponent() {
 
   return (
     <div>
-      <div className="w-full flex items-center max-w-2xl gap-4 py-4">
+      <div className="w-full flex flex-col gap-3 py-4 max-w-2xl">
         <Input
-          className="pl-4 pr-4 md:w-lg"
+          className="pl-4 pr-4 max-w-2xl"
           placeholder="Search patients..."
+          label="Search Patients"
           type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchState.searchQuery}
+          onChange={(e) =>
+            dispatchSearchAction({
+              type: "update-search-query",
+              payload: e.target.value,
+            })
+          }
         />
-        <Button
-          className=""
-          type="submit"
-          onClick={() => handleSearch(1)}
-          disabled={loading}
-        >
-          {loading ? "Searching..." : "Search"}
-        </Button>
+
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 px-0 text-muted-foreground hover:text-foreground"
+            >
+              <LucideChevronDown className="h-4 w-4 transition-transform [[data-state=open]_&]:rotate-180" />
+              Advanced filters
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="flex flex-col gap-3 pt-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Primary Clinic</label>
+              <Select
+                isMulti
+                placeholder="All clinics"
+                options={clinics.map((c) => ({
+                  value: c.id,
+                  label: c.name ?? c.id,
+                }))}
+                value={searchState.clinicIds.map((id) => {
+                  const clinic = clinics.find((c) => c.id === id);
+                  return { value: id, label: clinic?.name ?? id };
+                })}
+                onChange={(selected) =>
+                  dispatchSearchAction({
+                    type: "update-clinic-ids",
+                    payload: selected.map((s) => s.value),
+                  })
+                }
+                classNamePrefix="react-select"
+                className="max-w-md"
+              />
+            </div>
+
+            <fieldset className="flex items-end gap-2">
+              <legend className="text-sm font-medium mb-1">
+                Patient was registered within this Date Range
+              </legend>
+              <DatePickerInput
+                placeholder="From"
+                value={searchState.registrationDate[0] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-registration-date-start",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+              <span className="pb-2 text-sm text-muted-foreground">
+                &ndash;
+              </span>
+              <DatePickerInput
+                placeholder="To"
+                value={searchState.registrationDate[1] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-registration-date-end",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+            </fieldset>
+
+            <fieldset className="flex items-end gap-2">
+              <legend className="text-sm font-medium mb-1">
+                Patient had a visit within this Date Range
+              </legend>
+              <DatePickerInput
+                placeholder="From"
+                value={searchState.visitsInDateRange[0] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-visits-date-start",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+              <span className="pb-2 text-sm text-muted-foreground">
+                &ndash;
+              </span>
+              <DatePickerInput
+                placeholder="To"
+                value={searchState.visitsInDateRange[1] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-visits-date-end",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+            </fieldset>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              dispatchSearchAction({ type: "reset" });
+              handleSearch(1);
+            }}
+            className="text-muted-foreground"
+          >
+            Clear filters
+          </Button>
+
+          <Button
+            type="submit"
+            onClick={() => handleSearch(1)}
+            disabled={loading}
+          >
+            {loading ? "Searching..." : "Search"}
+          </Button>
+        </div>
       </div>
 
-      <div>
-        <Button type="button" onClick={handleExport}>
+      <div className="pt-4">
+        <Button type="button" variant="outline" onClick={handleExport}>
           <LucideDownload className="mr-2 h-4 w-4" />
           Export All Patient Data
         </Button>
@@ -626,16 +823,18 @@ function RouteComponent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {patientsList.length === 0 && searchQuery.trim().length > 0 && !loading && (
-              <TableRow>
-                <TableCell
-                  colSpan={headers.length + 2}
-                  className="px-6 py-8 text-center text-gray-500"
-                >
-                  No results found matching your search
-                </TableCell>
-              </TableRow>
-            )}
+            {patientsList.length === 0 &&
+              searchState.searchQuery.trim().length > 0 &&
+              !loading && (
+                <TableRow>
+                  <TableCell
+                    colSpan={headers.length + 2}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    No results found matching your search
+                  </TableCell>
+                </TableRow>
+              )}
             {patientsList?.map((patient) => (
               <TableRow
                 className="hover:bg-gray-100 cursor-pointer"

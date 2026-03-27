@@ -74,6 +74,14 @@ type gridPosition = {
   h: int,
 }
 
+// ── Time Range ────────────────────────────────────────────
+
+@tag("type")
+@genType
+type timeRange =
+  | Fixed({startAt: string, endAt: string})
+  | Rolling({windowDays: int})
+
 // ── Report Component ───────────────────────────────────────
 
 @genType
@@ -88,6 +96,7 @@ type reportComponent = {
   compilerVersion: string, // using calver TODO: add distint type
   position: gridPosition,
   display: componentDisplay,
+  timeRange?: timeRange,
 }
 
 // ── Report ─────────────────────────────────────────────────
@@ -100,8 +109,7 @@ type report = {
   id: string,
   name: string,
   description?: string,
-  startAt: string,
-  endAt: string,
+  timeRange: timeRange,
   layout: layoutConfig,
   components: array<reportComponent>,
 }
@@ -114,6 +122,17 @@ let constructLayoutConfig = (
   ~columns: int,
 ): layoutConfig => {
   columns,
+}
+
+/// TimeRange constructors
+@genType
+let fixedRange = (~startAt: string, ~endAt: string): timeRange => {
+  Fixed({startAt, endAt})
+}
+
+@genType
+let rollingRange = (~windowDays: int): timeRange => {
+  Rolling({windowDays: windowDays})
 }
 
 /// ReportComponent constructor
@@ -129,6 +148,7 @@ let constructReportComponent = (
   ~compilerVersion: string,
   ~position: gridPosition,
   ~display: componentDisplay,
+  ~timeRange: option<timeRange>=?,
 ): reportComponent => {
   id,
   reportId,
@@ -140,6 +160,7 @@ let constructReportComponent = (
   compilerVersion,
   position,
   display,
+  ?timeRange,
 }
 
 /// Report creation constructor
@@ -148,16 +169,14 @@ let constructReport = (
   ~id: string,
   ~name: string,
   ~description: string,
-  ~startAt: string,
-  ~endAt: string,
+  ~timeRange: timeRange,
   ~layout: layoutConfig,
   ~components: array<reportComponent>,
 ): report => {
   id,
   name,
   description,
-  startAt,
-  endAt,
+  timeRange,
   layout,
   components,
 }
