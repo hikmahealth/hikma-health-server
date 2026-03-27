@@ -42,14 +42,13 @@ export const getEventsByFormId = createServerFn({ method: "GET" })
         includeCount: true,
       });
 
-      // console.log({ result, form_id: data.form_id });
       return {
-        events: result,
+        events: result.events,
         pagination: {
-          total: result.length,
+          total: result.total,
           offset,
           limit,
-          hasMore: result.length >= limit,
+          hasMore: offset + result.events.length < result.total,
         },
       };
     },

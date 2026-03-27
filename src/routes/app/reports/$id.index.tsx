@@ -70,7 +70,7 @@ function RouteComponent() {
           <Link to="/app/reports/$id/edit" params={{ id }}>
             <Button variant="outline">Edit</Button>
           </Link>
-          <NewReportComponentDialog
+          {/*<NewReportComponentDialog
             reportId={report.id}
             existingComponents={report.components}
             gridColumns={report.layout.columns}
@@ -87,7 +87,7 @@ function RouteComponent() {
                 { componentId: component.id, rows: [], error: null },
               ]);
             }}
-          />
+          />*/}
         </div>
       </div>
 
