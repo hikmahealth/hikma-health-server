@@ -436,6 +436,65 @@ namespace Patient {
   `;
 
   /**
+   * Build a date range AND clause for a given column.
+   * If only start is set: >= start. If only end: <= end. If both: between inclusive.
+   */
+  const buildDateRangeClause = (
+    column: string,
+    start?: string,
+    end?: string,
+  ) => {
+    if (start && end) {
+      return sql`AND ${sql.raw(column)} >= ${start}::timestamptz AND ${sql.raw(column)} <= ${end}::timestamptz`;
+    }
+    if (start) {
+      return sql`AND ${sql.raw(column)} >= ${start}::timestamptz`;
+    }
+    if (end) {
+      return sql`AND ${sql.raw(column)} <= ${end}::timestamptz`;
+    }
+    return sql``;
+  };
+
+  /**
+   * Build an EXISTS clause requiring the patient to have at least one recorded
+   * activity (event, vital, problem, or prescription) in the date range.
+   */
+  const buildVisitsDateClause = (start?: string, end?: string) => {
+    if (!start && !end) return sql``;
+
+    const rangeCheck = (col: string) =>
+      start && end
+        ? sql`AND ${sql.raw(col)} >= ${start}::timestamptz AND ${sql.raw(col)} <= ${end}::timestamptz`
+        : start
+          ? sql`AND ${sql.raw(col)} >= ${start}::timestamptz`
+          : sql`AND ${sql.raw(col)} <= ${end}::timestamptz`;
+
+    return sql`AND (
+      EXISTS (
+        SELECT 1 FROM events e
+        WHERE e.patient_id = p.id AND e.is_deleted = false
+        ${rangeCheck("e.created_at")}
+      )
+      OR EXISTS (
+        SELECT 1 FROM patient_vitals v
+        WHERE v.patient_id = p.id AND v.is_deleted = false
+        ${rangeCheck("v.timestamp")}
+      )
+      OR EXISTS (
+        SELECT 1 FROM patient_problems pp
+        WHERE pp.patient_id = p.id AND pp.is_deleted = false
+        ${rangeCheck("COALESCE(pp.onset_date, pp.created_at)")}
+      )
+      OR EXISTS (
+        SELECT 1 FROM prescriptions rx
+        WHERE rx.patient_id = p.id AND rx.is_deleted = false
+        ${rangeCheck("rx.prescribed_at")}
+      )
+    )`;
+  };
+
+  /**
    * Build the base SQL for retrieving patients by a given list of ids and their additional attributes
    * @param ids List of patient ids
    * @returns SQL query template
@@ -588,13 +647,24 @@ namespace Patient {
         offset = 0,
         limit,
         includeCount = false,
+        registrationDateStart,
+        registrationDateEnd,
+        visitsDateStart,
+        visitsDateEnd,
+        clinicIds: filterClinicIds,
       }: {
         searchQuery: string;
         offset?: number;
         limit?: number;
         includeCount?: boolean;
+        registrationDateStart?: string;
+        registrationDateEnd?: string;
+        visitsDateStart?: string;
+        visitsDateEnd?: string;
+        clinicIds?: string[];
       }): Promise<PatientsQueryResult> => {
-        const searchPattern = `%${searchQuery}%`;
+        const hasTextQuery = searchQuery && searchQuery.trim() !== "";
+        const searchPattern = hasTextQuery ? `%${searchQuery}%` : "";
 
         // permissions check
         const clinicIds =
@@ -602,72 +672,76 @@ namespace Patient {
             "can_view_history",
           );
 
-        // Build the query using the base query and adding search condition with pagination
-        // Search across multiple patient fields and additional attributes
+        // Build conditional SQL fragments for text search
+        const textSearchClause = hasTextQuery
+          ? sql`AND (
+              LOWER(p.given_name) LIKE LOWER(${searchPattern})
+              OR LOWER(p.surname) LIKE LOWER(${searchPattern})
+              OR LOWER(COALESCE(p.phone, '')) LIKE LOWER(${searchPattern})
+              OR LOWER(COALESCE(p.camp, '')) LIKE LOWER(${searchPattern})
+              OR LOWER(COALESCE(p.citizenship, '')) LIKE LOWER(${searchPattern})
+              OR LOWER(COALESCE(p.hometown, '')) LIKE LOWER(${searchPattern})
+              OR LOWER(CAST(p.id AS TEXT)) = LOWER(${searchQuery})
+              OR EXISTS (
+                SELECT 1
+                FROM patient_additional_attributes paa
+                WHERE paa.patient_id = p.id
+                AND (
+                  LOWER(COALESCE(paa.string_value, '')) LIKE LOWER(${searchPattern})
+                  OR CAST(paa.number_value AS TEXT) LIKE ${searchPattern}
+                  OR CASE WHEN paa.boolean_value = true AND LOWER(${searchQuery}) IN ('true', 'yes', '1') THEN true
+                      WHEN paa.boolean_value = false AND LOWER(${searchQuery}) IN ('false', 'no', '0') THEN true
+                      ELSE false
+                     END
+                  OR LOWER(COALESCE(paa.attribute, '')) LIKE LOWER(${searchPattern})
+                )
+              )
+            )`
+          : sql``;
+
+        // Registration date filter on p.created_at
+        const regDateClause = buildDateRangeClause(
+          "p.created_at",
+          registrationDateStart,
+          registrationDateEnd,
+        );
+
+        // Visits date filter — patient must have at least one event in the date range
+        const visitsDateClause = buildVisitsDateClause(
+          visitsDateStart,
+          visitsDateEnd,
+        );
+
+        // Narrow results to specific primary clinics selected by the user
+        const clinicFilterClause =
+          filterClinicIds && filterClinicIds.length > 0
+            ? sql`AND p.primary_clinic_id IN (${sql.join(filterClinicIds)})`
+            : sql``;
+
         const query = sql`
       ${buildPatientAttributesBaseQuery(clinicIds)}
-      AND (
-        LOWER(p.given_name) LIKE LOWER(${searchPattern})
-        OR LOWER(p.surname) LIKE LOWER(${searchPattern})
-        OR LOWER(COALESCE(p.phone, '')) LIKE LOWER(${searchPattern})
-        OR LOWER(COALESCE(p.camp, '')) LIKE LOWER(${searchPattern})
-        OR LOWER(COALESCE(p.citizenship, '')) LIKE LOWER(${searchPattern})
-        OR LOWER(COALESCE(p.hometown, '')) LIKE LOWER(${searchPattern})
-        OR LOWER(CAST(p.id AS TEXT)) = LOWER(${searchQuery})
-        OR EXISTS (
-          SELECT 1
-          FROM patient_additional_attributes paa
-          WHERE paa.patient_id = p.id
-          AND (
-            LOWER(COALESCE(paa.string_value, '')) LIKE LOWER(${searchPattern})
-            OR CAST(paa.number_value AS TEXT) LIKE ${searchPattern}
-            OR CASE WHEN paa.boolean_value = true AND LOWER(${searchQuery}) IN ('true', 'yes', '1') THEN true
-                WHEN paa.boolean_value = false AND LOWER(${searchQuery}) IN ('false', 'no', '0') THEN true
-                ELSE false
-               END
-            OR LOWER(COALESCE(paa.attribute, '')) LIKE LOWER(${searchPattern})
-          )
-        )
-      )
+      ${textSearchClause}
+      ${regDateClause}
+      ${visitsDateClause}
+      ${clinicFilterClause}
       GROUP BY p.id
       ORDER BY p.updated_at DESC
       ${offset ? sql`OFFSET ${offset}` : sql``}
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `.compile(db);
 
-        // Execute the query and get formatted patients
         const patients = await executePatientQuery(query);
 
-        // Get total count if requested
         let totalCount = 0;
         if (includeCount) {
           const countQuery = sql`
           SELECT COUNT(*) as total
           FROM patients p
           WHERE p.is_deleted = false
-          AND (
-            LOWER(p.given_name) LIKE LOWER(${searchPattern})
-            OR LOWER(p.surname) LIKE LOWER(${searchPattern})
-            OR LOWER(COALESCE(p.phone, '')) LIKE LOWER(${searchPattern})
-            OR LOWER(COALESCE(p.camp, '')) LIKE LOWER(${searchPattern})
-            OR LOWER(COALESCE(p.citizenship, '')) LIKE LOWER(${searchPattern})
-            OR LOWER(COALESCE(p.hometown, '')) LIKE LOWER(${searchPattern})
-            OR LOWER(CAST(p.id AS TEXT)) = LOWER(${searchQuery})
-            OR EXISTS (
-              SELECT 1
-              FROM patient_additional_attributes paa
-              WHERE paa.patient_id = p.id
-              AND (
-                LOWER(COALESCE(paa.string_value, '')) LIKE LOWER(${searchPattern})
-                OR CAST(paa.number_value AS TEXT) LIKE ${searchPattern}
-                OR CASE WHEN paa.boolean_value = true AND LOWER(${searchQuery}) IN ('true', 'yes', '1') THEN true
-                    WHEN paa.boolean_value = false AND LOWER(${searchQuery}) IN ('false', 'no', '0') THEN true
-                    ELSE false
-                   END
-                OR LOWER(COALESCE(paa.attribute, '')) LIKE LOWER(${searchPattern})
-              )
-            )
-          )
+          ${textSearchClause}
+          ${regDateClause}
+          ${visitsDateClause}
+          ${clinicFilterClause}
         `.compile(db);
 
           const countResult = await db.executeQuery<{ total: number }>(
@@ -676,7 +750,6 @@ namespace Patient {
           totalCount = countResult.rows[0]?.total || 0;
         }
 
-        // Return both the patients and pagination metadata
         return {
           patients,
           pagination: {

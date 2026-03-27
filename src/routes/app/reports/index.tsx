@@ -37,10 +37,13 @@ const checkAiConfig = createServerFn({ method: "GET" })
 
 export const Route = createFileRoute("/app/reports/")({
   component: RouteComponent,
-  loader: async () => {
+  loader: async ({ context: { aiConfig, reports } }) => {
+    return { reports, aiConfig };
+  },
+  beforeLoad: async () => {
     const [reports, aiConfig] = await Promise.all([
       getAllReports(),
-      checkAiConfig(),
+      checkAiConfig().catch(() => ({ hasUrl: false, hasProxyKey: false })),
     ]);
     return { reports, aiConfig };
   },
