@@ -18,8 +18,6 @@ namespace ServerVariable {
 
   /** Well-known server variable keys */
   export const Keys = {
-    AI_DATA_ANALYSIS_API_KEY: "ai_data_analysis_api_key",
-    AI_DATA_ANALYSIS_URL: "ai_data_analysis_url",
     HH_STORE_TYPE: "hh_store_type",
     AWS_ACCESS_KEY_ID: "aws_access_key_id",
     AWS_SECRET_ACCESS_KEY: "aws_secret_access_key",
@@ -31,6 +29,11 @@ namespace ServerVariable {
     AZURE_STORAGE_CONNECTION_STRING: "azure_storage_connection_string",
     AZURE_CONTAINER_NAME: "azure_container_name",
     DISK_STORAGE_PATH: "disk_storage_path",
+    AI_DATA_ANALYSIS_URL: "ai_data_analysis_url",
+    AI_PROXY_SERVICE_API_KEY: "ai_proxy_service_api_key",
+    ANTHROPIC_API_KEY: "anthropic_api_key",
+    OPENAI_API_KEY: "openai_api_key",
+    GEMINI_API_KEY: "gemini_api_key",
   } as const;
 
   export type T = {
@@ -158,7 +161,11 @@ namespace ServerVariable {
   );
 
   export const setJson = createServerOnlyFn(
-    async (key: string, value: unknown, description?: string): Promise<string> =>
+    async (
+      key: string,
+      value: unknown,
+      description?: string,
+    ): Promise<string> =>
       setPrimitive(
         key,
         new TextEncoder().encode(JSON.stringify(value)),
@@ -178,7 +185,11 @@ namespace ServerVariable {
   );
 
   export const setBoolean = createServerOnlyFn(
-    async (key: string, value: boolean, description?: string): Promise<string> =>
+    async (
+      key: string,
+      value: boolean,
+      description?: string,
+    ): Promise<string> =>
       setPrimitive(
         key,
         new Uint8Array([value ? 1 : 0]),
@@ -217,7 +228,9 @@ namespace ServerVariable {
       if (raw === null) return null;
       const num = Number(raw);
       if (Number.isNaN(num)) {
-        throw new Error(`ServerVariable "${key}" is not a valid number: "${raw}"`);
+        throw new Error(
+          `ServerVariable "${key}" is not a valid number: "${raw}"`,
+        );
       }
       return num;
     },
@@ -231,7 +244,6 @@ namespace ServerVariable {
       return row.value_data[0] === 1;
     },
   );
-
 }
 
 export default ServerVariable;

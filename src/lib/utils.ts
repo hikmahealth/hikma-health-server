@@ -477,3 +477,19 @@ export function splitCheckboxValues(value: string): string[] {
   if (!value) return [];
   return value.split(CHECKBOX_SEPARATOR).filter(Boolean);
 }
+
+/**
+ * Counts the number of lines in a multiline string.
+ *
+ * @param text - The input string to count lines in
+ * @returns The number of lines (empty string returns 0)
+ *
+ * @example
+ * countLines('hello\nworld\n'); // 2
+ * countLines('single line');    // 1
+ * countLines('');               // 0
+ */
+export function countLines(text: string): number {
+  if (!text) return 0;
+  return text.split("\n").length;
+}

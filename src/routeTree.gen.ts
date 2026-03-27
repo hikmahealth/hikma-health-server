@@ -40,6 +40,7 @@ import { Route as ApiAuthSignOutRouteImport } from './routes/api/auth.sign-out'
 import { Route as ApiAuthSignInRouteImport } from './routes/api/auth.sign-in'
 import { Route as ApiAuthIsValidTokenRouteImport } from './routes/api/auth.is-valid-token'
 import { Route as AppSettingsDevicesIndexRouteImport } from './routes/app/settings.devices.index'
+import { Route as AppReportsIdIndexRouteImport } from './routes/app/reports/$id.index'
 import { Route as AppInventoryDrugCatalogueIndexRouteImport } from './routes/app/inventory/drug-catalogue.index'
 import { Route as AppInventoryClinicInventoryIndexRouteImport } from './routes/app/inventory/clinic-inventory.index'
 import { Route as AppClinicsIdIndexRouteImport } from './routes/app/clinics.$id.index'
@@ -213,6 +214,11 @@ const AppSettingsDevicesIndexRoute = AppSettingsDevicesIndexRouteImport.update({
   path: '/settings/devices/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReportsIdIndexRoute = AppReportsIdIndexRouteImport.update({
+  id: '/reports/$id/',
+  path: '/reports/$id/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppInventoryDrugCatalogueIndexRoute =
   AppInventoryDrugCatalogueIndexRouteImport.update({
     id: '/inventory/drug-catalogue/',
@@ -334,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/app/clinics/$id/': typeof AppClinicsIdIndexRoute
   '/app/inventory/clinic-inventory/': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
+  '/app/reports/$id/': typeof AppReportsIdIndexRoute
   '/app/settings/devices/': typeof AppSettingsDevicesIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
   '/app/settings/devices/edit/$': typeof AppSettingsDevicesEditSplatRoute
@@ -379,6 +386,7 @@ export interface FileRoutesByTo {
   '/app/clinics/$id': typeof AppClinicsIdIndexRoute
   '/app/inventory/clinic-inventory': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue': typeof AppInventoryDrugCatalogueIndexRoute
+  '/app/reports/$id': typeof AppReportsIdIndexRoute
   '/app/settings/devices': typeof AppSettingsDevicesIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
   '/app/settings/devices/edit/$': typeof AppSettingsDevicesEditSplatRoute
@@ -427,6 +435,7 @@ export interface FileRoutesById {
   '/app/clinics/$id/': typeof AppClinicsIdIndexRoute
   '/app/inventory/clinic-inventory/': typeof AppInventoryClinicInventoryIndexRoute
   '/app/inventory/drug-catalogue/': typeof AppInventoryDrugCatalogueIndexRoute
+  '/app/reports/$id/': typeof AppReportsIdIndexRoute
   '/app/settings/devices/': typeof AppSettingsDevicesIndexRoute
   '/app/inventory/drug-catalogue/edit/$': typeof AppInventoryDrugCatalogueEditSplatRoute
   '/app/settings/devices/edit/$': typeof AppSettingsDevicesEditSplatRoute
@@ -476,6 +485,7 @@ export interface FileRouteTypes {
     | '/app/clinics/$id/'
     | '/app/inventory/clinic-inventory/'
     | '/app/inventory/drug-catalogue/'
+    | '/app/reports/$id/'
     | '/app/settings/devices/'
     | '/app/inventory/drug-catalogue/edit/$'
     | '/app/settings/devices/edit/$'
@@ -521,6 +531,7 @@ export interface FileRouteTypes {
     | '/app/clinics/$id'
     | '/app/inventory/clinic-inventory'
     | '/app/inventory/drug-catalogue'
+    | '/app/reports/$id'
     | '/app/settings/devices'
     | '/app/inventory/drug-catalogue/edit/$'
     | '/app/settings/devices/edit/$'
@@ -568,6 +579,7 @@ export interface FileRouteTypes {
     | '/app/clinics/$id/'
     | '/app/inventory/clinic-inventory/'
     | '/app/inventory/drug-catalogue/'
+    | '/app/reports/$id/'
     | '/app/settings/devices/'
     | '/app/inventory/drug-catalogue/edit/$'
     | '/app/settings/devices/edit/$'
@@ -809,6 +821,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsDevicesIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/reports/$id/': {
+      id: '/app/reports/$id/'
+      path: '/reports/$id'
+      fullPath: '/app/reports/$id/'
+      preLoaderRoute: typeof AppReportsIdIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/inventory/drug-catalogue/': {
       id: '/app/inventory/drug-catalogue/'
       path: '/inventory/drug-catalogue'
@@ -937,6 +956,7 @@ interface AppRouteChildren {
   AppClinicsIdIndexRoute: typeof AppClinicsIdIndexRoute
   AppInventoryClinicInventoryIndexRoute: typeof AppInventoryClinicInventoryIndexRoute
   AppInventoryDrugCatalogueIndexRoute: typeof AppInventoryDrugCatalogueIndexRoute
+  AppReportsIdIndexRoute: typeof AppReportsIdIndexRoute
   AppSettingsDevicesIndexRoute: typeof AppSettingsDevicesIndexRoute
   AppInventoryDrugCatalogueEditSplatRoute: typeof AppInventoryDrugCatalogueEditSplatRoute
   AppSettingsDevicesEditSplatRoute: typeof AppSettingsDevicesEditSplatRoute
@@ -971,6 +991,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppClinicsIdIndexRoute: AppClinicsIdIndexRoute,
   AppInventoryClinicInventoryIndexRoute: AppInventoryClinicInventoryIndexRoute,
   AppInventoryDrugCatalogueIndexRoute: AppInventoryDrugCatalogueIndexRoute,
+  AppReportsIdIndexRoute: AppReportsIdIndexRoute,
   AppSettingsDevicesIndexRoute: AppSettingsDevicesIndexRoute,
   AppInventoryDrugCatalogueEditSplatRoute:
     AppInventoryDrugCatalogueEditSplatRoute,
