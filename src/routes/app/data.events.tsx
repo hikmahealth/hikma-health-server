@@ -126,15 +126,9 @@ function RouteComponent() {
   };
 
   useEffect(() => {
-    fetchEvents();
-
-    // getEventDataForExport({ data: { form_id: selectedForm } })
-    //   .then((res) => {
-    //     console.log({ res });
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //   });
+    if (selectedForm) {
+      fetchEvents();
+    }
   }, [selectedForm]);
 
   // Generate page numbers to display using functional approach

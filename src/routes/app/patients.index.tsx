@@ -8,6 +8,7 @@ import {
   LucideCalendarPlus,
   LucideChevronDown,
   LucideDownload,
+  LucideFilter,
   LucideTrash,
 } from "lucide-react";
 import { Option } from "effect";
@@ -88,6 +89,49 @@ const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
     return { patients, exportEvents, eventForms, vitals, problems };
   },
 );
+
+// Function to get all patients matching search filters for export (no pagination)
+// Returns the same shape as getAllPatientsForExport, but scoped to matching patients
+const getFilteredPatientsForExport = createServerFn({ method: "GET" })
+  .inputValidator(
+    (data: {
+      searchQuery: string;
+      registrationDateStart?: string;
+      registrationDateEnd?: string;
+      visitsDateStart?: string;
+      visitsDateEnd?: string;
+      clinicIds?: string[];
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== User.ROLES.SUPER_ADMIN) {
+      throw new Error("Unauthorized");
+    }
+    const { patients } = await Patient.API.search({
+      searchQuery: data.searchQuery,
+      includeCount: false,
+      registrationDateStart: data.registrationDateStart,
+      registrationDateEnd: data.registrationDateEnd,
+      visitsDateStart: data.visitsDateStart,
+      visitsDateEnd: data.visitsDateEnd,
+      clinicIds: data.clinicIds,
+    });
+    const patientIds = new Set(patients.map((p) => p.id));
+
+    const eventForms = await EventForm.API.getAll({ includeDeleted: true });
+    const allEvents = await Event.API.getAllForExport();
+    const allVitals = await PatientVital.API.getAll();
+    const allProblems = await PatientProblem.getAll();
+
+    return {
+      patients,
+      exportEvents: allEvents.filter((e) => patientIds.has(e.patient_id)),
+      eventForms,
+      vitals: allVitals.filter((v) => patientIds.has(v.patient_id)),
+      problems: allProblems.filter((p) => patientIds.has(p.patient_id)),
+    };
+  });
 
 export const Route = createFileRoute("/app/patients/")({
   component: RouteComponent,
@@ -209,6 +253,14 @@ function RouteComponent() {
   );
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+
+  const hasActiveFilters =
+    searchState.searchQuery.trim() !== "" ||
+    searchState.clinicIds.length > 0 ||
+    searchState.registrationDate[0] !== null ||
+    searchState.registrationDate[1] !== null ||
+    searchState.visitsInDateRange[0] !== null ||
+    searchState.visitsInDateRange[1] !== null;
 
   // Function to handle search with pagination
   const handleSearch = (page = 1) => {
@@ -435,167 +487,207 @@ function RouteComponent() {
     return worksheet;
   };
 
+  // Shared helpers for building export workbooks
+  const addPatientsWorksheet = (
+    worksheet: ExcelJS.Worksheet,
+    exportPatients: (typeof Patient.PatientWithAttributesSchema.Encoded)[],
+  ) => {
+    const headerRow = ["ID", ...headers];
+    worksheet.addRow(headerRow);
+    worksheet.getRow(1).font = { bold: true };
+    exportPatients.forEach((patient) => {
+      const rowData = [patient.id];
+      fields?.forEach((field) => {
+        if (field.baseField) {
+          rowData.push(
+            String(
+              PatientRegistrationForm.renderFieldValue(
+                field,
+                patient[field.column as keyof typeof patient],
+              ),
+            ),
+          );
+        } else {
+          rowData.push(
+            String(
+              PatientRegistrationForm.renderFieldValue(
+                field,
+                patient.additional_attributes[field.id],
+              ),
+            ),
+          );
+        }
+      });
+      worksheet.addRow(rowData);
+    });
+  };
+
+  const addEventFormsWorksheets = (
+    workbook: ExcelJS.Workbook,
+    eventForms: EventForm.EncodedT[],
+    exportEvents: (Event.EncodedT & { patient?: Partial<Patient.EncodedT> })[],
+  ) => {
+    eventForms.forEach((eventForm) => {
+      const isDeletedPrefix = eventForm.is_deleted ? "DEL - " : "";
+      const worksheetIdSuffix = `${eventForm.id.substring(0, 6)}`;
+      const worksheetName = `${isDeletedPrefix}${truncate(eventForm.name, {
+        length: 18,
+        omission: "..",
+      })}(#${worksheetIdSuffix})`.replace(/[*?:\\/\[\]]/g, "-");
+
+      const worksheet = workbook.addWorksheet(worksheetName);
+      const extraColumns = {
+        patient_id: "Patient ID",
+        patient_name: "Patient Name",
+        patient_sex: "Patient Sex",
+        patient_phone_number: "Patient Phone",
+        patient_citizenship: "Patient Citizenship",
+        patient_date_of_birth: "Patient Date of Birth",
+        visit_id: "Visit ID",
+        created_at: "Created At",
+      };
+      const eventFormFields = safeJSONParse(
+        eventForm.form_fields,
+        [],
+      ) as typeof eventForm.form_fields;
+      const headerRow = [
+        "ID",
+        ...eventFormFields?.map((f) => f.name),
+        ...Object.values(extraColumns),
+      ];
+      worksheet.addRow(headerRow);
+      worksheet.getRow(1).font = { bold: true };
+
+      exportEvents
+        .filter((ev) => ev.form_id === eventForm.id)
+        .forEach((event) => {
+          const rowData = [event.id];
+          eventFormFields?.forEach((field) => {
+            const fieldData = event.form_data.find(
+              (f) => f.fieldId === field.id,
+            );
+            rowData.push(JSON.stringify(fieldData?.value));
+          });
+
+          rowData.push(event.patient_id);
+          rowData.push(
+            `${event?.patient?.given_name || ""} ${event?.patient?.surname || ""}`.trim(),
+          );
+          rowData.push(event?.patient?.sex || "");
+          rowData.push(event?.patient?.phone || "");
+          rowData.push(event?.patient?.citizenship || "");
+          rowData.push(String(event?.patient?.date_of_birth || ""));
+          rowData.push(event.visit_id || "");
+          rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
+          worksheet.addRow(rowData);
+        });
+    });
+  };
+
+  const autoSizeColumns = (worksheet: ExcelJS.Worksheet) => {
+    worksheet.columns?.forEach((column) => {
+      let maxLength = 0;
+      column?.eachCell?.({ includeEmpty: true }, (cell) => {
+        const columnLength = cell.value ? cell.value.toString().length : 10;
+        if (columnLength > maxLength) {
+          maxLength = columnLength;
+        }
+      });
+      column.width = maxLength < 10 ? 10 : maxLength + 2;
+    });
+  };
+
+  const downloadWorkbook = async (
+    workbook: ExcelJS.Workbook,
+    fileName: string,
+  ) => {
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const buildExportWorkbook = async (exportData: {
+    patients: (typeof Patient.PatientWithAttributesSchema.Encoded)[];
+    exportEvents: (Event.EncodedT & { patient?: Partial<Patient.EncodedT> })[];
+    eventForms: EventForm.EncodedT[];
+    vitals: PatientVital.EncodedT[];
+    problems: PatientProblem.EncodedWithPatientName[];
+  }) => {
+    const ExcelJS = (await import("exceljs")).default;
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = currentUser?.name ?? "";
+    workbook.lastModifiedBy = currentUser?.name ?? "";
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    const patientsSheet = workbook.addWorksheet("Patients List");
+    addPatientsWorksheet(patientsSheet, exportData.patients);
+    autoSizeColumns(patientsSheet);
+
+    addProblemsWorksheet(workbook, exportData.problems);
+    addVitalsWorksheet(workbook, exportData.vitals);
+    addEventFormsWorksheets(
+      workbook,
+      exportData.eventForms,
+      exportData.exportEvents,
+    );
+
+    return workbook;
+  };
+
   const handleExport = async () => {
     try {
       toast(
-        "⏳ Export started. Please be patient as this could take some time.",
-        {
-          dismissible: true,
-          duration: 2000,
-        },
+        "Export started. Please be patient as this could take some time.",
+        { dismissible: true, duration: 2000 },
       );
-      // Create a new workbook
-      const ExcelJS = (await import("exceljs")).default;
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("Patients List");
-
-      // Set workbook properties
-      workbook.creator = currentUser?.name ?? "";
-      workbook.lastModifiedBy = currentUser?.name ?? "";
-      workbook.created = new Date();
-      workbook.modified = new Date();
-      workbook.lastPrinted = new Date();
-
-      // Get all patients for export (not paginated)
-      const {
-        vitals: patientVitals,
-        patients: allPatients,
-        exportEvents,
-        eventForms,
-        problems: patientProblems,
-      } = await getAllPatientsForExport({});
-
-      // add Patient Problems
-      addProblemsWorksheet(workbook, patientProblems);
-
-      // add Vitals
-      addVitalsWorksheet(workbook, patientVitals);
-
-      // for each event form type, add a new worksheet
-      eventForms.forEach((eventForm) => {
-        const isDeletedPrefix = eventForm.is_deleted ? "DEL - " : "";
-        const worksheetIdSuffix = `${eventForm.id.substring(0, 6)}`;
-        const worksheetName = `${isDeletedPrefix}${truncate(eventForm.name, {
-          length: 18,
-          omission: "..",
-        })}(#${worksheetIdSuffix})`.replace(/[*?:\\/\[\]]/g, "-");
-
-        const worksheet = workbook.addWorksheet(worksheetName);
-        const extraColumns = {
-          patient_id: "Patient ID",
-          patient_name: "Patient Name",
-          patient_sex: "Patient Sex",
-          patient_phone_number: "Patient Phone",
-          patient_citizenship: "Patient Citizenship",
-          patient_date_of_birth: "Patient Date of Birth",
-          visit_id: "Visit ID",
-          created_at: "Created At",
-          // provider_id: "Provider ID",
-        };
-        const eventFormFields = safeJSONParse(
-          eventForm.form_fields,
-          [],
-        ) as typeof eventForm.form_fields;
-        console.log({ eventFormFields });
-        const headerRow = [
-          "ID",
-          ...eventFormFields?.map((f) => f.name),
-          ...Object.values(extraColumns),
-        ];
-        worksheet.addRow(headerRow);
-        worksheet.getRow(1).font = { bold: true };
-
-        exportEvents
-          .filter((ev) => ev.form_id === eventForm.id)
-          .forEach((event) => {
-            const rowData = [event.id];
-            eventFormFields?.forEach((field) => {
-              const fieldData = event.form_data.find(
-                (f) => f.fieldId === field.id,
-              );
-              rowData.push(JSON.stringify(fieldData?.value));
-            });
-
-            rowData.push(event.patient_id);
-            rowData.push(
-              `${event?.patient?.given_name || ""} ${event?.patient?.surname || ""}`.trim(),
-            );
-            rowData.push(event?.patient?.sex || "");
-            rowData.push(event?.patient?.phone || "");
-            rowData.push(event?.patient?.citizenship || "");
-            rowData.push(String(event?.patient?.date_of_birth || ""));
-            rowData.push(event.visit_id || "");
-            rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
-            // rowData.push(event.provider_id || "");
-            worksheet.addRow(rowData);
-          });
-      });
-
-      const headerRow = ["ID", ...headers];
-      worksheet.addRow(headerRow);
-      worksheet.getRow(1).font = { bold: true };
-      allPatients.forEach((patient) => {
-        const rowData = [patient.id];
-
-        // Add data for each field in the registration form
-        fields?.forEach((field) => {
-          if (field.baseField) {
-            rowData.push(
-              String(
-                PatientRegistrationForm.renderFieldValue(
-                  field,
-                  patient[field.column as keyof typeof patient],
-                ),
-              ),
-            );
-          } else {
-            rowData.push(
-              String(
-                PatientRegistrationForm.renderFieldValue(
-                  field,
-                  patient.additional_attributes[field.id],
-                ),
-              ),
-            );
-          }
-        });
-
-        worksheet.addRow(rowData);
-      });
-
-      // Auto-size columns for better readability
-      worksheet.columns?.forEach((column) => {
-        let maxLength = 0;
-        column?.eachCell?.({ includeEmpty: true }, (cell) => {
-          const columnLength = cell.value ? cell.value.toString().length : 10;
-          if (columnLength > maxLength) {
-            maxLength = columnLength;
-          }
-        });
-        column.width = maxLength < 10 ? 10 : maxLength + 2;
-      });
-
-      // Generate a filename with current date - so that next download doesn't override previous
-      const fileName = `patients_export_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
-
-      // Write to file and trigger download
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const exportData = await getAllPatientsForExport({});
+      const workbook = await buildExportWorkbook(exportData as any);
+      const fileName = `patients_export_${new Date().toISOString().split("T")[0]}.xlsx`;
+      await downloadWorkbook(workbook, fileName);
     } catch (error: any) {
       console.error("Error exporting patients:", error, error.message);
       toast.error("Failed to export patients", error.message);
+    }
+  };
+
+  const handleFilteredExport = async () => {
+    try {
+      toast(
+        "Export started. Please be patient as this could take some time.",
+        { dismissible: true, duration: 2000 },
+      );
+      const exportData = await getFilteredPatientsForExport({
+        data: {
+          searchQuery: searchState.searchQuery,
+          registrationDateStart:
+            searchState.registrationDate[0]?.toISOString() ?? undefined,
+          registrationDateEnd:
+            searchState.registrationDate[1]?.toISOString() ?? undefined,
+          visitsDateStart:
+            searchState.visitsInDateRange[0]?.toISOString() ?? undefined,
+          visitsDateEnd:
+            searchState.visitsInDateRange[1]?.toISOString() ?? undefined,
+          clinicIds:
+            searchState.clinicIds.length > 0
+              ? searchState.clinicIds
+              : undefined,
+        },
+      });
+      const workbook = await buildExportWorkbook(exportData as any);
+      const fileName = `patients_filtered_export_${new Date().toISOString().split("T")[0]}.xlsx`;
+      await downloadWorkbook(workbook, fileName);
+    } catch (error: any) {
+      console.error("Error exporting filtered patients:", error, error.message);
+      toast.error("Failed to export filtered patients");
     }
   };
 
@@ -772,10 +864,19 @@ function RouteComponent() {
         </div>
       </div>
 
-      <div className="pt-4">
+      <div className="pt-4 flex gap-3">
         <Button type="button" variant="outline" onClick={handleExport}>
           <LucideDownload className="mr-2 h-4 w-4" />
           Export All Patient Data
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleFilteredExport}
+          disabled={!hasActiveFilters || patientsList.length === 0}
+        >
+          <LucideFilter className="mr-2 h-4 w-4" />
+          Export Filtered Patients ({totalItems})
         </Button>
       </div>
 

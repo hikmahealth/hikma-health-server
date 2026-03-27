@@ -200,21 +200,25 @@ namespace Event {
               recorded_by_user_id: event.recorded_by_user_id ?? null,
             })
             .onConflict((oc) => {
-              return oc.column("id").doUpdateSet({
-                patient_id: (eb) => eb.ref("excluded.patient_id"),
-                visit_id: (eb) => eb.ref("excluded.visit_id"),
-                form_id: (eb) => eb.ref("excluded.form_id"),
-                event_type: (eb) => eb.ref("excluded.event_type"),
-                form_data: (eb) => eb.ref("excluded.form_data"),
-                metadata: (eb) => eb.ref("excluded.metadata"),
-                is_deleted: (eb) => eb.ref("excluded.is_deleted"),
-                recorded_by_user_id: (eb) =>
-                  eb.ref("excluded.recorded_by_user_id"),
-                updated_at: sql`now()::timestamp with time zone`,
-                last_modified: sql`now()::timestamp with time zone`,
-              })
-              // Only update if the incoming record is newer than what's already stored
-              .where(sql<boolean>`excluded.updated_at > events.updated_at`);
+              return (
+                oc
+                  .column("id")
+                  .doUpdateSet({
+                    patient_id: (eb) => eb.ref("excluded.patient_id"),
+                    visit_id: (eb) => eb.ref("excluded.visit_id"),
+                    form_id: (eb) => eb.ref("excluded.form_id"),
+                    event_type: (eb) => eb.ref("excluded.event_type"),
+                    form_data: (eb) => eb.ref("excluded.form_data"),
+                    metadata: (eb) => eb.ref("excluded.metadata"),
+                    is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+                    recorded_by_user_id: (eb) =>
+                      eb.ref("excluded.recorded_by_user_id"),
+                    updated_at: sql`now()::timestamp with time zone`,
+                    last_modified: sql`now()::timestamp with time zone`,
+                  })
+                  // Only update if the incoming record is newer than what's already stored
+                  .where(sql<boolean>`excluded.updated_at > events.updated_at`)
+              );
             })
             .executeTakeFirst();
           // InsertResult is undefined when the updated_at guard skips a stale record
@@ -257,7 +261,7 @@ namespace Event {
           offset = 0,
           includeCount = false,
         }: { limit?: number; offset?: number; includeCount?: boolean },
-      ): Promise<Event.EncodedT[]> => {
+      ): Promise<{ events: Event.EncodedT[]; total: number }> => {
         const res = await db
           .selectFrom(Table.name)
           .selectAll()
@@ -267,7 +271,19 @@ namespace Event {
           .limit(limit)
           .offset(offset)
           .execute();
-        return res as unknown as Event.EncodedT[];
+
+        let total = res.length + offset;
+        if (includeCount) {
+          const countResult = await db
+            .selectFrom(Table.name)
+            .select(db.fn.countAll().as("count"))
+            .where("form_id", "=", form_id)
+            .where("is_deleted", "=", false)
+            .executeTakeFirstOrThrow();
+          total = Number(countResult.count);
+        }
+
+        return { events: res as unknown as Event.EncodedT[], total };
       },
     );
 
