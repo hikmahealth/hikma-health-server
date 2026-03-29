@@ -242,7 +242,7 @@ export function InputSettingsList({
                     )}
 
                     {item.fieldType === "options" &&
-                      item.inputType === "select" && (
+                      (item.inputType === "select" || item.inputType === "radio") && (
                         <Checkbox
                           className="py-2"
                           onChange={(e) =>

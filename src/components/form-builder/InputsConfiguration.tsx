@@ -319,7 +319,7 @@ export function InputsConfiguration({
                       />
                     )}
 
-                    {field.inputType === "select" && (
+                    {(field.inputType === "select" || field.inputType === "radio") && (
                       <Checkbox
                         onClick={(e) =>
                           onFieldChange(
