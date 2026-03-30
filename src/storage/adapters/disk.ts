@@ -1,5 +1,5 @@
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
-import { join, resolve, normalize } from "node:path";
+import { join, resolve, normalize, sep, dirname } from "node:path";
 import { createHash } from "node:crypto";
 import type { StorageAdapter, AdapterConfigDefinition } from "./base.ts";
 import { validatePut } from "./base.ts";
@@ -33,7 +33,7 @@ export const resolveSafePath = (basePath: string, destination: string): string =
   // The resolved path must start with base + separator (or equal base exactly)
   // to prevent escaping. We append "/" to avoid prefix false-positives like
   // "/base-other" matching "/base".
-  if (!full.startsWith(resolvedBase + "/") && full !== resolvedBase) {
+  if (!full.startsWith(resolvedBase + sep) && full !== resolvedBase) {
     throw new Error(`Path traversal detected: "${destination}" escapes base directory`);
   }
   return full;
@@ -56,7 +56,7 @@ export const createDiskAdapter = async (
       validatePut(data, mimetype);
       const fullPath = resolveSafePath(resolvedBase, destination);
       // Ensure parent directory exists
-      const parentDir = fullPath.substring(0, fullPath.lastIndexOf("/"));
+      const parentDir = dirname(fullPath);
       if (parentDir) {
         await mkdir(parentDir, { recursive: true });
       }
