@@ -2,20 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { superAdminMiddleware } from "@/middleware/auth";
 import db, { pool } from "@/db";
 import { sql } from "kysely";
-import { validateSQL } from "../../../db/utils";
+import { validateSQL } from "@/db/utils";
 
 /**
  * Validate and update the compiled SQL of a single report component.
  * Uses PREPARE/DEALLOCATE to validate syntax and schema before persisting.
  */
 export const updateComponentSql = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: { componentId: string; compiledSql: string }) => data,
-  )
+  .inputValidator((data: { componentId: string; compiledSql: string }) => data)
   .middleware([superAdminMiddleware])
   .handler(async ({ data }) => {
     const { componentId, compiledSql } = data;
-    console.log("[updateComponentSql] called", { componentId, sqlLength: compiledSql.length });
+    console.log("[updateComponentSql] called", {
+      componentId,
+      sqlLength: compiledSql.length,
+    });
 
     console.log("[updateComponentSql] validating SQL...");
     const validation = await validateSQL(pool, compiledSql);
@@ -29,7 +30,10 @@ export const updateComponentSql = createServerFn({ method: "POST" })
     }
 
     // SQL is valid — persist the update
-    console.log("[updateComponentSql] persisting update for component:", componentId);
+    console.log(
+      "[updateComponentSql] persisting update for component:",
+      componentId,
+    );
     const result = await db
       .updateTable("report_components")
       .set({

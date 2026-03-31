@@ -36,6 +36,8 @@ import type PatientObservation from "@/models/patient-observation";
 import type EventLog from "@/models/event-logs";
 import type Device from "@/models/device";
 import type DevicePinCode from "@/models/device-pin-code";
+import type EducationContent from "@/models/education-content";
+import type Report from "@/models/report";
 import { Pool } from "pg";
 import type { StringId, StringContent } from "@/models/string-content";
 import "dotenv/config";
@@ -71,6 +73,9 @@ export type Database = {
   event_logs: EventLog.Table.T;
   devices: Device.Table.T;
   device_pin_codes: DevicePinCode.Table.T;
+  education_content: EducationContent.Table.T;
+  reports: Report.Table.T;
+  report_components: Report.ComponentTable.T;
 };
 
 // The table names in the database
@@ -105,12 +110,15 @@ const config = {
   debugPort,
 };
 
+const pool = new Pool({
+  ...config.database,
+});
+
 const db = new Kysely<Database>({
   dialect: new PostgresDialect({
-    pool: new Pool({
-      ...config.database,
-    }),
+    pool,
   }),
 });
 
+export { pool };
 export default db;
