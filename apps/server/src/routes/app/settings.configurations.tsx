@@ -90,22 +90,49 @@ const upsertServerVariable = createServerFn({ method: "POST" })
 export const Route = createFileRoute("/app/settings/configurations")({
   component: RouteComponent,
   loader: async ({ params }) => {
-    const [config, aiKeyVariable, aiUrlVariable] = await Promise.all([
-      getAllConfigurations(),
-      getServerVariable({
-        data: { key: ServerVariable.Keys.AI_DATA_ANALYSIS_API_KEY },
-      }),
-      getServerVariable({
-        data: { key: ServerVariable.Keys.AI_DATA_ANALYSIS_URL },
-      }),
-    ]);
-    const aiKeyIsSet = aiKeyVariable?.value_data !== null;
+    const [config, anthropicKeyVar, openaiKeyVar, geminiKeyVar, aiUrlVariable, aiProxyKeyVar] =
+      await Promise.all([
+        getAllConfigurations(),
+        getServerVariable({
+          data: { key: ServerVariable.Keys.ANTHROPIC_API_KEY },
+        }),
+        getServerVariable({
+          data: { key: ServerVariable.Keys.OPENAI_API_KEY },
+        }),
+        getServerVariable({
+          data: { key: ServerVariable.Keys.GEMINI_API_KEY },
+        }),
+        getServerVariable({
+          data: { key: ServerVariable.Keys.AI_DATA_ANALYSIS_URL },
+        }),
+        getServerVariable({
+          data: { key: ServerVariable.Keys.AI_PROXY_SERVICE_API_KEY },
+        }),
+      ]);
+    const toBytes = (data: unknown): Uint8Array | null => {
+      if (data == null) return null;
+      if (data instanceof Uint8Array) return data;
+      if (data instanceof ArrayBuffer) return new Uint8Array(data);
+      // Serialized Uint8Array comes back as a plain object like { 0: 72, 1: 101, ... }
+      if (typeof data === "object") return new Uint8Array(Object.values(data as Record<string, number>));
+      return null;
+    };
+
     const aiServiceUrl = aiUrlVariable?.value_data
-      ? new TextDecoder().decode(aiUrlVariable.value_data)
+      ? new TextDecoder().decode(toBytes(aiUrlVariable.value_data) ?? new Uint8Array())
       : "";
+    const hasValue = (v: { value_data: unknown } | null | undefined) => {
+      if (v?.value_data == null) return false;
+      const bytes = toBytes(v.value_data);
+      return bytes != null && bytes.length > 0;
+    };
+
     return {
       config,
-      aiKeyIsSet,
+      anthropicKeyIsSet: hasValue(anthropicKeyVar),
+      openaiKeyIsSet: hasValue(openaiKeyVar),
+      geminiKeyIsSet: hasValue(geminiKeyVar),
+      aiProxyKeyIsSet: hasValue(aiProxyKeyVar),
       aiServiceUrl,
       currentUser: await getCurrentUser(),
     };
@@ -116,8 +143,15 @@ const overrideMobilePermissionsConfirmation =
   "I am sure I want to disable permissions on mobile devices";
 
 function RouteComponent() {
-  const { config, aiKeyIsSet, aiServiceUrl, currentUser } =
-    Route.useLoaderData();
+  const {
+    config,
+    anthropicKeyIsSet,
+    openaiKeyIsSet,
+    geminiKeyIsSet,
+    aiProxyKeyIsSet,
+    aiServiceUrl,
+    currentUser,
+  } = Route.useLoaderData();
   const router = useRouter();
   const [openDialog, setOpenDialog] = useState<{
     title: string;
@@ -149,7 +183,10 @@ function RouteComponent() {
       "operation_mode",
     ) || "user_choice";
 
-  const [aiApiKey, setAiApiKey] = useState("");
+  const [anthropicApiKey, setAnthropicApiKey] = useState("");
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [aiProxyApiKey, setAiProxyApiKey] = useState("");
   const [aiUrl, setAiUrl] = useState(aiServiceUrl);
 
   const handleSaveAiSettings = () => {
@@ -157,14 +194,53 @@ function RouteComponent() {
     const encoder = new TextEncoder();
     const promises: Promise<unknown>[] = [];
 
-    if (aiApiKey) {
+    if (anthropicApiKey) {
       promises.push(
         upsertServerVariable({
           data: {
-            key: ServerVariable.Keys.AI_DATA_ANALYSIS_API_KEY,
+            key: ServerVariable.Keys.ANTHROPIC_API_KEY,
             value_type: "secret",
-            description: "API key for AI data analysis and reporting",
-            value_data: encoder.encode(aiApiKey),
+            description: "Anthropic API key",
+            value_data: encoder.encode(anthropicApiKey),
+          },
+        }),
+      );
+    }
+
+    if (openaiApiKey) {
+      promises.push(
+        upsertServerVariable({
+          data: {
+            key: ServerVariable.Keys.OPENAI_API_KEY,
+            value_type: "secret",
+            description: "OpenAI API key",
+            value_data: encoder.encode(openaiApiKey),
+          },
+        }),
+      );
+    }
+
+    if (geminiApiKey) {
+      promises.push(
+        upsertServerVariable({
+          data: {
+            key: ServerVariable.Keys.GEMINI_API_KEY,
+            value_type: "secret",
+            description: "Google Gemini API key",
+            value_data: encoder.encode(geminiApiKey),
+          },
+        }),
+      );
+    }
+
+    if (aiProxyApiKey) {
+      promises.push(
+        upsertServerVariable({
+          data: {
+            key: ServerVariable.Keys.AI_PROXY_SERVICE_API_KEY,
+            value_type: "secret",
+            description: "AI proxy service API key",
+            value_data: encoder.encode(aiProxyApiKey),
           },
         }),
       );
@@ -188,7 +264,10 @@ function RouteComponent() {
     Promise.all(promises)
       .then(() => {
         toast.success("AI settings saved successfully");
-        setAiApiKey("");
+        setAnthropicApiKey("");
+        setOpenaiApiKey("");
+        setGeminiApiKey("");
+        setAiProxyApiKey("");
       })
       .catch((error) => {
         toast.error(`Failed to save AI settings: ${error.message}`);
@@ -385,20 +464,68 @@ function RouteComponent() {
               autoComplete="one-time-code"
               className="lg:w-md"
             />
+            <Input
+              label="AI Proxy Service API Key"
+              description={
+                aiProxyKeyIsSet
+                  ? "A key is currently set. Enter a new value to replace it."
+                  : "Enter the API key for the AI proxy service."
+              }
+              type="password"
+              placeholder={aiProxyKeyIsSet ? "••••••••" : "Enter API key"}
+              value={aiProxyApiKey}
+              onChange={(e) => setAiProxyApiKey(e.target.value)}
+              autoComplete="new-password"
+              className="lg:w-md"
+            />
           </div>
 
           <div className="flex flex-row gap-4 items-end">
             <Input
-              label="API Key"
+              label="Anthropic API Key"
               description={
-                aiKeyIsSet
+                anthropicKeyIsSet
                   ? "A key is currently set. Enter a new value to replace it."
-                  : "Enter the API key for AI-powered data analysis and reporting."
+                  : "Enter your Anthropic API key."
               }
               type="password"
-              placeholder={aiKeyIsSet ? "••••••••" : "Enter API key"}
-              value={aiApiKey}
-              onChange={(e) => setAiApiKey(e.target.value)}
+              placeholder={anthropicKeyIsSet ? "••••••••" : "Enter API key"}
+              value={anthropicApiKey}
+              onChange={(e) => setAnthropicApiKey(e.target.value)}
+              autoComplete="new-password"
+              className="lg:w-md"
+            />
+          </div>
+
+          <div className="flex flex-row gap-4 items-end">
+            <Input
+              label="OpenAI API Key"
+              description={
+                openaiKeyIsSet
+                  ? "A key is currently set. Enter a new value to replace it."
+                  : "Enter your OpenAI API key."
+              }
+              type="password"
+              placeholder={openaiKeyIsSet ? "••••••••" : "Enter API key"}
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              autoComplete="new-password"
+              className="lg:w-md"
+            />
+          </div>
+
+          <div className="flex flex-row gap-4 items-end">
+            <Input
+              label="Gemini API Key"
+              description={
+                geminiKeyIsSet
+                  ? "A key is currently set. Enter a new value to replace it."
+                  : "Enter your Google Gemini API key."
+              }
+              type="password"
+              placeholder={geminiKeyIsSet ? "••••••••" : "Enter API key"}
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
               autoComplete="new-password"
               className="lg:w-md"
             />
@@ -407,7 +534,13 @@ function RouteComponent() {
           <div>
             <Button
               onClick={handleSaveAiSettings}
-              disabled={!aiApiKey && aiUrl === aiServiceUrl}
+              disabled={
+                !anthropicApiKey &&
+                !openaiApiKey &&
+                !geminiApiKey &&
+                !aiProxyApiKey &&
+                aiUrl === aiServiceUrl
+              }
             >
               Save
             </Button>

@@ -1,7 +1,0 @@
-layer: library
-language: typescript
-stack: frontend
-tasks:
-  build:
-    outputs:
-      - dist/**/*

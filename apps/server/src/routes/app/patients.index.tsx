@@ -6,7 +6,9 @@ import {
   LucideCalculator,
   LucideCalendar,
   LucideCalendarPlus,
+  LucideChevronDown,
   LucideDownload,
+  LucideFilter,
   LucideTrash,
 } from "lucide-react";
 import { Option } from "effect";
@@ -28,6 +30,9 @@ import {
   searchPatients,
   softDeletePatientsByIds,
 } from "@/lib/server-functions/patients";
+import { getAllClinics } from "@/lib/server-functions/clinics";
+import { Result } from "@/lib/result";
+import type Clinic from "@/models/clinic";
 import PatientRegistrationForm from "@/models/patient-registration-form";
 import { createServerFn } from "@tanstack/react-start";
 import {
@@ -48,13 +53,23 @@ import EventForm from "@/models/event-form";
 import { format } from "date-fns";
 import User from "@/models/user";
 import { toast } from "sonner";
+import PatientProblem from "@/models/patient-problem";
 import PatientVital from "@/models/patient-vital";
 import { safeJSONParse } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useMap } from "usehooks-ts";
 import If from "@/components/if";
+import { DatePickerInput } from "@/components/date-picker-input";
+import Select from "react-select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+
 import { forEach } from "ramda";
 import { useEffect } from "react";
+import { useImmerReducer } from "use-immer";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
@@ -70,26 +85,121 @@ const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
     const eventForms = await EventForm.API.getAll({ includeDeleted: true });
     const exportEvents = await Event.API.getAllForExport();
     const vitals = await PatientVital.API.getAll();
-    return { patients, exportEvents, eventForms, vitals };
+    const problems = await PatientProblem.getAll();
+    return { patients, exportEvents, eventForms, vitals, problems };
   },
 );
+
+// Function to get all patients matching search filters for export (no pagination)
+// Returns the same shape as getAllPatientsForExport, but scoped to matching patients
+const getFilteredPatientsForExport = createServerFn({ method: "GET" })
+  .inputValidator(
+    (data: {
+      searchQuery: string;
+      registrationDateStart?: string;
+      registrationDateEnd?: string;
+      visitsDateStart?: string;
+      visitsDateEnd?: string;
+      clinicIds?: string[];
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    const currentUser = await getCurrentUser();
+    if (!currentUser || currentUser.role !== User.ROLES.SUPER_ADMIN) {
+      throw new Error("Unauthorized");
+    }
+    const { patients } = await Patient.API.search({
+      searchQuery: data.searchQuery,
+      includeCount: false,
+      registrationDateStart: data.registrationDateStart,
+      registrationDateEnd: data.registrationDateEnd,
+      visitsDateStart: data.visitsDateStart,
+      visitsDateEnd: data.visitsDateEnd,
+      clinicIds: data.clinicIds,
+    });
+    const patientIds = new Set(patients.map((p) => p.id));
+
+    const eventForms = await EventForm.API.getAll({ includeDeleted: true });
+    const allEvents = await Event.API.getAllForExport();
+    const allVitals = await PatientVital.API.getAll();
+    const allProblems = await PatientProblem.getAll();
+
+    return {
+      patients,
+      exportEvents: allEvents.filter((e) => patientIds.has(e.patient_id)),
+      eventForms,
+      vitals: allVitals.filter((v) => patientIds.has(v.patient_id)),
+      problems: allProblems.filter((p) => patientIds.has(p.patient_id)),
+    };
+  });
 
 export const Route = createFileRoute("/app/patients/")({
   component: RouteComponent,
   loader: async () => {
     const { patients, pagination, error } = await getAllPatients();
+    const clinicsResult = await getAllClinics();
+    const clinics = Result.isOk(clinicsResult) ? clinicsResult.data : [];
 
     return {
       currentUser: await getCurrentUser(),
       patients: patients,
       pagination,
+      clinics,
       patientRegistrationForm: await getPatientRegistrationForm(),
     };
   },
 });
 
+type SearchState = {
+  searchQuery: string;
+  clinicIds: string[];
+  registrationDate: [Date | null, Date | null]; // Start date, End date
+  visitsInDateRange: [Date | null, Date | null];
+};
+
+const initialSearchState: SearchState = {
+  searchQuery: "",
+  clinicIds: [],
+  registrationDate: [null, null],
+  visitsInDateRange: [null, null],
+};
+
+type SearchAction =
+  | { type: "update-search-query"; payload: string }
+  | { type: "update-clinic-ids"; payload: string[] }
+  | { type: "update-registration-date-start"; payload: Date | null }
+  | { type: "update-registration-date-end"; payload: Date | null }
+  | { type: "update-visits-date-start"; payload: Date | null }
+  | { type: "update-visits-date-end"; payload: Date | null }
+  | { type: "reset" };
+
+function searchReducer(draft: SearchState, action: SearchAction) {
+  switch (action.type) {
+    case "update-search-query":
+      draft.searchQuery = action.payload;
+      break;
+    case "update-clinic-ids":
+      draft.clinicIds = action.payload;
+      break;
+    case "update-registration-date-start":
+      draft.registrationDate[0] = action.payload;
+      break;
+    case "update-registration-date-end":
+      draft.registrationDate[1] = action.payload;
+      break;
+    case "update-visits-date-start":
+      draft.visitsInDateRange[0] = action.payload;
+      break;
+    case "update-visits-date-end":
+      draft.visitsInDateRange[1] = action.payload;
+      break;
+    case "reset":
+      return initialSearchState;
+  }
+}
+
 function RouteComponent() {
-  const { currentUser, patients, pagination, patientRegistrationForm } =
+  const { currentUser, patients, pagination, patientRegistrationForm, clinics } =
     Route.useLoaderData();
 
   const [patientsList, setPatientsList] =
@@ -109,10 +219,19 @@ function RouteComponent() {
   const navigate = Route.useNavigate();
   const route = useRouter();
   const [currentPage, setCurrentPage] = React.useState(1);
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchState, dispatchSearchAction] = useImmerReducer(
+    searchReducer,
+    initialSearchState,
+  );
   const [loading, setLoading] = React.useState(false);
 
   const [selectedPatients, actions] = useMap<string, string>(); // [patientId, patientName]
+
+  // Sync local state when loader data changes (e.g. after invalidation)
+  useEffect(() => {
+    setPatientsList(patients);
+    setPaginationResults({ pagination });
+  }, [patients, pagination]);
 
   // on mount page, invalidate the data
   useEffect(() => {
@@ -135,6 +254,14 @@ function RouteComponent() {
 
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
 
+  const hasActiveFilters =
+    searchState.searchQuery.trim() !== "" ||
+    searchState.clinicIds.length > 0 ||
+    searchState.registrationDate[0] !== null ||
+    searchState.registrationDate[1] !== null ||
+    searchState.visitsInDateRange[0] !== null ||
+    searchState.visitsInDateRange[1] !== null;
+
   // Function to handle search with pagination
   const handleSearch = (page = 1) => {
     setLoading(true);
@@ -142,9 +269,21 @@ function RouteComponent() {
 
     searchPatients({
       data: {
-        searchQuery,
+        searchQuery: searchState.searchQuery,
         offset,
         limit: pageSize,
+        registrationDateStart:
+          searchState.registrationDate[0]?.toISOString() ?? undefined,
+        registrationDateEnd:
+          searchState.registrationDate[1]?.toISOString() ?? undefined,
+        visitsDateStart:
+          searchState.visitsInDateRange[0]?.toISOString() ?? undefined,
+        visitsDateEnd:
+          searchState.visitsInDateRange[1]?.toISOString() ?? undefined,
+        clinicIds:
+          searchState.clinicIds.length > 0
+            ? searchState.clinicIds
+            : undefined,
       },
     })
       .then((res) => {
@@ -152,7 +291,6 @@ function RouteComponent() {
           setPatientsList(res.patients);
           setPaginationResults(res);
           setCurrentPage(page);
-          // scroll to the top
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       })
@@ -297,163 +435,259 @@ function RouteComponent() {
     return vitalsWorksheet;
   };
 
+  const addProblemsWorksheet = (
+    workbook: ExcelJS.Workbook,
+    problems: PatientProblem.EncodedWithPatientName[],
+  ): ExcelJS.Worksheet => {
+    const worksheet = workbook.addWorksheet("Patient Problems");
+    const headerRow = [
+      "ID",
+      "Patient ID",
+      "Given Name",
+      "Surname",
+      "Visit ID",
+      "Code System",
+      "Code",
+      "Label",
+      "Clinical Status",
+      "Verification Status",
+      "Severity Score",
+      "Onset Date",
+      "End Date",
+      "Recorded By User ID",
+      "Created At",
+      "Updated At",
+    ];
+    worksheet.addRow(headerRow);
+    worksheet.getRow(1).font = { bold: true };
+
+    const rows: unknown[][] = [];
+    problems.forEach((p) => {
+      rows.push([
+        p.id,
+        p.patient_id,
+        p.given_name ?? "",
+        p.surname ?? "",
+        p.visit_id,
+        p.problem_code_system,
+        p.problem_code,
+        p.problem_label,
+        p.clinical_status,
+        p.verification_status,
+        p.severity_score,
+        p.onset_date,
+        p.end_date,
+        p.recorded_by_user_id,
+        p.created_at,
+        p.updated_at,
+      ]);
+    });
+
+    worksheet.addRows(rows);
+    return worksheet;
+  };
+
+  // Shared helpers for building export workbooks
+  const addPatientsWorksheet = (
+    worksheet: ExcelJS.Worksheet,
+    exportPatients: (typeof Patient.PatientWithAttributesSchema.Encoded)[],
+  ) => {
+    const headerRow = ["ID", ...headers];
+    worksheet.addRow(headerRow);
+    worksheet.getRow(1).font = { bold: true };
+    exportPatients.forEach((patient) => {
+      const rowData = [patient.id];
+      fields?.forEach((field) => {
+        if (field.baseField) {
+          rowData.push(
+            String(
+              PatientRegistrationForm.renderFieldValue(
+                field,
+                patient[field.column as keyof typeof patient],
+              ),
+            ),
+          );
+        } else {
+          rowData.push(
+            String(
+              PatientRegistrationForm.renderFieldValue(
+                field,
+                patient.additional_attributes[field.id],
+              ),
+            ),
+          );
+        }
+      });
+      worksheet.addRow(rowData);
+    });
+  };
+
+  const addEventFormsWorksheets = (
+    workbook: ExcelJS.Workbook,
+    eventForms: EventForm.EncodedT[],
+    exportEvents: (Event.EncodedT & { patient?: Partial<Patient.EncodedT> })[],
+  ) => {
+    eventForms.forEach((eventForm) => {
+      const isDeletedPrefix = eventForm.is_deleted ? "DEL - " : "";
+      const worksheetIdSuffix = `${eventForm.id.substring(0, 6)}`;
+      const worksheetName = `${isDeletedPrefix}${truncate(eventForm.name, {
+        length: 18,
+        omission: "..",
+      })}(#${worksheetIdSuffix})`.replace(/[*?:\\/\[\]]/g, "-");
+
+      const worksheet = workbook.addWorksheet(worksheetName);
+      const extraColumns = {
+        patient_id: "Patient ID",
+        patient_name: "Patient Name",
+        patient_sex: "Patient Sex",
+        patient_phone_number: "Patient Phone",
+        patient_citizenship: "Patient Citizenship",
+        patient_date_of_birth: "Patient Date of Birth",
+        visit_id: "Visit ID",
+        created_at: "Created At",
+      };
+      const eventFormFields = safeJSONParse(
+        eventForm.form_fields,
+        [],
+      ) as typeof eventForm.form_fields;
+      const headerRow = [
+        "ID",
+        ...eventFormFields?.map((f) => f.name),
+        ...Object.values(extraColumns),
+      ];
+      worksheet.addRow(headerRow);
+      worksheet.getRow(1).font = { bold: true };
+
+      exportEvents
+        .filter((ev) => ev.form_id === eventForm.id)
+        .forEach((event) => {
+          const rowData = [event.id];
+          eventFormFields?.forEach((field) => {
+            const fieldData = event.form_data.find(
+              (f) => f.fieldId === field.id,
+            );
+            rowData.push(JSON.stringify(fieldData?.value));
+          });
+
+          rowData.push(event.patient_id);
+          rowData.push(
+            `${event?.patient?.given_name || ""} ${event?.patient?.surname || ""}`.trim(),
+          );
+          rowData.push(event?.patient?.sex || "");
+          rowData.push(event?.patient?.phone || "");
+          rowData.push(event?.patient?.citizenship || "");
+          rowData.push(String(event?.patient?.date_of_birth || ""));
+          rowData.push(event.visit_id || "");
+          rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
+          worksheet.addRow(rowData);
+        });
+    });
+  };
+
+  const autoSizeColumns = (worksheet: ExcelJS.Worksheet) => {
+    worksheet.columns?.forEach((column) => {
+      let maxLength = 0;
+      column?.eachCell?.({ includeEmpty: true }, (cell) => {
+        const columnLength = cell.value ? cell.value.toString().length : 10;
+        if (columnLength > maxLength) {
+          maxLength = columnLength;
+        }
+      });
+      column.width = maxLength < 10 ? 10 : maxLength + 2;
+    });
+  };
+
+  const downloadWorkbook = async (
+    workbook: ExcelJS.Workbook,
+    fileName: string,
+  ) => {
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const buildExportWorkbook = async (exportData: {
+    patients: (typeof Patient.PatientWithAttributesSchema.Encoded)[];
+    exportEvents: (Event.EncodedT & { patient?: Partial<Patient.EncodedT> })[];
+    eventForms: EventForm.EncodedT[];
+    vitals: PatientVital.EncodedT[];
+    problems: PatientProblem.EncodedWithPatientName[];
+  }) => {
+    const ExcelJS = (await import("exceljs")).default;
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = currentUser?.name ?? "";
+    workbook.lastModifiedBy = currentUser?.name ?? "";
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    const patientsSheet = workbook.addWorksheet("Patients List");
+    addPatientsWorksheet(patientsSheet, exportData.patients);
+    autoSizeColumns(patientsSheet);
+
+    addProblemsWorksheet(workbook, exportData.problems);
+    addVitalsWorksheet(workbook, exportData.vitals);
+    addEventFormsWorksheets(
+      workbook,
+      exportData.eventForms,
+      exportData.exportEvents,
+    );
+
+    return workbook;
+  };
+
   const handleExport = async () => {
     try {
       toast(
-        "⏳ Export started. Please be patient as this could take some time.",
-        {
-          dismissible: true,
-          duration: 2000,
-        },
+        "Export started. Please be patient as this could take some time.",
+        { dismissible: true, duration: 2000 },
       );
-      // Create a new workbook
-      const ExcelJS = (await import("exceljs")).default;
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("Patients List");
-
-      // Set workbook properties
-      workbook.creator = currentUser?.name ?? "";
-      workbook.lastModifiedBy = currentUser?.name ?? "";
-      workbook.created = new Date();
-      workbook.modified = new Date();
-      workbook.lastPrinted = new Date();
-
-      // Get all patients for export (not paginated)
-      const {
-        vitals: patientVitals,
-        patients: allPatients,
-        exportEvents,
-        eventForms,
-      } = await getAllPatientsForExport({});
-
-      // add Vitals
-      addVitalsWorksheet(workbook, patientVitals);
-
-      // for each event form type, add a new worksheet
-      eventForms.forEach((eventForm) => {
-        const isDeletedPrefix = eventForm.is_deleted ? "DEL - " : "";
-        const worksheetIdSuffix = `${eventForm.id.substring(0, 6)}`;
-        const worksheetName = `${isDeletedPrefix}${truncate(eventForm.name, {
-          length: 18,
-          omission: "..",
-        })}(#${worksheetIdSuffix})`;
-
-        const worksheet = workbook.addWorksheet(worksheetName);
-        const extraColumns = {
-          patient_id: "Patient ID",
-          patient_name: "Patient Name",
-          patient_sex: "Patient Sex",
-          patient_phone_number: "Patient Phone",
-          patient_citizenship: "Patient Citizenship",
-          patient_date_of_birth: "Patient Date of Birth",
-          visit_id: "Visit ID",
-          created_at: "Created At",
-          // provider_id: "Provider ID",
-        };
-        const eventFormFields = safeJSONParse(
-          eventForm.form_fields,
-          [],
-        ) as typeof eventForm.form_fields;
-        console.log({ eventFormFields });
-        const headerRow = [
-          "ID",
-          ...eventFormFields?.map((f) => f.name),
-          ...Object.values(extraColumns),
-        ];
-        worksheet.addRow(headerRow);
-        worksheet.getRow(1).font = { bold: true };
-
-        exportEvents
-          .filter((ev) => ev.form_id === eventForm.id)
-          .forEach((event) => {
-            const rowData = [event.id];
-            eventFormFields?.forEach((field) => {
-              const fieldData = event.form_data.find(
-                (f) => f.fieldId === field.id,
-              );
-              rowData.push(JSON.stringify(fieldData?.value));
-            });
-
-            rowData.push(event.patient_id);
-            rowData.push(
-              `${event?.patient?.given_name || ""} ${event?.patient?.surname || ""}`.trim(),
-            );
-            rowData.push(event?.patient?.sex || "");
-            rowData.push(event?.patient?.phone || "");
-            rowData.push(event?.patient?.citizenship || "");
-            rowData.push(String(event?.patient?.date_of_birth || ""));
-            rowData.push(event.visit_id || "");
-            rowData.push(format(event.created_at, "yyyy-MM-dd HH:mm:ss"));
-            // rowData.push(event.provider_id || "");
-            worksheet.addRow(rowData);
-          });
-      });
-
-      const headerRow = ["ID", ...headers];
-      worksheet.addRow(headerRow);
-      worksheet.getRow(1).font = { bold: true };
-      allPatients.forEach((patient) => {
-        const rowData = [patient.id];
-
-        // Add data for each field in the registration form
-        fields?.forEach((field) => {
-          if (field.baseField) {
-            rowData.push(
-              String(
-                PatientRegistrationForm.renderFieldValue(
-                  field,
-                  patient[field.column as keyof typeof patient],
-                ),
-              ),
-            );
-          } else {
-            rowData.push(
-              String(
-                PatientRegistrationForm.renderFieldValue(
-                  field,
-                  patient.additional_attributes[field.id],
-                ),
-              ),
-            );
-          }
-        });
-
-        worksheet.addRow(rowData);
-      });
-
-      // Auto-size columns for better readability
-      worksheet.columns?.forEach((column) => {
-        let maxLength = 0;
-        column?.eachCell?.({ includeEmpty: true }, (cell) => {
-          const columnLength = cell.value ? cell.value.toString().length : 10;
-          if (columnLength > maxLength) {
-            maxLength = columnLength;
-          }
-        });
-        column.width = maxLength < 10 ? 10 : maxLength + 2;
-      });
-
-      // Generate a filename with current date - so that next download doesn't override previous
-      const fileName = `patients_export_${
-        new Date().toISOString().split("T")[0]
-      }.xlsx`;
-
-      // Write to file and trigger download
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const exportData = await getAllPatientsForExport({});
+      const workbook = await buildExportWorkbook(exportData as any);
+      const fileName = `patients_export_${new Date().toISOString().split("T")[0]}.xlsx`;
+      await downloadWorkbook(workbook, fileName);
     } catch (error: any) {
       console.error("Error exporting patients:", error, error.message);
       toast.error("Failed to export patients", error.message);
+    }
+  };
+
+  const handleFilteredExport = async () => {
+    try {
+      toast(
+        "Export started. Please be patient as this could take some time.",
+        { dismissible: true, duration: 2000 },
+      );
+      const exportData = await getFilteredPatientsForExport({
+        data: {
+          searchQuery: searchState.searchQuery,
+          registrationDateStart:
+            searchState.registrationDate[0]?.toISOString() ?? undefined,
+          registrationDateEnd:
+            searchState.registrationDate[1]?.toISOString() ?? undefined,
+          visitsDateStart:
+            searchState.visitsInDateRange[0]?.toISOString() ?? undefined,
+          visitsDateEnd:
+            searchState.visitsInDateRange[1]?.toISOString() ?? undefined,
+          clinicIds:
+            searchState.clinicIds.length > 0
+              ? searchState.clinicIds
+              : undefined,
+        },
+      });
+      const workbook = await buildExportWorkbook(exportData as any);
+      const fileName = `patients_filtered_export_${new Date().toISOString().split("T")[0]}.xlsx`;
+      await downloadWorkbook(workbook, fileName);
+    } catch (error: any) {
+      console.error("Error exporting filtered patients:", error, error.message);
+      toast.error("Failed to export filtered patients");
     }
   };
 
@@ -493,28 +727,156 @@ function RouteComponent() {
 
   return (
     <div>
-      <div className="w-full flex items-center max-w-2xl gap-4 py-4">
+      <div className="w-full flex flex-col gap-3 py-4 max-w-2xl">
         <Input
-          className="pl-4 pr-4 md:w-lg"
+          className="pl-4 pr-4 max-w-2xl"
           placeholder="Search patients..."
+          label="Search Patients"
           type="search"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchState.searchQuery}
+          onChange={(e) =>
+            dispatchSearchAction({
+              type: "update-search-query",
+              payload: e.target.value,
+            })
+          }
         />
-        <Button
-          className=""
-          type="submit"
-          onClick={() => handleSearch(1)}
-          disabled={loading}
-        >
-          {loading ? "Searching..." : "Search"}
-        </Button>
+
+        <Collapsible>
+          <CollapsibleTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1 px-0 text-muted-foreground hover:text-foreground"
+            >
+              <LucideChevronDown className="h-4 w-4 transition-transform [[data-state=open]_&]:rotate-180" />
+              Advanced filters
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="flex flex-col gap-3 pt-2">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium">Primary Clinic</label>
+              <Select
+                isMulti
+                placeholder="All clinics"
+                options={clinics.map((c) => ({
+                  value: c.id,
+                  label: c.name ?? c.id,
+                }))}
+                value={searchState.clinicIds.map((id) => {
+                  const clinic = clinics.find((c) => c.id === id);
+                  return { value: id, label: clinic?.name ?? id };
+                })}
+                onChange={(selected) =>
+                  dispatchSearchAction({
+                    type: "update-clinic-ids",
+                    payload: selected.map((s) => s.value),
+                  })
+                }
+                classNamePrefix="react-select"
+                className="max-w-md"
+              />
+            </div>
+
+            <fieldset className="flex items-end gap-2">
+              <legend className="text-sm font-medium mb-1">
+                Patient was registered within this Date Range
+              </legend>
+              <DatePickerInput
+                placeholder="From"
+                value={searchState.registrationDate[0] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-registration-date-start",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+              <span className="pb-2 text-sm text-muted-foreground">
+                &ndash;
+              </span>
+              <DatePickerInput
+                placeholder="To"
+                value={searchState.registrationDate[1] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-registration-date-end",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+            </fieldset>
+
+            <fieldset className="flex items-end gap-2">
+              <legend className="text-sm font-medium mb-1">
+                Patient had a visit within this Date Range
+              </legend>
+              <DatePickerInput
+                placeholder="From"
+                value={searchState.visitsInDateRange[0] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-visits-date-start",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+              <span className="pb-2 text-sm text-muted-foreground">
+                &ndash;
+              </span>
+              <DatePickerInput
+                placeholder="To"
+                value={searchState.visitsInDateRange[1] ?? undefined}
+                onChange={(date) =>
+                  dispatchSearchAction({
+                    type: "update-visits-date-end",
+                    payload: date ?? null,
+                  })
+                }
+                className="w-36"
+              />
+            </fieldset>
+          </CollapsibleContent>
+        </Collapsible>
+
+        <div className="flex items-center justify-end gap-3">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              dispatchSearchAction({ type: "reset" });
+              handleSearch(1);
+            }}
+            className="text-muted-foreground"
+          >
+            Clear filters
+          </Button>
+
+          <Button
+            type="submit"
+            onClick={() => handleSearch(1)}
+            disabled={loading}
+          >
+            {loading ? "Searching..." : "Search"}
+          </Button>
+        </div>
       </div>
 
-      <div>
-        <Button type="button" onClick={handleExport}>
+      <div className="pt-4 flex gap-3">
+        <Button type="button" variant="outline" onClick={handleExport}>
           <LucideDownload className="mr-2 h-4 w-4" />
           Export All Patient Data
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleFilteredExport}
+          disabled={!hasActiveFilters || patientsList.length === 0}
+        >
+          <LucideFilter className="mr-2 h-4 w-4" />
+          Export Filtered Patients ({totalItems})
         </Button>
       </div>
 
@@ -562,16 +924,18 @@ function RouteComponent() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {patientsList.length === 0 && searchQuery.trim().length > 0 && !loading && (
-              <TableRow>
-                <TableCell
-                  colSpan={headers.length + 2}
-                  className="px-6 py-8 text-center text-gray-500"
-                >
-                  No results found matching your search
-                </TableCell>
-              </TableRow>
-            )}
+            {patientsList.length === 0 &&
+              searchState.searchQuery.trim().length > 0 &&
+              !loading && (
+                <TableRow>
+                  <TableCell
+                    colSpan={headers.length + 2}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    No results found matching your search
+                  </TableCell>
+                </TableRow>
+              )}
             {patientsList?.map((patient) => (
               <TableRow
                 className="hover:bg-gray-100 cursor-pointer"

@@ -1,8 +1,3 @@
-```
-npm install
-npm run dev
-```
+# Hikma Health AI Proxy Server
 
-```
-open http://localhost:3000
-```
+Serves the purpose of air-gapping Hikma Health servers and connecting to external 3rd party AI/LLM services

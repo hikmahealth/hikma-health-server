@@ -1,0 +1,495 @@
+# PRQL
+
+> PRQL (Pipelined Relational Query Language), pronounced "Prequel", is a modern
+> language for transforming data — a simple, powerful, pipelined SQL replacement.
+> Like SQL, it's readable, explicit and declarative. Unlike SQL, it forms a
+> logical pipeline of transformations, and supports abstractions such as variables
+> and functions. It can be used with any database that uses SQL, since it compiles
+> to SQL.
+
+- Repo: https://github.com/PRQL/prql
+- Book: https://prql-lang.org/book/
+- Playground: https://prql-lang.org/playground/
+- Discord: https://discord.gg/eQcfsCjH
+
+## Quick Examples
+
+A simple query:
+
+```prql
+from tracks
+filter artist == "Bob Marley"
+aggregate {
+  plays    = sum plays,
+  longest  = max length,
+  shortest = min length,
+}
+```
+
+A more complex query:
+
+```prql
+from employees
+filter start_date > @2021-01-01
+derive {
+  gross_salary = salary + (tax ?? 0),
+  gross_cost = gross_salary + benefits,
+}
+filter gross_cost > 0
+group {title, country} (
+  aggregate {
+    average gross_salary,
+    sum_gross_cost = sum gross_cost,
+  }
+)
+filter sum_gross_cost > 100_000
+derive id = f"{title}_{country}"
+sort {sum_gross_cost, -country}
+take 1..20
+```
+
+## Core Concepts
+
+PRQL is built on relational algebra. A relation is a table of data with rows and
+columns. Queries are pipelines of transforms that take a relation and produce a
+new relation.
+
+Pipelines are formed by line breaks or the `|` operator. Each line transforms
+the result of the previous line.
+
+## Syntax
+
+### Literals
+
+- **Numbers**: integers (`42`), floats (`3.14`), underscores (`100_000`),
+  scientific notation (`1.5e3`), hex (`0xff`), octal (`0o77`), binary (`0b1010`)
+- **Strings**: single or double quotes (`'hello'`, `"world"`), triple quotes for
+  multiline
+- **Booleans**: `true`, `false`
+- **Null**: `null`
+- **Dates/times**: `@2021-01-01`, `@14:00`, `@2021-01-01T08:00:00`
+- **Durations**: `2years`, `10minutes`, `3days`
+
+### String Types
+
+- **F-strings**: `f"Hello {name}"` — interpolate variables into strings
+- **R-strings**: `r"\no\escaping"` — raw strings with no escape processing
+- **S-strings**: `s"SQL_FUNCTION({col})"` — escape hatch for embedding raw SQL
+
+### Tuples and Arrays
+
+- **Tuples**: `{a, b, c}` — ordered sets of expressions, optionally named:
+  `{name = "Alice", age = 30}`. Tuples are the type of table rows.
+- **Arrays**: `[1, 2, 3]` — variable-length collections of same-typed items
+
+### Identifiers
+
+- Alphanumeric + `_`, cannot start with a number
+- Backtick quoting for special characters: `` `column with spaces` ``
+- Dot-chaining for schema access: `my_database.schema.table`
+- Special variables: `this` (current relation), `that` (other table in joins)
+- Reserved keywords: `prql`, `let`, `into`, `case`, `type`, `func`, `module`,
+  `internal`, `true`, `false`, `null`
+
+### Operators
+
+- Arithmetic: `+`, `-`, `*`, `/` (float division), `//` (integer division)
+- Comparison: `==`, `!=`, `>`, `>=`, `<`, `<=`
+- Logical: `&&`, `||`, `!`
+- Coalesce: `??` (null fallback)
+- Regex: `~=` (experimental)
+- Range: `start..end` (inclusive both ends)
+
+### Function Calls
+
+Functions are called with space-separated arguments:
+
+```prql
+function_name arg1 arg2 arg3
+```
+
+Named parameters use `:` notation:
+
+```prql
+function_name arg1 named_param:arg2
+```
+
+Nested calls require parentheses:
+
+```prql
+outer_func (inner_func arg_a arg_b)
+```
+
+### Case Expressions
+
+```prql
+case [
+  score >= 90 => "A",
+  score >= 80 => "B",
+  true => "C",
+]
+```
+
+### Comments
+
+`#` denotes a comment until end of line. There is no multiline comment syntax.
+
+### Parameters
+
+`$id` syntax for query parameters, e.g. `$1`, `$user_id`.
+
+## Transforms
+
+Transforms are the core operations in PRQL. Each takes a relation and produces a
+relation.
+
+### from
+
+Specifies the data source:
+
+```prql
+from employees
+from e = employees          # with alias
+from `artist tracks`        # quoted table name
+from default_db.my_table    # explicit database prefix
+```
+
+### select
+
+Picks and computes columns:
+
+```prql
+from employees
+select {name, salary}
+
+from employees
+select {name, double_salary = salary * 2}
+
+from employees
+select !{salary, tax}       # exclude columns
+```
+
+### derive
+
+Computes new columns without removing existing ones:
+
+```prql
+from employees
+derive {
+  gross_salary = salary + tax,
+  is_senior = years > 10,
+}
+```
+
+### filter
+
+Picks rows based on a boolean condition:
+
+```prql
+from employees
+filter age >= 18
+
+from employees
+filter (country | in ["USA", "UK"])
+
+from employees
+filter (salary | in 50_000..100_000)
+```
+
+### sort
+
+Orders rows:
+
+```prql
+from employees
+sort salary              # ascending (default)
+sort {-salary}           # descending
+sort {department, -salary}
+```
+
+`+` prefix for ascending (default), `-` for descending.
+
+### take
+
+Picks rows by position:
+
+```prql
+from employees
+take 10           # first 10 rows
+take 11..20       # rows 11-20 (inclusive)
+```
+
+### join
+
+Adds columns from another table:
+
+```prql
+from employees
+join departments (==department_id)     # inner join on equal column
+
+from employees
+join side:left departments (==department_id)
+
+from e = employees
+join d = departments (e.dept_id == d.id)
+```
+
+Join types: `inner` (default), `left`, `right`, `full`.
+
+### group
+
+Partitions rows and applies a pipeline to each group:
+
+```prql
+from employees
+group department (
+  aggregate {
+    avg_salary = average salary,
+    headcount = count this,
+  }
+)
+
+from employees
+group department (
+  sort salary
+  take 3          # top 3 per department
+)
+```
+
+### aggregate
+
+Reduces rows to a single summary row:
+
+```prql
+from employees
+aggregate {
+  total = sum salary,
+  avg = average salary,
+  n = count this,
+}
+```
+
+Aggregation functions: `min`, `max`, `sum`, `average`, `stddev`, `count`,
+`count_distinct`, `avg`.
+
+### window
+
+Applies a pipeline over sliding/rolling segments of rows:
+
+```prql
+from employees
+window rows:-2..0 (
+  derive {running_total = sum salary}
+)
+
+from employees
+window expanding:true (
+  derive {cumulative = sum salary}
+)
+
+from employees
+window rolling:5 (
+  derive {moving_avg = average salary}
+)
+```
+
+### append
+
+Concatenates two tables (SQL UNION ALL):
+
+```prql
+from employees_us
+append employees_uk
+```
+
+### loop
+
+Iteratively applies a step function (compiles to `WITH RECURSIVE`):
+
+```prql
+from [{n = 1}]
+loop (
+  filter n < 10
+  derive {n = n + 1}
+)
+```
+
+## Declarations
+
+### Variables
+
+Variables assign names to expressions:
+
+```prql
+let top_50 = (
+  from employees
+  sort salary
+  take 50
+  aggregate {total_salary = sum salary}
+)
+
+from top_50
+```
+
+`into` declares after the expression (useful for splitting pipelines):
+
+```prql
+from employees
+take 50
+into first_50
+
+from first_50
+```
+
+Variables compile to CTEs (Common Table Expressions) in SQL.
+
+### Functions
+
+Define reusable transformations:
+
+```prql
+let fahrenheit_to_celsius = temp -> (temp - 32) / 1.8
+
+let interp = low:0 high x -> (x - low) / (high - low)
+```
+
+- Positional parameters: required, in order
+- Named parameters: optional, with defaults (e.g., `low:0`)
+- Values pipe into the last positional parameter
+- Functions support late binding, partial application, and composition
+
+## Standard Library
+
+### Math Functions
+
+`abs`, `acos`, `asin`, `atan`, `ceil`, `cos`, `degrees`, `exp`, `floor`, `ln`,
+`log`, `log10`, `pi`, `pow`, `radians`, `round`, `sin`, `sqrt`, `tan`
+
+Usage: `math.round 2`, `math.pow 2`, `math.abs`
+
+### Text Functions
+
+`contains`, `ends_with`, `extract`, `length`, `lower`, `ltrim`, `replace`,
+`rtrim`, `starts_with`, `trim`, `upper`
+
+Usage: `text.lower`, `text.contains "search"`, `text.length`
+
+### Date Functions
+
+`date.to_text`, `date.now`, `date.trunc`
+
+Requires explicit SQL dialect target. Supported databases: BigQuery, ClickHouse,
+DuckDB, MySQL, MSSQL, Postgres.
+
+### Removing Duplicates
+
+PRQL uses `group` with `take 1` instead of SQL's `DISTINCT`:
+
+```prql
+from employees
+group {first_name, last_name} (
+  take 1
+)
+```
+
+## Ad-hoc Data
+
+Create inline relations:
+
+```prql
+from [{name = "Alice", age = 30}, {name = "Bob", age = 25}]
+```
+
+Or use `from_text`:
+
+```prql
+from_text format:csv """
+name,age
+Alice,30
+Bob,25
+"""
+```
+
+## Reading Files
+
+For databases that support it (e.g. DuckDB):
+
+```prql
+from (read_parquet "data.parquet")
+from (read_csv "data.csv")
+```
+
+## Target Dialect
+
+Specify the SQL dialect at the top of a query:
+
+```prql
+prql target:sql.postgres
+
+from employees
+```
+
+Supported dialects: `sql.clickhouse`, `sql.duckdb`, `sql.generic`,
+`sql.glaredb`, `sql.mysql`, `sql.postgres`, `sql.sqlite`.
+
+Unsupported (minimal testing): `sql.mssql`, `sql.ansi`, `sql.bigquery`,
+`sql.snowflake`.
+
+## Version
+
+Specify the PRQL version for compatibility:
+
+```prql
+prql version:"0.13.12"
+
+from employees
+```
+
+## Null Handling
+
+PRQL treats `null` as a value, unlike SQL's three-valued logic:
+
+- `null == null` evaluates to `true` in PRQL
+- Coalesce with `??`: `value ?? default`
+
+## Type System
+
+Primitive types: `int`, `float`, `bool`, `text`, `date`, `time`, `timestamp`.
+Supports tuples, arrays, functions, unions, and type annotations.
+
+
+## PRQL column reference rules:
+Do not qualify columns from the base from table with the table name. Only use table prefixes for joined tables to disambiguate.
+
+Correct:
+
+```prql
+from visits
+filter is_deleted == false
+join side:inner p = patients (patient_id == p.id)
+derive visit_day = s"to_char(check_in_timestamp, 'YYYY-MM-DD')"
+filter p.sex != null
+```
+
+Wrong:
+
+```prql
+prqlfrom visits
+filter visits.is_deleted == false
+join side:inner p = patients (visits.patient_id == p.id)
+derive visit_day = s"to_char(visits.check_in_timestamp, 'YYYY-MM-DD')"
+filter p.sex != null
+```
+
+The wrong version causes compilation errors because PRQL wraps the base table in a CTE, making visits.* references invalid in the outer query. Columns from the from table are always in scope without qualification. Only joined tables (e.g. p.sex, p.id) need a prefix.
+
+
+When using s\"...\" raw SQL expressions that reference base table columns, derive them before any join — PRQL cannot track column references inside raw SQL strings, so the column may be dropped from the compiled CTE.
+
+
+## Documentation
+- Full book: https://prql-lang.org/book/
+- Tutorial: https://prql-lang.org/book/tutorial/relations.html
+- Reference: https://prql-lang.org/book/reference/syntax/
+- Stdlib: https://prql-lang.org/book/reference/stdlib/
+- Contributing: https://prql-lang.org/book/project/contributing/

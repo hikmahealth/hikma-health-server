@@ -1,0 +1,225 @@
+# Hikma Health Forms — Data Structure Reference
+
+This document describes the two form systems used in Hikma Health: **Patient Registration Forms** and **Event Forms**. Use this as a reference for understanding what data exists, what field types are available, and how form data is structured.
+
+---
+
+## 1. Patient Registration Form
+
+A patient registration form defines the fields collected when registering a new patient. There is typically one registration form per clinic. It controls what data appears on a patient's profile.
+
+### Form structure
+
+```
+{
+  id: string (UUID),
+  clinic_id: string | null,
+  name: string,
+  fields: Field[],          // ordered list of form fields
+  metadata: object,         // arbitrary key-value metadata
+  is_deleted: boolean,
+  created_at, updated_at, last_modified, server_created_at: timestamps,
+  deleted_at: timestamp | null
+}
+```
+
+### Field structure
+
+Each field in the `fields` array has this shape:
+
+```
+{
+  id: string (UUID),
+  position: number,          // display order (1-based)
+  column: string,            // database column name for this field (e.g. "given_name", "sex")
+  label: TranslationObject,  // { "en": "First Name", "es": "Nombre", "ar": "..." }
+  fieldType: InputType,      // one of the input types below
+  options: TranslationObject[],  // for select/checkbox fields, each option is a translation object
+  required: boolean,
+  baseField: boolean,        // true = built-in field that cannot be removed
+  visible: boolean,          // whether the field displays in the app
+  deleted: boolean,          // soft-deleted fields remain for data retrieval
+  showsInSummary: boolean,   // whether displayed on the patient summary/file
+  isSearchField: boolean     // whether this field is searchable
+}
+```
+
+A `TranslationObject` is a key-value map of language code to translated string:
+```
+{ "en": "Male", "es": "masculino", "ar": "ذكر" }
+```
+
+### Input types (fieldType)
+
+| fieldType    | Description                                      | options used? |
+|-------------|--------------------------------------------------|---------------|
+| `text`      | Free-text input (single line)                     | No            |
+| `number`    | Numeric input                                     | No            |
+| `date`      | Date picker                                       | No            |
+| `boolean`   | Yes/No toggle                                     | No            |
+| `select`    | Dropdown — user picks exactly one option           | Yes — each option is a TranslationObject |
+| `checkbox`  | Multi-select checkboxes — user picks one or more   | Yes — each option is a TranslationObject |
+
+### Base fields (always present)
+
+Every registration form includes these base fields by default. They map to columns on the `patients` table:
+
+| position | column               | label (en)      | fieldType |
+|----------|---------------------|-----------------|-----------|
+| 1        | given_name          | First Name      | text      |
+| 2        | surname             | Last Name       | text      |
+| 3        | date_of_birth       | Date of Birth   | date      |
+| 4        | sex                 | Sex             | select (options: male, female) |
+| 5        | citizenship         | Citizenship     | text      |
+| 6        | hometown            | Hometown        | text      |
+| 7        | phone               | Phone           | text      |
+| 8        | camp                | Camp            | text      |
+| 9        | government_id       | Government ID   | text      |
+| 10       | external_patient_id | Patient ID      | text      |
+| 11       | primary_clinic_id   | Primary Clinic  | text      |
+
+Clinics can add custom (non-base) fields beyond these.
+
+---
+
+## 2. Event Forms
+
+Event forms define the structure of clinical encounters/visits. Each event (visit) records data using one of these forms. Event forms have a rich set of field types for capturing clinical data.
+
+### Form structure
+
+```
+{
+  id: string (UUID),
+  name: string | null,
+  description: string | null,
+  language: string,               // two-letter ISO 639 code (e.g. "en", "ar", "es")
+  is_editable: boolean,           // whether the form can be edited after submission
+  is_snapshot_form: boolean,      // snapshot forms capture point-in-time data
+  form_fields: Field[],           // ordered list of form fields
+  metadata: object,               // arbitrary key-value metadata
+  clinic_ids: string[],           // which clinics can use this form (empty = all)
+  translations: FieldTranslation[], // per-field translations
+  is_deleted: boolean,
+  created_at, updated_at, last_modified, server_created_at: timestamps,
+  deleted_at: timestamp | null
+}
+```
+
+### Field types (fieldType + inputType)
+
+Every field has a base structure:
+```
+{
+  id: string,
+  name: string,           // field label/name
+  description: string,    // help text
+  required: boolean,
+  fieldType: string,      // determines the kind of field
+  inputType: string,      // determines the specific input control
+  _tag: string            // same as fieldType (internal discriminator)
+}
+```
+
+#### `binary` — Yes/No or True/False field
+- **inputType**: `"checkbox"` | `"radio"` | `"select"`
+- **options**: `FieldOption[]` — typically two options (e.g. Yes/No)
+
+#### `free-text` — Text input field
+- **inputType**: `"text"` | `"number"` | `"email"` | `"password"` | `"tel"` (short) or `"textarea"` (long)
+- **length**: `"short"` | `"long"`
+- **units** (optional): array of unit labels, e.g. `["mg", "g", "mL"]` or `["hours", "days", "weeks"]`
+
+#### `options` — Single or multi-select from a list
+- **inputType**: `"radio"` | `"checkbox"` | `"select"` | `"dropdown"`
+- **multi**: `boolean` — when true, multiple selections allowed (only with checkbox/select)
+- **options**: `FieldOption[]` — the choices
+
+#### `date` — Date picker
+- **inputType**: `"date"`
+- **min/max** (optional): date bounds
+
+#### `diagnosis` — Diagnosis selector
+- **inputType**: `"select"`
+- **options**: `FieldOption[]` — list of diagnoses
+
+#### `medicine` — Medication entry (compound field)
+- **inputType**: `"input-group"`
+- **options**: `FieldOption[]` — list of available medicines
+- **fields**: sub-fields for a complete medication entry:
+  - `name`: medicine name
+  - `route`: one of `oral`, `sublingual`, `rectal`, `topical`, `inhalation`, `intravenous`, `intramuscular`, `intradermal`, `subcutaneous`, `nasal`, `ophthalmic`, `otic`, `vaginal`, `transdermal`, `other`
+  - `form`: one of `tablet`, `syrup`, `ampule`, `suppository`, `cream`, `drops`, `bottle`, `spray`, `gel`, `lotion`, `inhaler`, `capsule`, `injection`, `patch`, `other`
+  - `frequency`, `intervals`, `dose`, `duration`: text inputs
+  - `doseUnits`: one of `mg`, `g`, `mcg`, `mL`, `L`, `units`
+  - `durationUnits`: one of `hours`, `days`, `weeks`, `months`, `years`
+
+#### `file` — File upload
+- **inputType**: `"file"`
+- **allowedMimeTypes**: `["image/png", "image/jpeg", "application/pdf"]` or `null` (any)
+- **multiple**: `boolean`
+- **minItems** / **maxItems**: `number`
+
+#### `text` — Display-only text block (not an input)
+- **content**: `string` — the text to display
+- **size**: `"xxl"` | `"xl"` | `"lg"` | `"md"` | `"sm"`
+
+#### `separator` — Visual separator line (not an input)
+- No additional properties
+
+### FieldOption
+
+Used by binary, options, diagnosis, and medicine fields:
+```
+{
+  id?: string,    // stable ID for translations (nanoid); may be absent in old data
+  label: string,  // display label
+  value: string   // stored value
+}
+```
+
+### Translations
+
+Translations are stored per-field in the `translations` array on the form:
+```
+{
+  fieldId: string,                              // matches a field's id
+  name: { "en": "...", "es": "...", ... },      // translated field name
+  description: { "en": "...", "es": "..." },    // translated description
+  options: {                                     // keyed by option ID
+    "optionId1": { "en": "...", "es": "..." },
+    "optionId2": { "en": "...", "es": "..." }
+  },
+  createdAt: ISO timestamp,
+  updatedAt: ISO timestamp
+}
+```
+
+Special sentinel field IDs for form-level translations:
+- `"__form_name__"` — translation of the form's name
+- `"__form_description__"` — translation of the form's description
+
+### Reserved field names
+
+The field names `"diagnosis"` and `"medicine"` are reserved and have special handling in the system.
+
+### Measurement & unit constants
+
+- **Dose units**: mg, g, mcg, mL, L, units
+- **Duration units**: hours, days, weeks, months, years
+- **Measurement units**: cm, m, kg, lb, in, ft, mmHg, cmH2O, mmH2O, °C, °F, BPM, P, mmol/L, mg/dL, %, units
+- **Medicine routes**: oral, sublingual, rectal, topical, inhalation, intravenous, intramuscular, intradermal, subcutaneous, nasal, ophthalmic, otic, vaginal, transdermal, other
+- **Medicine forms**: tablet, syrup, ampule, suppository, cream, drops, bottle, spray, gel, lotion, inhaler, capsule, injection, patch, other
+
+---
+
+## Summary: Key Differences
+
+| Aspect                | Patient Registration Form         | Event Form                        |
+|-----------------------|-----------------------------------|-----------------------------------|
+| Purpose               | Patient demographics/identity     | Clinical visit/encounter data     |
+| Field types           | 6 simple types                    | 9 types including compound fields |
+| Translations          | Inline in each field (TranslationObject) | Separate translations array  |
+| Options format        | TranslationObject per option      | FieldOption with id/label/value   |
+| One per clinic?       | Typically yes                     | Many per clinic                   |
+| Has base fields?      | Yes (11 built-in fields)          | No                                |

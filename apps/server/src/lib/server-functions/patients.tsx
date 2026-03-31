@@ -67,10 +67,19 @@ export const getAllPatients = createServerFn({
     },
   );
 
-// Update the searchPatients function to accept pagination parameters
+// Search patients with text query and optional date filters
 export const searchPatients = createServerFn({ method: "GET" })
   .inputValidator(
-    (data: { searchQuery: string; offset?: number; limit?: number }) => data,
+    (data: {
+      searchQuery: string;
+      offset?: number;
+      limit?: number;
+      registrationDateStart?: string;
+      registrationDateEnd?: string;
+      visitsDateStart?: string;
+      visitsDateEnd?: string;
+      clinicIds?: string[];
+    }) => data,
   )
   .handler(
     async ({
@@ -80,7 +89,6 @@ export const searchPatients = createServerFn({ method: "GET" })
       pagination: Pagination;
       error: { message: string } | null;
     }> => {
-      console.log("Calling searchPatients");
       return Sentry.startSpan({ name: "searchPatients" }, async () => {
         const authorized = await userRoleTokenHasCapability([
           User.CAPABILITIES.READ_ALL_PATIENT,
@@ -105,8 +113,18 @@ export const searchPatients = createServerFn({ method: "GET" })
         const offset = data.offset || 0;
         const limit = data.limit || 10;
 
-        // If search query is empty, use getAllWithAttributes for better performance
-        if (!data.searchQuery || data.searchQuery.trim() === "") {
+        const hasTextQuery =
+          data.searchQuery && data.searchQuery.trim() !== "";
+        const hasDateFilters =
+          data.registrationDateStart ||
+          data.registrationDateEnd ||
+          data.visitsDateStart ||
+          data.visitsDateEnd;
+        const hasClinicFilter =
+          data.clinicIds && data.clinicIds.length > 0;
+
+        // If no filters at all, use getAllWithAttributes for better performance
+        if (!hasTextQuery && !hasDateFilters && !hasClinicFilter) {
           const result = await Patient.API.getAllWithAttributes({
             offset,
             limit,
@@ -119,12 +137,16 @@ export const searchPatients = createServerFn({ method: "GET" })
           };
         }
 
-        // Use the search API with proper pagination parameters
         const result = await Patient.API.search({
           searchQuery: data.searchQuery,
           offset,
           limit,
           includeCount: true,
+          registrationDateStart: data.registrationDateStart,
+          registrationDateEnd: data.registrationDateEnd,
+          visitsDateStart: data.visitsDateStart,
+          visitsDateEnd: data.visitsDateEnd,
+          clinicIds: data.clinicIds,
         });
 
         return {

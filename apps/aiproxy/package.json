@@ -1,29 +1,33 @@
 {
   "name": "aiproxy",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "dev": "dotenv -e ../../.env -e .env -- tsx watch src/process.ts",
-    "build": "tsc",
-    "start:http": "node dist/server.js",
-    "start:process": "dotenv -e ../../.env -e .env -- node dist/process.js"
+    "test": "vitest run",
+    "dev": "tsx watch --env-file=.env api/index.ts",
+    "start": "tsx --env-file=.env api/index.ts",
+    "res:build": "rescript",
+    "res:clean": "rescript clean",
+    "res:dev": "rescript watch"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.14.0",
   "dependencies": {
-    "@google/genai": "^1.38.0",
+    "@anthropic-ai/sdk": "^0.80.0",
     "@hono/node-server": "^1.19.9",
-    "@hono/zod-validator": "^0.7.6",
-    "@modelcontextprotocol/sdk": "^1.25.3",
-    "database": "workspace:*",
-    "hono": "^4.11.5",
-    "kysely": "^0.28.9",
-    "openai": "^6.17.0",
-    "pg": "^8.16.3",
-    "zod": "^4.3.6",
-    "zod-to-json-schema": "^3.25.1"
+    "hono": "^4.12.9",
+    "prqlc": "^0.13.11",
+    "rescript": "12.2.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/node": "^20.11.17",
-    "dotenv-cli": "^11.0.0",
-    "tsx": "^4.7.1",
-    "typescript": "^5.8.3"
+    "@types/node": "^25.2.3",
+    "fast-check": "^4.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1"
   }
 }

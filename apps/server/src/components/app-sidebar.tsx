@@ -12,6 +12,7 @@ import {
   LucideFormInput,
   LucideListChecks,
   Box,
+  LucideSchool2,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -179,13 +180,30 @@ export const navData = {
       ],
     },
     {
+      title: "Education",
+      url: "#",
+      icon: LucideSchool2,
+      isActive: true,
+      items: [
+        {
+          title: "Content List",
+          url: "/app/education",
+          icon: BarChart3,
+        },
+        {
+          title: "New Content",
+          url: "/app/education/new/editor",
+        },
+      ],
+    },
+    {
       title: "Data Analysis",
       url: "#",
       icon: BarChart3,
       isActive: true,
       items: [
         {
-          title: "Reports (?)",
+          title: "Reports 🧪",
           url: "/app/reports",
           icon: BarChart3,
         },

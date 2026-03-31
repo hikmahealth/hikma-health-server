@@ -10,13 +10,30 @@ import type {
 import { sql } from "kysely";
 import db from "@/db";
 import { createServerOnlyFn } from "@tanstack/react-start";
-import { v1 as uuidV1 } from "uuid";
+import { v7 as uuidV7 } from "uuid";
+import { createHash } from "node:crypto";
 
 namespace ServerVariable {
+  export type ValueType = "string" | "number" | "boolean" | "blob" | "json";
+
   /** Well-known server variable keys */
   export const Keys = {
-    AI_DATA_ANALYSIS_API_KEY: "ai_data_analysis_api_key",
+    HH_STORE_TYPE: "hh_store_type",
+    AWS_ACCESS_KEY_ID: "aws_access_key_id",
+    AWS_SECRET_ACCESS_KEY: "aws_secret_access_key",
+    AWS_REGION: "aws_region",
+    AWS_ENDPOINT_URL_S3: "aws_endpoint_url_s3",
+    S3_BUCKET_NAME: "s3_bucket_name",
+    GCP_SERVICE_ACCOUNT: "gcp_service_account",
+    GCP_BUCKET_NAME: "gcp_bucket_name",
+    AZURE_STORAGE_CONNECTION_STRING: "azure_storage_connection_string",
+    AZURE_CONTAINER_NAME: "azure_container_name",
+    DISK_STORAGE_PATH: "disk_storage_path",
     AI_DATA_ANALYSIS_URL: "ai_data_analysis_url",
+    AI_PROXY_SERVICE_API_KEY: "ai_proxy_service_api_key",
+    ANTHROPIC_API_KEY: "anthropic_api_key",
+    OPENAI_API_KEY: "openai_api_key",
+    GEMINI_API_KEY: "gemini_api_key",
   } as const;
 
   export type T = {
@@ -84,7 +101,7 @@ namespace ServerVariable {
           >
         >,
     ): Promise<string> => {
-      const id = uuidV1();
+      const id = uuidV7();
       const result = await db
         .insertInto(Table.name)
         .values({
@@ -111,6 +128,122 @@ namespace ServerVariable {
     },
   );
 
+  // --- Typed helpers ---
+  // These build on the raw get/update above to provide type-safe access
+  // to server variables without callers needing to handle encoding.
+
+  const sha256 = (data: Uint8Array): string =>
+    createHash("sha256").update(data).digest("hex");
+
+  const normalizeKey = (key: string): string => key.toLowerCase();
+
+  /** Core setter: encodes value as bytes, computes SHA-256 hash, upserts. */
+  export const setPrimitive = createServerOnlyFn(
+    async (
+      key: string,
+      value: Uint8Array,
+      valueType: ValueType,
+      description?: string,
+    ): Promise<string> => {
+      return update({
+        key: normalizeKey(key),
+        value_type: valueType,
+        value_data: value,
+        value_hash: sha256(value),
+        description: description ?? null,
+      });
+    },
+  );
+
+  export const setString = createServerOnlyFn(
+    async (key: string, value: string, description?: string): Promise<string> =>
+      setPrimitive(key, new TextEncoder().encode(value), "string", description),
+  );
+
+  export const setJson = createServerOnlyFn(
+    async (
+      key: string,
+      value: unknown,
+      description?: string,
+    ): Promise<string> =>
+      setPrimitive(
+        key,
+        new TextEncoder().encode(JSON.stringify(value)),
+        "json",
+        description,
+      ),
+  );
+
+  export const setNumber = createServerOnlyFn(
+    async (key: string, value: number, description?: string): Promise<string> =>
+      setPrimitive(
+        key,
+        new TextEncoder().encode(String(value)),
+        "number",
+        description,
+      ),
+  );
+
+  export const setBoolean = createServerOnlyFn(
+    async (
+      key: string,
+      value: boolean,
+      description?: string,
+    ): Promise<string> =>
+      setPrimitive(
+        key,
+        new Uint8Array([value ? 1 : 0]),
+        "boolean",
+        description,
+      ),
+  );
+
+  /** Get a server variable's value decoded as a string. Returns null if not found. */
+  export const getAsString = createServerOnlyFn(
+    async (key: string): Promise<string | null> => {
+      const row = await get(normalizeKey(key));
+      if (!row?.value_data) return null;
+      return new TextDecoder().decode(row.value_data);
+    },
+  );
+
+  /** Get a server variable's value decoded as parsed JSON. Returns null if not found. */
+  export const getAsJson = createServerOnlyFn(
+    async <T = unknown>(key: string): Promise<T | null> => {
+      const row = await get(normalizeKey(key));
+      if (!row?.value_data) return null;
+      if (row.value_type !== "json") {
+        throw new Error(
+          `ServerVariable "${key}" has type "${row.value_type}", expected "json"`,
+        );
+      }
+      return JSON.parse(new TextDecoder().decode(row.value_data)) as T;
+    },
+  );
+
+  /** Get a server variable's value decoded as a number. Returns null if not found. */
+  export const getAsNumber = createServerOnlyFn(
+    async (key: string): Promise<number | null> => {
+      const raw = await getAsString(key);
+      if (raw === null) return null;
+      const num = Number(raw);
+      if (Number.isNaN(num)) {
+        throw new Error(
+          `ServerVariable "${key}" is not a valid number: "${raw}"`,
+        );
+      }
+      return num;
+    },
+  );
+
+  /** Get a server variable's value decoded as a boolean. Returns null if not found. */
+  export const getAsBoolean = createServerOnlyFn(
+    async (key: string): Promise<boolean | null> => {
+      const row = await get(normalizeKey(key));
+      if (!row?.value_data) return null;
+      return row.value_data[0] === 1;
+    },
+  );
 }
 
 export default ServerVariable;

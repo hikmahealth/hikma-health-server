@@ -1,0 +1,17 @@
+language: typescript
+
+tasks:
+  build:
+    args: "run res:build"
+    command: pnpm
+    outputs:
+      - lib/**/*
+  # dev:
+  #   command: pnpm run dev
+  #   deps:
+  #     - database:dev
+  #   preset: server
+  start:
+    inputs:
+      - lib/**/*
+    command: npx tsx api/index.ts

@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
     "strict": true,
-    "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "types": [
-      "node"
-    ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "resolveJsonModule": true
   },
-  "exclude": ["node_modules"]
+  "include": ["api/**/*.ts"],
+  "exclude": ["node_modules", "dist", "lib"]
 }
