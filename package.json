@@ -3,7 +3,9 @@
   "private": true,
   "scripts": {
     "build": "APP_FOLDER=.server just build-server",
-    "start": "APP_FOLDER=.server just start-server"
+    "start": "APP_FOLDER=.server just start-server",
+    "aiproxy:build": "moon aiproxy:build",
+    "aiproxy:start": "moon aiproxy:start"
   },
   "devDependencies": {
     "@moonrepo/cli": "^1.41.7",
