@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { reportComponent } from "@/lib/ai-service/report.gen";
-import { Code, Sparkles, Pencil, Trash2 } from "lucide-react";
+import { Code, Sparkles, Pencil, Trash2, GripVertical } from "lucide-react";
 import { ReportStatCard } from "./displays/stat-card";
 import { ReportLineChart } from "./displays/line-chart";
 import { ReportPieChart } from "./displays/pie-chart";
@@ -46,6 +46,7 @@ type Props = {
   component: reportComponent;
   rows: Record<string, unknown>[];
   error: string | null;
+  isEditable?: boolean;
   isSuperAdmin?: boolean;
   onAiEdit?: (componentId: string, prompt: string) => void | Promise<void>;
   onSqlEdit?: (componentId: string, sql: string) => void | Promise<void>;
@@ -57,6 +58,7 @@ export const ReportComponentCard = ({
   rows,
   error,
   isSuperAdmin = false,
+  isEditable = false,
   onAiEdit,
   onSqlEdit,
   onDelete,
@@ -81,7 +83,12 @@ export const ReportComponentCard = ({
     <Card className="h-full">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          {isEditable && (
+            <div className="drag-handle cursor-grab active:cursor-grabbing shrink-0 pt-0.5 text-muted-foreground">
+              <GripVertical className="h-4 w-4" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
             <CardTitle className="text-sm">{component.title}</CardTitle>
             {component.description && (
               <CardDescription className="text-xs">
@@ -99,25 +106,29 @@ export const ReportComponentCard = ({
             >
               <Code className="h-3.5 w-3.5" />
             </Button>
-            <Button
-              variant={activePanel === "ai-edit" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => toggle("ai-edit")}
-              title="AI edit"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant={activePanel === "sql-edit" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => toggle("sql-edit")}
-              title="Edit SQL"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
-            {onDelete && (
+            {isEditable && (
+              <>
+                <Button
+                  variant={activePanel === "ai-edit" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => toggle("ai-edit")}
+                  title="AI edit"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  variant={activePanel === "sql-edit" ? "secondary" : "ghost"}
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => toggle("sql-edit")}
+                  title="Edit SQL"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            )}
+            {onDelete && isEditable && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -131,7 +142,7 @@ export const ReportComponentCard = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="flex-1">
+      <CardContent className="flex-1 h-full">
         {activePanel === "display" && (
           <>
             {dirty ? (
@@ -155,12 +166,13 @@ export const ReportComponentCard = ({
         )}
 
         {activePanel === "ai-edit" && (
-          <div className="space-y-2">
+          <div className="space-y-1 h-[80%]">
             <Textarea
               placeholder="Describe how to change this component..."
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              className="min-h-[60px] text-sm"
+              wrapperProps={{ className: "h-full" }}
+              className="h-full text-sm"
             />
             <Button
               size="sm"
@@ -185,13 +197,14 @@ export const ReportComponentCard = ({
           </div>
         )}
 
-        {activePanel === "sql-edit" && (
-          <div className="space-y-2">
+        {activePanel === "sql-edit" && isEditable && (
+          <div className="space-y-1 h-[80%]">
             <Textarea
               value={editedSql}
               onChange={(e) => setEditedSql(e.target.value)}
-              className="min-h-[80px] text-sm font-mono"
-              rows={countLinesOnce(editedSql)}
+              className="text-sm font-mono h-full"
+              wrapperProps={{ className: "h-full" }}
+              // rows={countLinesOnce(editedSql)}
             />
             <Button
               size="sm"

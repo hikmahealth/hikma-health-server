@@ -95,6 +95,7 @@ function RouteComponent() {
         report={report}
         data={data}
         isSuperAdmin={isSuperAdmin}
+        isEditable={false}
         onDeleteComponent={(componentId) => {
           setReport((prev) => {
             if (!prev) return prev;

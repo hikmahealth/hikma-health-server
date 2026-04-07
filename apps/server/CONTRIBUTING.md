@@ -38,7 +38,7 @@ We follow a trunk-based development workflow where the `dev` branch serves as ou
 
 Make sure you have the following installed:
 
-- Node.js 22.14 or higher
+- Node.js 24.14.0
 - pnpm (Fast, disk space efficient package manager)
 - PostgreSQL (local or remote)
 - Git
