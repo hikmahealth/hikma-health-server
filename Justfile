@@ -6,7 +6,7 @@ build-server:
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
     export MOON_DEBUG_PROCESS_ENV=true
 
-    # prepare the web project
+    # prepare the server project
     moon docker scaffold server
 
     # package the content needed to build the server in a single folder

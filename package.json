@@ -4,6 +4,8 @@
   "scripts": {
     "build": "APP_FOLDER=.server just build-server",
     "start": "APP_FOLDER=.server just start-server",
+    "server:build": "APP_FOLDER=.server just build-server",
+    "server:start": "APP_FOLDER=.server just start-server",
     "aiproxy:build": "moon aiproxy:build",
     "aiproxy:start": "moon aiproxy:start"
   },

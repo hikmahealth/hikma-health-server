@@ -14,8 +14,8 @@ services:
     # Uncomment if you want to deploy to the free tier first.
     # NOTE: free tier has degraded performance making it unusable in real world settings
     # plan: free
-    buildCommand: pnpm install && pnpm run build
-    startCommand: pnpm run start
+    buildCommand: pnpm install; pnpm server:build
+    startCommand: pnpm run server:start
 
     envVars:
       # DATABASE_URL trumps all other env variables.
@@ -23,12 +23,6 @@ services:
         fromDatabase:
           name: hikma-health-db
           property: connectionString
-      - key: NODE_VERSION
-        value: "24.14.0"
-      - key: NODE_OPTIONS
-        value: "--max-old-space-size=5120"
-      - key: NITRO_PRESET
-        value: "render-com"
 
 databases:
   - name: "hikma-health-db"

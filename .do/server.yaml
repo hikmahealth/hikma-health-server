@@ -7,8 +7,8 @@ services:
       branch: main
       deploy_on_push: true
     source_dir: /
-    build_command: pnpm install && pnpm run build
-    run_command: pnpm run start
+    build_command: "pnpm install; pnpm server:build"
+    run_command: "pnpm server:start"
     envs:
       - key: DATABASE_URL
         value: ${db.DATABASE_URL}
@@ -18,9 +18,6 @@ services:
         scope: RUN_AND_BUILD_TIME
       - key: NODE_VERSION
         value: "24.14.0"
-        scope: RUN_AND_BUILD_TIME
-      - key: NODE_OPTIONS
-        value: "--max-old-space-size=5120"
         scope: RUN_AND_BUILD_TIME
 databases:
   - name: db
