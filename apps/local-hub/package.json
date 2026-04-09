@@ -1,0 +1,39 @@
+{
+  "name": "hh-local-hub",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "test:frontend": "vitest run --passWithNoTests",
+    "test:backend": "cargo nextest run --manifest-path src-tauri/Cargo.toml",
+    "test": "pnpm test:frontend && pnpm test:backend",
+    "coverage": "bash scripts/coverage.sh"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/plugin-fs": "~2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "~2",
+    "qrcode.react": "^4.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router": "^7.13.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@unocss/preset-wind": "^66.6.0",
+    "@vitejs/plugin-react": "^4.6.0",
+    "fast-check": "^4.5.3",
+    "typescript": "~5.8.3",
+    "unocss": "^66.6.0",
+    "vite": "^7.0.4",
+    "vitest": "^4.0.18"
+  }
+}
