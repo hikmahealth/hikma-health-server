@@ -22,7 +22,7 @@ import {
   LucideUndo2,
   LucideRedo2,
   LucideImage,
-  LucideYoutube,
+  LucidePlay,
   LucideTable,
   LucideCode,
 } from "lucide-react";
@@ -33,7 +33,11 @@ type TipTapEditorProps = {
   onImageUpload: (file: File) => Promise<string>;
 };
 
-export function TipTapEditor({ content, onUpdate, onImageUpload }: TipTapEditorProps) {
+export function TipTapEditor({
+  content,
+  onUpdate,
+  onImageUpload,
+}: TipTapEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const editor = useEditor({
@@ -88,7 +92,11 @@ export function TipTapEditor({ content, onUpdate, onImageUpload }: TipTapEditorP
 
   const handleInsertTable = useCallback(() => {
     if (!editor) return;
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+    editor
+      .chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
   }, [editor]);
 
   if (!editor) return null;
@@ -129,21 +137,27 @@ export function TipTapEditor({ content, onUpdate, onImageUpload }: TipTapEditorP
         <div className="w-px h-6 bg-gray-300 mx-1 self-center" />
 
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 1 }).run()
+          }
           active={editor.isActive("heading", { level: 1 })}
           title="Heading 1"
         >
           <LucideHeading1 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 2 }).run()
+          }
           active={editor.isActive("heading", { level: 2 })}
           title="Heading 2"
         >
           <LucideHeading2 className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          onClick={() =>
+            editor.chain().focus().toggleHeading({ level: 3 }).run()
+          }
           active={editor.isActive("heading", { level: 3 })}
           title="Heading 3"
         >
@@ -186,7 +200,7 @@ export function TipTapEditor({ content, onUpdate, onImageUpload }: TipTapEditorP
           <LucideImage className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton onClick={handleYoutubeEmbed} title="Embed YouTube">
-          <LucideYoutube className="h-4 w-4" />
+          <LucidePlay className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton onClick={handleInsertTable} title="Insert Table">
           <LucideTable className="h-4 w-4" />

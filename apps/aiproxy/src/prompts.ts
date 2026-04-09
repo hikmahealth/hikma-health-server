@@ -158,15 +158,13 @@ Return exactly 3 suggestions. Each has a "refined_prompt" (the improved prompt t
 export function format_table(table: table_schema): string {
   const cols = table.columns
     .map(
-      (c) =>
-        `    ${c.name} (${c.data_type}${c.is_nullable ? ", nullable" : ""})`,
+      (c) => `    ${c.name} (${c.dataType}${c.isNullable ? ", nullable" : ""})`,
     )
     .join("\n");
   return `### ${table.schema}.${table.name}\n${cols}`;
 }
 
-/** Builds the user message for a component fix retry. Includes the original request
- *  context so the LLM has full awareness, plus the failed component and its error. */
+/** Builds the user message for a component fix retry when PRQL fails to compile. */
 export function build_fix_component_message(
   original_user_message: string,
   component_title: string,
@@ -178,7 +176,7 @@ export function build_fix_component_message(
 
 ## Fix Required — Attempt ${attempt} of 3
 
-The following component failed PRQL compilation. Fix the prql_source so it compiles to valid PostgreSQL. Return ONLY the corrected prql_source.
+The following component failed PRQL compilation. The PRQL syntax or structure is invalid. Fix the prql_source so it compiles to valid PostgreSQL. Return ONLY the corrected prql_source.
 
 ### Component: "${component_title}"
 
@@ -187,8 +185,36 @@ The following component failed PRQL compilation. Fix the prql_source so it compi
 ${failed_prql}
 \`\`\`
 
-### Compilation Error
+### PRQL Compilation Error
 ${compile_error}`;
+}
+
+/** Builds the user message for a component fix retry when the compiled SQL
+ *  fails validation against the actual database schema. The PRQL compiled
+ *  successfully, but the resulting SQL references columns, tables, or types
+ *  that don't exist in the database. */
+export function build_fix_validation_message(
+  original_user_message: string,
+  component_title: string,
+  failed_prql: string,
+  validation_error: string,
+  attempt: number,
+): string {
+  return `${original_user_message}
+
+## Fix Required — Attempt ${attempt} of 3
+
+The following component's PRQL compiled to SQL successfully, but the SQL failed validation against the actual database schema. This means the query references columns, tables, types, or operations that don't match the real database. Review the schema provided in the system prompt and fix the prql_source to only use tables and columns that exist. Return ONLY the corrected prql_source.
+
+### Component: "${component_title}"
+
+### Failed PRQL
+\`\`\`prql
+${failed_prql}
+\`\`\`
+
+### Database Validation Error
+${validation_error}`;
 }
 
 /** Builds the user message for /update-component. Distinguishes create vs edit mode

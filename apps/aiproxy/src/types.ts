@@ -1,18 +1,20 @@
 import { z } from "zod";
 
-// ── Input types (from EHR server) ──────────────────────────
+////////////// Input types (from EHR server) ///////////////
+// REFACTOR: Convert to shared types
 
+// Field names match what the EHR server actually sends (camelCase).
 export type table_schema = {
   name: string;
-  is_view: boolean;
+  isView: boolean;
   schema: string;
   columns: {
     name: string;
-    data_type: string;
-    data_type_schema: string;
-    is_nullable: boolean;
-    is_auto_incrementing: boolean;
-    has_default_value: boolean;
+    dataType: string;
+    dataTypeSchema: string;
+    isNullable: boolean;
+    isAutoIncrementing: boolean;
+    hasDefaultValue: boolean;
   }[];
 };
 

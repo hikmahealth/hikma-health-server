@@ -8,9 +8,10 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": ".",
+    "types": ["node"],
     "baseUrl": ".",
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
   },
   "include": ["api/**/*.ts"],
-  "exclude": ["node_modules", "dist", "lib"]
+  "exclude": ["node_modules", "dist", "lib"],
 }

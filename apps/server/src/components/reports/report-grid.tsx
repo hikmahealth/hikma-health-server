@@ -9,12 +9,14 @@ type ReportGridProps = ReportWithData & {
   isSuperAdmin?: boolean;
   updateReport?: any;
   onDeleteComponent?: (componentId: string) => void;
+  isEditable?: boolean;
 };
 
 export const ReportGrid = ({
   report,
   data,
   isSuperAdmin = false,
+  isEditable = false,
   updateReport,
   onDeleteComponent,
 }: ReportGridProps) => {
@@ -108,6 +110,7 @@ export const ReportGrid = ({
               onSqlEdit={handleOnSqlEdit}
               onAiEdit={handleOnAIEdit}
               onDelete={onDeleteComponent}
+              isEditable={isEditable}
             />
           </div>
         );

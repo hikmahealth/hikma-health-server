@@ -68,7 +68,7 @@ Migration is straightforward and takes just a few minutes:
 
 Before you begin, ensure you have the following installed on your system:
 
-- **Node.js 22.14 or higher** - [Download here](https://nodejs.org/)
+- **Node.js 24.14.0** - [Download here](https://nodejs.org/)
 - **pnpm** - Fast, disk space efficient package manager
   ```bash
   npm install -g pnpm

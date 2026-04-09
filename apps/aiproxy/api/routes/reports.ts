@@ -15,15 +15,27 @@ import {
   build_user_message,
   build_component_user_message,
   build_fix_component_message,
+  build_fix_validation_message,
 } from "../../src/prompts.js";
 import { compile_prql } from "../../src/compiler.js";
 import { resolve_ai_api_key, type client } from "../../src/clients.js";
 import { swap_uuids } from "../../src/uuid_swap.js";
+import { create_validator, type pg_validator } from "../../src/pg-validator.js";
 
 type app_env = { Variables: { client: client } };
 
 const AI_MODEL = process.env.AI_MODEL ?? "claude-opus-4-6";
 const RETRY_LIMIT = 3;
+const OVERLOADED_MESSAGE =
+  "The AI service is currently busy, please try again after a few minutes. If this persists for more than a few days please contact support.";
+
+function is_overloaded_error(e: unknown): boolean {
+  return (
+    e instanceof Anthropic.InternalServerError &&
+    typeof (e as any).error?.error?.type === "string" &&
+    (e as any).error.error.type === "overloaded_error"
+  );
+}
 
 function log_usage(
   route: string,
@@ -51,20 +63,40 @@ async function retry_failed_component(
   user_message: string,
   component: compiled_component,
   restore: (text: string) => string,
+  validator: pg_validator,
 ): Promise<compiled_component> {
   let current = component;
 
   for (let attempt = 1; attempt <= RETRY_LIMIT; attempt++) {
     if (!current.compile_error) return current;
 
-    const fix_message = build_fix_component_message(
-      user_message,
-      current.title,
-      current.prql_source,
-      current.compile_error,
-      attempt,
+    const is_validation_error = current.compile_error.startsWith(
+      "PostgreSQL validation error:",
     );
+    const error_kind = is_validation_error ? "validation" : "compilation";
+    // console.log(
+    //   `[retry] component="${current.title}" attempt=${attempt}/${RETRY_LIMIT} error_kind=${error_kind}\n` +
+    //     `  prql:\n${current.prql_source}\n` +
+    //     `  error: ${current.compile_error}`,
+    // );
 
+    const fix_message = is_validation_error
+      ? build_fix_validation_message(
+          user_message,
+          current.title,
+          current.prql_source,
+          current.compile_error,
+          attempt,
+        )
+      : build_fix_component_message(
+          user_message,
+          current.title,
+          current.prql_source,
+          current.compile_error,
+          attempt,
+        );
+
+    // Overloaded errors are not retryable — let them propagate to the route handler
     const message = await client.messages.create({
       model: AI_MODEL,
       max_tokens: 2048,
@@ -87,12 +119,22 @@ async function retry_failed_component(
     const restored_prql = restore(parsed.data.prql_source);
     const result = compile_prql(restored_prql);
     if (result.ok) {
-      return {
+      const validation = await validator.validate(result.sql);
+      if (validation.ok) {
+        return {
+          ...current,
+          prql_source: restored_prql,
+          compiled_sql: result.sql,
+          compile_error: null,
+        };
+      }
+      // SQL compiled but failed validation — retry with PG error
+      current = {
         ...current,
         prql_source: restored_prql,
-        compiled_sql: result.sql,
-        compile_error: null,
+        compile_error: validation.error,
       };
+      continue;
     }
 
     // Update for next attempt with the new PRQL and its error
@@ -170,15 +212,23 @@ reports.post("/prompt-refine", async (c) => {
     string,
   ];
 
-  const message = await client.messages.create({
-    model: AI_MODEL,
-    max_tokens: 2048,
-    system: scrubbed_system,
-    messages: [{ role: "user", content: scrubbed_user }],
-    output_config: {
-      format: zodOutputFormat(prompt_refine_response_schema),
-    },
-  });
+  let message;
+  try {
+    message = await client.messages.create({
+      model: AI_MODEL,
+      max_tokens: 2048,
+      system: scrubbed_system,
+      messages: [{ role: "user", content: scrubbed_user }],
+      output_config: {
+        format: zodOutputFormat(prompt_refine_response_schema),
+      },
+    });
+  } catch (e) {
+    if (is_overloaded_error(e)) {
+      return c.json({ error: OVERLOADED_MESSAGE }, 503);
+    }
+    throw e;
+  }
   log_usage("prompt-refine", message.usage);
 
   const text_block = message.content.find((b) => b.type === "text");
@@ -249,15 +299,23 @@ reports.post("/update-component", async (c) => {
     string,
   ];
 
-  const message = await client.messages.create({
-    model: AI_MODEL,
-    max_tokens: 4096,
-    system: system_prompt,
-    messages: [{ role: "user", content: user_msg }],
-    output_config: {
-      format: zodOutputFormat(report_component_schema),
-    },
-  });
+  let message;
+  try {
+    message = await client.messages.create({
+      model: AI_MODEL,
+      max_tokens: 4096,
+      system: system_prompt,
+      messages: [{ role: "user", content: user_msg }],
+      output_config: {
+        format: zodOutputFormat(report_component_schema),
+      },
+    });
+  } catch (e) {
+    if (is_overloaded_error(e)) {
+      return c.json({ error: OVERLOADED_MESSAGE }, 503);
+    }
+    throw e;
+  }
   log_usage("update-component", message.usage);
 
   const text_block = message.content.find((b) => b.type === "text");
@@ -273,41 +331,75 @@ reports.post("/update-component", async (c) => {
     );
   }
 
-  const restored_prql = restore(parsed.data.prql_source);
-  const result = compile_prql(restored_prql);
+  const validator = await create_validator(db_schema);
+  try {
+    const restored_prql = restore(parsed.data.prql_source);
+    const result = compile_prql(restored_prql);
 
-  let compiled: compiled_component = result.ok
-    ? {
-        ...parsed.data,
-        prql_source: restored_prql,
-        compiled_sql: result.sql,
-        compile_error: null,
+    let compiled: compiled_component;
+    if (result.ok) {
+      const validation = await validator.validate(result.sql);
+      if (validation.ok) {
+        compiled = {
+          ...parsed.data,
+          prql_source: restored_prql,
+          compiled_sql: result.sql,
+          compile_error: null,
+        };
+      } else {
+        // console.log(
+        //   `[update-component] validation failed for "${parsed.data.title}"\n` +
+        //     `  sql:\n${result.sql}\n` +
+        //     `  error: ${validation.error}`,
+        // );
+        compiled = {
+          ...parsed.data,
+          prql_source: restored_prql,
+          compiled_sql: null,
+          compile_error: validation.error,
+        };
       }
-    : {
+    } else {
+      // console.log(
+      //   `[update-component] compilation failed for "${parsed.data.title}"\n` +
+      //     `  prql:\n${restored_prql}\n` +
+      //     `  error: ${result.error}`,
+      // );
+      compiled = {
         ...parsed.data,
         prql_source: restored_prql,
         compiled_sql: null,
         compile_error: result.error,
       };
+    }
 
-  if (compiled.compile_error) {
-    compiled = await retry_failed_component(
-      client,
-      system_prompt,
-      user_msg,
-      compiled,
-      restore,
-    );
+    if (compiled.compile_error) {
+      compiled = await retry_failed_component(
+        client,
+        system_prompt,
+        user_msg,
+        compiled,
+        restore,
+        validator,
+      );
+    }
+
+    if (compiled.compile_error) {
+      console.error("PRQL compilation failure after retries:", {
+        title: compiled.title,
+        error: compiled.compile_error,
+      });
+    }
+
+    return c.json({ status: "ok", component: compiled });
+  } catch (e) {
+    if (is_overloaded_error(e)) {
+      return c.json({ error: OVERLOADED_MESSAGE }, 503);
+    }
+    throw e;
+  } finally {
+    await validator.close();
   }
-
-  if (compiled.compile_error) {
-    console.error("PRQL compilation failure after retries:", {
-      title: compiled.title,
-      error: compiled.compile_error,
-    });
-  }
-
-  return c.json({ status: "ok", component: compiled });
 });
 
 reports.post("/manage", async (c) => {
@@ -362,18 +454,26 @@ reports.post("/manage", async (c) => {
     string,
     string,
   ];
-  console.log("=== SYSTEM PROMPT ===\n" + system_prompt);
-  console.log("=== USER MSG ===\n" + user_msg);
+  // console.log("=== SYSTEM PROMPT ===\n" + system_prompt);
+  // console.log("=== USER MSG ===\n" + user_msg);
 
-  const message = await client.messages.create({
-    model: AI_MODEL,
-    max_tokens: 4096,
-    system: system_prompt,
-    messages: [{ role: "user", content: user_msg }],
-    output_config: {
-      format: zodOutputFormat(ai_report_response_schema),
-    },
-  });
+  let message;
+  try {
+    message = await client.messages.create({
+      model: AI_MODEL,
+      max_tokens: 4096,
+      system: system_prompt,
+      messages: [{ role: "user", content: user_msg }],
+      output_config: {
+        format: zodOutputFormat(ai_report_response_schema),
+      },
+    });
+  } catch (e) {
+    if (is_overloaded_error(e)) {
+      return c.json({ error: OVERLOADED_MESSAGE }, 503);
+    }
+    throw e;
+  }
   log_usage("manage", message.usage);
 
   const text_block = message.content.find((b) => b.type === "text");
@@ -391,49 +491,81 @@ reports.post("/manage", async (c) => {
     );
   }
 
-  // Restore real UUIDs in PRQL before compilation so the SQL references real IDs
-  const compiled: compiled_component[] = parsed.data.components.map((comp) => {
-    const restored_prql = restore(comp.prql_source);
-    const result = compile_prql(restored_prql);
-    if (!result.ok) {
-      return {
-        ...comp,
-        prql_source: restored_prql,
-        compiled_sql: null,
-        compile_error: result.error,
-      };
-    }
-    return {
-      ...comp,
-      prql_source: restored_prql,
-      compiled_sql: result.sql,
-      compile_error: null,
-    };
-  });
-
-  // Retry failed components in parallel
-  const results = await Promise.all(
-    compiled.map((comp) => {
-      if (!comp.compile_error) return comp;
-      return retry_failed_component(
-        client,
-        system_prompt,
-        user_msg,
-        comp,
-        restore,
-      );
-    }),
-  );
-
-  const still_failed = results.filter((c) => c.compile_error);
-  if (still_failed.length > 0) {
-    console.error(
-      "PRQL compilation failures after retries:",
-      still_failed.map((f) => ({ title: f.title, error: f.compile_error })),
+  const validator = await create_validator(db_schema);
+  try {
+    // Restore real UUIDs in PRQL before compilation so the SQL references real IDs
+    const compiled: compiled_component[] = await Promise.all(
+      parsed.data.components.map(async (comp) => {
+        const restored_prql = restore(comp.prql_source);
+        const result = compile_prql(restored_prql);
+        if (!result.ok) {
+          // console.log(
+          //   `[manage] compilation failed for "${comp.title}"\n` +
+          //     `  prql:\n${restored_prql}\n` +
+          //     `  error: ${result.error}`,
+          // );
+          return {
+            ...comp,
+            prql_source: restored_prql,
+            compiled_sql: null,
+            compile_error: result.error,
+          };
+        }
+        const validation = await validator.validate(result.sql);
+        if (!validation.ok) {
+          // console.log(
+          //   `[manage] validation failed for "${comp.title}"\n` +
+          //     `  sql:\n${result.sql}\n` +
+          //     `  error: ${validation.error}`,
+          // );
+          return {
+            ...comp,
+            prql_source: restored_prql,
+            compiled_sql: null,
+            compile_error: validation.error,
+          };
+        }
+        return {
+          ...comp,
+          prql_source: restored_prql,
+          compiled_sql: result.sql,
+          compile_error: null,
+        };
+      }),
     );
-  }
 
-  return c.json({ status: "ok", components: results });
+    // Retry failed components in parallel
+    const results = await Promise.all(
+      compiled.map((comp) => {
+        if (!comp.compile_error) return comp;
+        return retry_failed_component(
+          client,
+          system_prompt,
+          user_msg,
+          comp,
+          restore,
+          validator,
+        );
+      }),
+    );
+
+    const still_failed = results.filter((c) => c.compile_error);
+    if (still_failed.length > 0) {
+      console.error(
+        "PRQL compilation failures after retries:",
+        still_failed.map((f) => ({ title: f.title, error: f.compile_error })),
+      );
+    }
+
+    return c.json({ status: "ok", components: results });
+  } catch (e) {
+    if (is_overloaded_error(e)) {
+      return c.json({ error: OVERLOADED_MESSAGE }, 503);
+    }
+    throw e;
+  } finally {
+    await validator.close();
+  }
 });
 
 export default reports;
