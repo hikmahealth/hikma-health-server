@@ -14,17 +14,20 @@ tasks:
       - .output/**/*
     env:
       NODE_OPTIONS: --max-old-space-size=5120
-  # dev:
-  #   command: pnpm run dev
-  #   deps:
-  #     - database:dev
-  #   preset: server
+  dev:
+    command: pnpm run dev
+    options:
+      envFile: "/.env"
+    deps:
+      - database:dev
+    preset: server
   recovery:
     command: pnpm run recovery:permissions
     deps:
       - database:migrate
     env:
       DB_MIGRATION: "true"
+
   start:
     inputs:
       - .output/**/*

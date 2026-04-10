@@ -1,6 +1,13 @@
 {
-  "include": ["config.ts", "schema/*/*.ts"],
-  "exclude": ["node_modules", "alembic", "migrations"],
+  "extends": "./tsconfig.json",
+  "include": ["*.ts", "schema/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "alembic",
+    "custom",
+    "migrations",
+    "kysely.config.ts",
+  ],
   "compilerOptions": {
     "target": "ES6",
     "module": "ES6",

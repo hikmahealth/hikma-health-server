@@ -9,7 +9,7 @@ tasks:
     command: pnpm build
     outputs:
       - dist/**/*
-  # dev:
-  #   command: pnpm create_schema
-  #   outputs:
-  #     - /apps/web/src/db/types.d.ts
+  dev:
+    command: pnpm create_schema
+    outputs:
+      - /apps/web/src/db/types.d.ts

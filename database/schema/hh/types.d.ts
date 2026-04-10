@@ -9,6 +9,8 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
   ? ColumnType<S, I | undefined, U>
   : ColumnType<T, T | undefined, T>;
 
+export type Int8 = ColumnType<string, bigint | number | string, bigint | number | string>;
+
 export type Json = JsonValue;
 
 export type JsonArray = JsonValue[];
@@ -238,6 +240,26 @@ export interface DrugCatalogue {
   updated_at: Generated<Timestamp>;
 }
 
+export interface EducationContent {
+  author_id: string | null;
+  content_type: string;
+  created_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+  description: string | null;
+  id: Generated<string>;
+  is_deleted: Generated<boolean>;
+  language: Generated<string>;
+  metadata: Generated<Json>;
+  published_at: Timestamp | null;
+  resource_id: string | null;
+  status: Generated<string>;
+  tags: Generated<Json>;
+  tiptap_content: Json | null;
+  title: string;
+  updated_at: Generated<Timestamp>;
+  visibility: Generated<string>;
+}
+
 export interface EventForms {
   clinic_ids: Generated<Json | null>;
   created_at: Generated<Timestamp | null>;
@@ -369,6 +391,22 @@ export interface PatientAllergyReactions {
   updated_at: Generated<Timestamp>;
 }
 
+export interface PatientEvents {
+  clinic_id: string;
+  created_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+  id: string;
+  is_deleted: Generated<boolean>;
+  last_modified: Generated<Timestamp>;
+  log_user_id: string | null;
+  name: string;
+  patient_id: string;
+  reference_patients_event_id: string | null;
+  server_created_at: Generated<Timestamp>;
+  updated_at: Generated<Timestamp>;
+  version: Generated<Int8 | null>;
+}
+
 export interface PatientObservations {
   created_at: Generated<Timestamp>;
   deleted_at: Timestamp | null;
@@ -488,6 +526,7 @@ export interface PatientVitals {
   metadata: Generated<Json>;
   oxygen_saturation: Numeric | null;
   pain_level: number | null;
+  patient_event_id: string | null;
   patient_id: string;
   pulse_rate: number | null;
   recorded_by_user_id: string | null;
@@ -537,6 +576,7 @@ export interface Prescriptions {
   last_modified: Generated<Timestamp>;
   metadata: Generated<Json>;
   notes: Generated<string>;
+  patient_event_id: string | null;
   patient_id: string;
   pickup_clinic_id: string;
   prescribed_at: Generated<Timestamp>;
@@ -546,6 +586,41 @@ export interface Prescriptions {
   status: Generated<string>;
   updated_at: Generated<Timestamp>;
   visit_id: string | null;
+}
+
+export interface ReportComponents {
+  compiled_at: Generated<Timestamp>;
+  compiled_sql: string;
+  compiler_version: Generated<string>;
+  created_at: Generated<Timestamp>;
+  deleted_at: Timestamp | null;
+  description: string | null;
+  display: Json;
+  id: Generated<string>;
+  is_deleted: Generated<boolean>;
+  last_modified: Generated<Timestamp>;
+  position: Generated<Json>;
+  prql_source: string;
+  report_id: string;
+  time_range: Json | null;
+  title: string;
+  updated_at: Generated<Timestamp>;
+}
+
+export interface Reports {
+  clinic_id: string | null;
+  created_at: Generated<Timestamp>;
+  created_by: string | null;
+  deleted_at: Timestamp | null;
+  description: string | null;
+  id: Generated<string>;
+  is_deleted: Generated<boolean>;
+  last_modified: Generated<Timestamp>;
+  layout: Generated<Json>;
+  name: string;
+  server_created_at: Generated<Timestamp>;
+  time_range: Json;
+  updated_at: Generated<Timestamp>;
 }
 
 export interface Resources {
@@ -665,6 +740,7 @@ export interface DB {
   dispensing_records: DispensingRecords;
   drug_batches: DrugBatches;
   drug_catalogue: DrugCatalogue;
+  education_content: EducationContent;
   event_forms: EventForms;
   event_logs: EventLogs;
   events: Events;
@@ -672,6 +748,7 @@ export interface DB {
   patient_additional_attributes: PatientAdditionalAttributes;
   patient_allergies: PatientAllergies;
   patient_allergy_reactions: PatientAllergyReactions;
+  patient_events: PatientEvents;
   patient_observations: PatientObservations;
   patient_problems: PatientProblems;
   patient_registration_forms: PatientRegistrationForms;
@@ -680,6 +757,8 @@ export interface DB {
   patients: Patients;
   prescription_items: PrescriptionItems;
   prescriptions: Prescriptions;
+  report_components: ReportComponents;
+  reports: Reports;
   resources: Resources;
   server_variables: ServerVariables;
   string_content: StringContent;
