@@ -90,6 +90,7 @@ enum EnvironmentType {
 }
 
 import { getDatabaseConfig } from "@repo/database/config";
+import { type DB } from "@repo/database/types/schema/hh";
 
 // Application environment configuration
 const appEnv = (process.env.APP_ENV as EnvironmentType) || EnvironmentType.Prod;
@@ -114,7 +115,7 @@ const pool = new Pool({
   ...config.database,
 });
 
-const db = new Kysely<Database>({
+const db = new Kysely<DB>({
   dialect: new PostgresDialect({
     pool,
   }),
