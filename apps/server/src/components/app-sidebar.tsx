@@ -13,6 +13,7 @@ import {
   LucideListChecks,
   Box,
   LucideSchool2,
+  ClipboardEditIcon,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -237,13 +238,6 @@ export const navData = {
         // },
       ],
     },
-    // {
-    //   title: "Sign Out",
-    //   url: "#",
-    //   icon: LogOut,
-    //   isActive: true,
-    //   items: [],
-    // },
   ],
   projects: [
     // {

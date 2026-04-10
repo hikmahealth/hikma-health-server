@@ -1,5 +1,5 @@
 {
-  "outFile": "./schema/hh/types.d.ts",
+  "outFile": "./types/schema/hh.d.ts",
   "dialect": "postgres",
   "url": "env(DATABASE_URL)",
   "defaultSchemas": ["public"]

@@ -5,9 +5,9 @@
   "main": "index.js",
   "keywords": [],
   "exports": {
-    "./schema/*": {
-      "default": "./dist/schema/*/types.d.ts",
-      "types": "./dist/schema/*/types.d.ts"
+    "./types/*": {
+      "import": "./types/*.d.ts",
+      "types": "./types/*.d.ts"
     },
     "./config": {
       "import": "./dist/config.js",
@@ -20,7 +20,7 @@
     "build": "tsc -p tsconfig.build.json",
     "migrate:dev": "dotenv -e ../.env -- npx kysely migrate latest",
     "migrate:prod": "DB_MIGRATION=true npx kysely migrate latest",
-    "create_schema": "dotenv -e ../.env -- npx kysely-codegen --dialect postgres --config-file=web.kysely-codegen.json"
+    "create_schema": "dotenv -e ../.env -- npx kysely-codegen --config-file=server.kysely-codegen.json"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.9",

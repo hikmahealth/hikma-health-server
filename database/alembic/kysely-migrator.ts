@@ -1,4 +1,4 @@
-import type { DB } from "../schema/hh/types";
+import type { DB } from "../schema/hh";
 import { createMigrationProviderFromAlembic } from "./util";
 import { alembicMigrationIds } from "./mapping";
 import { promises as fs } from "node:fs";

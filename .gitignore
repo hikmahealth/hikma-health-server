@@ -48,3 +48,4 @@ old.*
 
 .server
 postserver
+.resources/sample.csv

@@ -1,6 +1,6 @@
 import type { Kysely, Migration, MigrationProvider } from "kysely";
 import { sql } from "kysely";
-import type { DB } from "../schema/hh/types";
+import type { DB } from "../schema/hh";
 import {
   TSFileMigrationProvider,
   type TSFileMigrationProviderProps,
