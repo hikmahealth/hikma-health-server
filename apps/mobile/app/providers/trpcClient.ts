@@ -5,6 +5,7 @@
  * the existing HttpClient. No @trpc/client dependency.
  */
 
+import { Logger } from "@hh/js-utils"
 import type { HttpClient, HttpResponse } from "./httpClient"
 
 /**
@@ -18,7 +19,7 @@ export async function trpcMutate<TInput, TOutput>(
   procedure: string,
   input: TInput,
 ): Promise<HttpResponse<TOutput>> {
-  console.log(`[tRPC] ${procedure}`, input)
+  Logger.log({ msg: `[tRPC] ${procedure}`, input })
   const response = await httpClient.post<TOutput>(`/api/trpc/${procedure}`, input)
   return response
 }

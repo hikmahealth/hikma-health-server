@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import db from "@/db";
 import EventLog from "@/models/event-logs";
 import { getRequestHeader } from "@tanstack/react-start/server";
+import { Logger } from "@hh/js-utils";
 
 /**
  * Build an EventLog.RequestContext from the current server function request.
@@ -51,6 +52,6 @@ export async function logAuditEvent(
   } catch (error) {
     // Audit logging should never break the primary operation
     Sentry.captureException(error, { tags: { subsystem: "audit" } });
-    console.error("Audit log failed:", error);
+    Logger.error({ msg: "Audit log failed:", error });
   }
 }

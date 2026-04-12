@@ -5,6 +5,7 @@ import ClinicDepartment from "@/models/clinic-department";
 import { permissionsMiddleware } from "@/middleware/auth";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
 import { Result } from "@/lib/result";
+import { Logger } from "@hh/js-utils";
 
 /**
  * Get all clinics
@@ -45,7 +46,7 @@ export const getClinicById = createServerFn({
         });
       } catch (error) {
         Sentry.captureException(error);
-        console.error("Error fetching clinic:", error);
+        Logger.error({ msg: "Error fetching clinic:", error });
         return Result.err({
           _tag: "ServerError" as const,
           message:
@@ -100,8 +101,6 @@ export const toggleDepartmentCapability = createServerFn({ method: "POST" })
         source: "deleteDepartment",
       });
     }
-
-    // console.log("toggleDepartmentCapability", data);
 
     await UserClinicPermissions.API.isAuthorizedWithClinic(
       data.clinicId,

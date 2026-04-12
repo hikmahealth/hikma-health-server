@@ -21,6 +21,7 @@ import PatientProblems from "@/models/PatientProblems"
 import { PatientStackScreenProps } from "@/navigators/PatientNavigator"
 import { colors } from "@/theme/colors"
 import { spacing } from "@/theme/spacing"
+import { Logger } from "@hh/js-utils"
 
 const CLINICAL_STATUSES: PatientProblems.ClinicalStatus[] = [
   "active",
@@ -111,7 +112,7 @@ export const PatientDiagnosisEditorScreen: FC<PatientDiagnosisEditorScreenProps>
         }
         setLoading(false)
       } catch (err) {
-        console.error("Error loading diagnosis:", err)
+        Logger.error({ msg: "Error loading diagnosis:", err })
         Alert.alert(translate("common:error"), translate("diagnosisEditor:loadError"))
         navigation.goBack()
       }
@@ -129,7 +130,10 @@ export const PatientDiagnosisEditorScreen: FC<PatientDiagnosisEditorScreenProps>
     if (severityScore) {
       const score = parseInt(severityScore, 10)
       if (isNaN(score) || score < 1 || score > 10) {
-        Alert.alert(translate("diagnosisEditor:validationError"), translate("diagnosisEditor:severityRange"))
+        Alert.alert(
+          translate("diagnosisEditor:validationError"),
+          translate("diagnosisEditor:severityRange"),
+        )
         return
       }
     }
@@ -153,7 +157,7 @@ export const PatientDiagnosisEditorScreen: FC<PatientDiagnosisEditorScreenProps>
 
       navigation.goBack()
     } catch (error) {
-      console.error("Error updating diagnosis:", error)
+      Logger.error({ msg: "Error updating diagnosis:", error })
       Alert.alert(translate("common:error"), translate("diagnosisEditor:saveError"))
     } finally {
       setSaving(false)
@@ -245,7 +249,11 @@ export const PatientDiagnosisEditorScreen: FC<PatientDiagnosisEditorScreenProps>
               }}
             >
               <Text
-                text={translate(showEndDate ? "diagnosisEditor:removeResolvedDate" : "diagnosisEditor:addResolvedDate")}
+                text={translate(
+                  showEndDate
+                    ? "diagnosisEditor:removeResolvedDate"
+                    : "diagnosisEditor:addResolvedDate",
+                )}
                 color={colors.palette.primary500}
                 textDecorationLine="underline"
               />

@@ -43,6 +43,7 @@ import {
   type ServerDisplay,
 } from "./syncSettingsHelpers"
 import { If } from "@/components/If"
+import { Logger } from "@hh/js-utils"
 
 interface SyncSettingsScreenProps extends AppStackScreenProps<"SyncSettings"> {}
 const { height, width } = Dimensions.get("screen")
@@ -222,7 +223,7 @@ export const SyncSettingsScreen: FC<SyncSettingsScreenProps> = () => {
               duration: Toast.durations.LONG,
             })
           } else {
-            console.error("[SyncSettings] Hub re-auth failed:", authResult.error)
+            Logger.error({ msg: "[SyncSettings] Hub re-auth failed:", error: authResult.error })
             Toast.show(translate("login:hubAuthFailed"), {
               position: Toast.positions.BOTTOM,
               duration: Toast.durations.LONG,
@@ -230,7 +231,7 @@ export const SyncSettingsScreen: FC<SyncSettingsScreenProps> = () => {
           }
         }
       } catch (error) {
-        console.error(error)
+        Logger.error(error)
         Alert.alert(translate("login:invalidQRCode"))
       } finally {
         setScanned(false)
@@ -274,7 +275,7 @@ export const SyncSettingsScreen: FC<SyncSettingsScreenProps> = () => {
       await startSync()
       await startSync()
     } catch (error) {
-      console.error("Manual sync failed:", error)
+      Logger.error({ msg: "Manual sync failed:", error })
     }
   }
 

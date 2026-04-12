@@ -25,6 +25,7 @@ import {
 } from "@/lib/server-functions/users";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
 import { permissionsMiddleware } from "@/middleware/auth";
+import { Logger } from "@hh/js-utils";
 
 // const getCurrentUserId = createServerFn({ method: "GET" }).handler(async () => {
 //   const tokenCookie = getCookieToken();
@@ -95,7 +96,7 @@ function RouteComponent() {
       await deleteUser({ data: { id } });
       router.invalidate({ sync: true });
     } catch (error) {
-      console.error("Failed to delete user:", error);
+      Logger.error({ msg: "Failed to delete user:", error });
       toast.error("Failed to delete user");
     } finally {
       setIsDeleting(null);

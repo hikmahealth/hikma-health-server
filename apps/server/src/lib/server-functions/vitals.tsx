@@ -3,6 +3,7 @@ import PatientVital from "@/models/patient-vital";
 import { userRoleTokenHasCapability } from "../auth/request";
 import User from "@/models/user";
 import * as Sentry from "@sentry/tanstackstart-react";
+import { Logger } from "@hh/js-utils";
 
 export const getPatientVitals = createServerFn({
   method: "GET",
@@ -25,7 +26,7 @@ export const getPatientVitals = createServerFn({
         const vitals = await PatientVital.API.getByPatientId(data.patientId);
         return vitals;
       } catch (error) {
-        console.error("Failed to fetch patient vitals:", error);
+        Logger.error({ msg: "Failed to fetch patient vitals:", error });
         return Promise.reject({
           message: "Failed to fetch patient vitals",
         });
@@ -54,7 +55,7 @@ export const getMostRecentVital = createServerFn({
         const vital = await PatientVital.API.getMostRecent(data.patientId);
         return vital;
       } catch (error) {
-        console.error("Failed to fetch most recent vital:", error);
+        Logger.error({ msg: "Failed to fetch most recent vital:", error });
         return Promise.reject({
           message: "Failed to fetch most recent vital",
         });
@@ -89,7 +90,7 @@ export const getVitalsByDateRange = createServerFn({
         );
         return vitals;
       } catch (error) {
-        console.error("Failed to fetch vitals by date range:", error);
+        Logger.error({ msg: "Failed to fetch vitals by date range:", error });
         return Promise.reject({
           message: "Failed to fetch vitals by date range",
         });
@@ -118,7 +119,7 @@ export const createPatientVital = createServerFn({
         const vital = await PatientVital.API.save(data);
         return vital;
       } catch (error) {
-        console.error("Failed to create patient vital:", error);
+        Logger.error({ msg: "Failed to create patient vital:", error });
         return Promise.reject({
           message: "Failed to create patient vital",
         });

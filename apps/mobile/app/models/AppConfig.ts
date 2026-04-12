@@ -3,6 +3,7 @@ import { Option } from "effect"
 import AppConfigModel from "@/db/model/AppConfig"
 import database from "@/db"
 import { Q } from "@nozbe/watermelondb"
+import { Logger } from "@hh/js-utils"
 
 namespace AppConfig {
   export type T = {
@@ -84,9 +85,9 @@ namespace AppConfig {
         .query()
         .fetchCount()
         .then((count) => {
-          console.log({ count })
+          Logger.log({ count })
         })
-      console.log({ res, namespace, key })
+      Logger.log({ res, namespace, key })
 
       if (res.length === 0) {
         return null
@@ -95,7 +96,7 @@ namespace AppConfig {
       if (!config) {
         return null
       }
-      console.log({ config })
+      Logger.log({ config })
       return Utils.parseValue(config) || null
     }
   }

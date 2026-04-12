@@ -1,3 +1,4 @@
+import { Logger } from "@hh/js-utils";
 import { test as base, expect, type Page } from "@playwright/test";
 
 // Define the fixtures type
@@ -18,7 +19,7 @@ export const test = base.extend<AuthFixtures>({
       );
     }
 
-    page.on("dialog", (dialog) => console.log(dialog.message()));
+    page.on("dialog", (dialog) => Logger.log(dialog.message()));
     page.on("dialog", (dialog) => dialog.accept());
 
     // Clear cookies
@@ -54,7 +55,7 @@ export const test = base.extend<AuthFixtures>({
             response.status() === 200,
           { timeout: 10000 },
         )
-        .catch(() => console.log("Sign-in API response timeout")),
+        .catch(() => Logger.log("Sign-in API response timeout")),
       loginButton.click(),
     ]);
 
@@ -78,7 +79,7 @@ export const test = base.extend<AuthFixtures>({
       // Wait for redirect back to login page
       await page.waitForURL("/");
     } catch (error) {
-      console.error("Failed to sign out:", error);
+      Logger.error({ msg: "Failed to sign out:", error });
       // Even if sign out fails, we continue to not block other tests
     }
   },

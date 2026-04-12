@@ -22,6 +22,7 @@ import { SelectInput } from "@/components/select-input";
 import { toggleAppointmentStatus } from "@/lib/server-functions/appointments";
 import { toast } from "sonner";
 import { useRouter } from "@tanstack/react-router";
+import { Logger } from "@hh/js-utils";
 
 export const Route = createFileRoute("/app/appointments/")({
   component: RouteComponent,
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/app/appointments/")({
           departmentMap.set(deptId, dept.name);
         }
       } catch {
-        console.error(`Failed to fetch department ${deptId}`);
+        Logger.error(`Failed to fetch department ${deptId}`);
       }
     }
 
@@ -82,8 +83,6 @@ function RouteComponent() {
 
     return age;
   };
-
-  console.log({ appointments });
 
   // Function to handle status change
   const handleStatusChange = (appointmentId: string, newStatus: string) => {

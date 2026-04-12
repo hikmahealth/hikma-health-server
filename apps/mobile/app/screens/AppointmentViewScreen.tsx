@@ -30,10 +30,13 @@ import { useSelector } from "@xstate/react"
 import { providerStore } from "@/store/provider"
 import { useFocusEffect } from "@react-navigation/native"
 import { usePermissionGuard } from "@/hooks/usePermissionGuard"
+import { Logger } from "@hh/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
-interface AppointmentViewScreenProps
-  extends NativeStackScreenProps<PatientNavigatorParamList, "AppointmentView"> {}
+interface AppointmentViewScreenProps extends NativeStackScreenProps<
+  PatientNavigatorParamList,
+  "AppointmentView"
+> {}
 
 const colorCodes = ["#ffffff", "#1f2937", "#991b1b", "#c2410c", "#166534", "#1e40af", "#5b21b6"]
 
@@ -119,7 +122,7 @@ export const AppointmentViewScreen: FC<AppointmentViewScreenProps> = ({ route, n
                     marginBottom: 100,
                   },
                 })
-                console.error(err)
+                Logger.error(err)
               })
             setIsDatePickerOpen(false)
           },
@@ -148,7 +151,7 @@ export const AppointmentViewScreen: FC<AppointmentViewScreenProps> = ({ route, n
           ? { ...appointment.metadata, colorTag: color }
           : { colorTag: color }
     } catch (error) {
-      console.error("Error parsing metadata:", error)
+      Logger.error({ msg: "Error parsing metadata:", error })
       updatedMetadata = { colorTag: color }
     }
 
@@ -171,7 +174,7 @@ export const AppointmentViewScreen: FC<AppointmentViewScreenProps> = ({ route, n
             marginBottom: 100,
           },
         })
-        console.error(err)
+        Logger.error(err)
       })
       .finally(() => {
         refreshPage()
@@ -203,7 +206,7 @@ export const AppointmentViewScreen: FC<AppointmentViewScreenProps> = ({ route, n
             marginBottom: 100,
           },
         })
-        console.error(err)
+        Logger.error(err)
       })
   }
 
@@ -232,7 +235,7 @@ export const AppointmentViewScreen: FC<AppointmentViewScreenProps> = ({ route, n
             marginBottom: 100,
           },
         })
-        console.error(err)
+        Logger.error(err)
       })
       .finally(() => {
         refreshPage()
@@ -287,7 +290,7 @@ export const AppointmentViewScreen: FC<AppointmentViewScreenProps> = ({ route, n
                     marginBottom: 100,
                   },
                 })
-                console.error(err)
+                Logger.error(err)
               })
           },
         },
@@ -364,8 +367,6 @@ export const AppointmentViewScreen: FC<AppointmentViewScreenProps> = ({ route, n
           refreshPage()
         })
     }
-
-  // console.log({ appointmentDepts: appointment?.departments })
 
   if (isLoading) {
     return (

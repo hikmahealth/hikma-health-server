@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { getEventForms } from "@/lib/server-functions/event-forms";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { Result } from "@/lib/result";
+import { Logger } from "@hh/js-utils";
 
 const deleteForm = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)
@@ -75,7 +76,7 @@ function RouteComponent() {
       })
       .catch((error) => {
         toast.error("Failed to toggle form snapshot mode");
-        console.error(error);
+        Logger.error(error);
       });
   };
 
@@ -87,7 +88,7 @@ function RouteComponent() {
       })
       .catch((error) => {
         toast.error("Failed to toggle form editable mode");
-        console.error(error);
+        Logger.error(error);
       });
   };
 
@@ -99,7 +100,7 @@ function RouteComponent() {
       })
       .catch((error) => {
         toast.error("Failed to delete form");
-        console.error(error);
+        Logger.error(error);
       });
   };
 

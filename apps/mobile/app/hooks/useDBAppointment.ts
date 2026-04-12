@@ -4,6 +4,7 @@ import database from "@/db"
 import Appointment from "@/models/Appointment"
 import Clinic from "@/models/Clinic"
 import Patient from "@/models/Patient"
+import { Logger } from "@hh/js-utils"
 
 /**
  * Fetches an appointment from the database given its ID.
@@ -42,7 +43,7 @@ export const useAppointment = (appointmentId: string) => {
         .subscribe((apt) => {
           const { getPatient, getClinic } = apt
           setAppointment(apt)
-          console.log("🎉 Change happened to appointment")
+          Logger.log("🎉 Change happened to appointment")
           getPatient
             .then((res) => {
               setPatient(res?.[0])
@@ -57,7 +58,7 @@ export const useAppointment = (appointmentId: string) => {
             .catch(resetClinic)
         })
     } catch (error) {
-      console.error(error)
+      Logger.error(error)
       setAppointment(null)
       setClinic(null)
       setPatient(null)

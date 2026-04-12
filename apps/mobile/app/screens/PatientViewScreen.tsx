@@ -48,11 +48,14 @@ import { appStateStore } from "@/store/appState"
 import { languageStore } from "@/store/language"
 import { colors } from "@/theme/colors"
 import { localeDate } from "@/utils/date"
+import { Logger } from "@hh/js-utils"
 
 const { height } = Dimensions.get("window")
 
-interface PatientViewScreenProps
-  extends NativeStackScreenProps<PatientNavigatorParamList, "PatientView"> {}
+interface PatientViewScreenProps extends NativeStackScreenProps<
+  PatientNavigatorParamList,
+  "PatientView"
+> {}
 
 export const PatientViewScreen: FC<PatientViewScreenProps> = ({ route, navigation }) => {
   const { patientId } = route.params
@@ -675,7 +678,7 @@ async function printHTML(props: PDFReportProps) {
     </html>`,
   })
 
-  console.log("File has been saved to:", uri)
+  Logger.log({ msg: "File has been saved to:", uri })
   await shareAsync(uri, { UTI: ".pdf", mimeType: "application/pdf" })
   // TODO: Offer a print/pdf option instead of just sharing
   // download

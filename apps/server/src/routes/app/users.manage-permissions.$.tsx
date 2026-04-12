@@ -35,6 +35,7 @@ import UserClinicPermissions from "@/models/user-clinic-permissions";
 import { toast } from "sonner";
 import { permissionsMiddleware } from "@/middleware/auth";
 import User from "@/models/user";
+import { Logger } from "@hh/js-utils";
 
 const addClinicPermissions = createServerFn({ method: "POST" })
   .inputValidator(
@@ -194,7 +195,7 @@ function RouteComponent() {
       toast.success("Permission updated successfully");
       router.invalidate({ sync: true });
     } catch (error) {
-      console.error("Failed to update permission:", error);
+      Logger.error({ msg: "Failed to update permission:", error });
       toast.error("Failed to update permission");
     } finally {
       setUpdatingPermission(null);
@@ -245,7 +246,7 @@ function RouteComponent() {
       setSelectedClinicId("");
       toast.success("Clinic permissions added successfully");
     } catch (error) {
-      console.error("Failed to add clinic permissions:", error);
+      Logger.error({ msg: "Failed to add clinic permissions:", error });
       toast.error("Failed to add clinic permissions");
     } finally {
       setIsAddingClinic(false);

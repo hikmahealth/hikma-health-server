@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Device from "@/models/device";
+import { Logger } from "@hh/js-utils";
 
 export const Route = createFileRoute("/api/hub/verify-key")({
   server: {
@@ -7,7 +8,7 @@ export const Route = createFileRoute("/api/hub/verify-key")({
       POST: async ({ request }) => {
         try {
           const { api_key } = await request.json();
-          console.log({ api_key });
+          Logger.log({ api_key });
 
           if (!api_key || typeof api_key !== "string") {
             return new Response(
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/api/hub/verify-key")({
 
           const device = await Device.API.getByApiKey(api_key);
 
-          console.log({ device });
+          Logger.log({ device });
 
           if (!device) {
             return new Response(JSON.stringify({ error: "Invalid API key" }), {
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/api/hub/verify-key")({
             status: 200,
           });
         } catch (error) {
-          console.error("Error verifying device API key:", error);
+          Logger.error({ msg: "Error verifying device API key:", error });
           return new Response(
             JSON.stringify({ error: "Internal server error" }),
             {

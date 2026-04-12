@@ -37,6 +37,7 @@ import {
   SafeAreaProvider,
   SafeAreaView,
 } from "react-native-safe-area-context"
+import { Logger } from "@hh/js-utils"
 
 const HIKMA_API_TESTING = process.env.EXPO_PUBLIC_HIKMA_API_TESTING
 
@@ -79,14 +80,13 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const handleSignIn = async () => {
     if (isLoading) return
     const isGoogle = isGoogleTester(creds.email, creds.password)
-    console.log(
-      "isGoogle",
+    Logger.log({
+      msg: "isGoogle",
       isGoogle,
-      creds.email,
-      creds.password,
+      creds,
       GOOGLE_TESTER_EMAIL,
       GOOGLE_TESTER_PASSWORD,
-    )
+    })
     if (isGoogle) {
       Alert.alert(
         "You are about to sign in as a Tester",
@@ -94,7 +94,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         [
           {
             text: "Cancel",
-            onPress: () => console.log("Cancel Pressed"),
+            onPress: () => Logger.log("Cancel Pressed"),
             style: "cancel",
           },
           {
@@ -127,7 +127,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       return Alert.alert("Invalid email or password")
     }
 
-    console.log({ connectionType, hubSession })
+    Logger.log({ connectionType, hubSession })
 
     // Hub login flow
     if (connectionType === "sync_hub" && hubSession) {
@@ -135,7 +135,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       try {
         const transport = createEncryptedTransport(hubSession)
         const result = await transport.login(creds.email, creds.password)
-        console.warn("[Login] Hub login: ", { result, creds })
+        Logger.warn({ msg: "[Login] Hub login: ", result, creds })
         if (!result.ok) {
           setIsLoading(false)
           Alert.alert(translate("login:hubAuthFailed"))
@@ -149,7 +149,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         await User.setFromHubLogin(result.data, creds.email, creds.password)
         setIsLoading(false)
       } catch (e) {
-        console.error("[Login] Hub login error:", e)
+        Logger.error({ msg: "[Login] Hub login error:", e })
         setIsLoading(false)
         Alert.alert(translate("login:hubAuthFailed"))
       }
@@ -171,7 +171,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       await User.signIn(creds.email, creds.password)
       setIsLoading(false)
     } catch (e) {
-      console.error("[Login] Login error: ", e)
+      Logger.error({ msg: "[Login] Login error: ", e })
       setIsLoading(false)
 
       // Show appropriate error message based on the error type
@@ -204,7 +204,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
     setScannerVisible(false)
 
     const result = await registerFromQR(data)
-    console.log({ data })
+    Logger.log({ data })
 
     if (result.ok) {
       const messageKey =
@@ -214,7 +214,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         position: Toast.positions.BOTTOM,
       })
     } else {
-      console.log("Peer registration failed:", result.error)
+      Logger.log({ msg: "Peer registration failed:", error: result.error })
       Toast.show(translate("login:invalidQRCode"), {
         duration: Toast.durations.LONG,
         position: Toast.positions.BOTTOM,

@@ -36,6 +36,7 @@ import type Patient from "@/models/patient";
 import DrugCatalogue from "@/models/drug-catalogue";
 import { useClinicInventory } from "@/hooks/useClinicInventory";
 import type User from "@/models/user";
+import { Logger } from "@hh/js-utils";
 
 // Define the prescription item schema based on the migration
 const prescriptionItemSchema = z.object({
@@ -283,12 +284,12 @@ export function PrescriptionForm({
 
     if (hasErrors) {
       // You might want to show a toast or alert here
-      console.error("Please fill in all required fields for medications");
+      Logger.error("Please fill in all required fields for medications");
       return;
     }
 
     if (prescriptionItems.length === 0) {
-      console.error("Please add at least one medication");
+      Logger.error("Please add at least one medication");
       return;
     }
 
@@ -300,7 +301,7 @@ export function PrescriptionForm({
     }
   };
 
-  console.log({ inventoryItems });
+  Logger.log({ inventoryItems });
 
   return (
     <Form {...form}>
@@ -548,7 +549,7 @@ export function PrescriptionForm({
               </div>
             ) : (
               prescriptionItems.map((item, index) => {
-                console.log("(item.drug_id)", item.drug_id);
+                Logger.log({ msg: "(item.drug_id)", drug_id: item.drug_id });
                 const medicationDetails = getMedicationDetails(item.drug_id);
                 const isExpanded = expandedItems[index] || false;
 

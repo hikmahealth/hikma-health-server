@@ -36,7 +36,7 @@ export function useSimilarPatientsSearch(givenName: string, surname: string): Pa
           // get the lev distance for each patient and sort
           const sorted = sortBy(
             results.map((patient) => {
-              console.warn(levenshtein(patient.givenName.toLowerCase(), givenName.toLowerCase()))
+              Logger.warn(levenshtein(patient.givenName.toLowerCase(), givenName.toLowerCase()))
               return {
                 patient,
                 distance:
@@ -50,7 +50,7 @@ export function useSimilarPatientsSearch(givenName: string, surname: string): Pa
           setPatients(sorted)
         },
         (error) => {
-          console.error(error)
+          Logger.error(error)
           setPatients([])
         },
       )

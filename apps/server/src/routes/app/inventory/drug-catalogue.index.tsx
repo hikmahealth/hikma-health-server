@@ -29,6 +29,7 @@ import {
   getDrugStats,
   searchDrugs,
 } from "@/lib/server-functions/drugs";
+import { Logger } from "@hh/js-utils";
 
 const ITEMS_PER_PAGE = 100;
 
@@ -96,7 +97,7 @@ function RouteComponent() {
       setDrugs(result);
       setCurrentPage(page);
     } catch (error) {
-      console.error("Error loading drugs:", error);
+      Logger.error({ msg: "Error loading drugs:", error });
       toast.error("Failed to load drugs");
     } finally {
       setLoading(false);

@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { AlertTriangle, Copy, Check } from "lucide-react";
 import upperFirst from "lodash/upperFirst";
 import Creatable from "react-select/creatable";
+import { Logger } from "@hh/js-utils";
 
 // ── Server functions ──────────────────────────────────────────────
 
@@ -335,7 +336,7 @@ function RouteComponent() {
         setApiKey(result.api_key);
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      Logger.error({ msg: "Error submitting form:", error });
       toast.error("Failed to save device");
     } finally {
       setIsSubmitting(false);
@@ -357,7 +358,7 @@ function RouteComponent() {
       setApiKey(result.api_key);
       toast.success("API key regenerated");
     } catch (error) {
-      console.error("Failed to regenerate API key:", error);
+      Logger.error({ msg: "Failed to regenerate API key:", error });
       toast.error("Failed to regenerate API key");
     } finally {
       setIsRegenerating(false);

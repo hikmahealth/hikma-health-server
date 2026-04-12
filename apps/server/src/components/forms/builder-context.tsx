@@ -54,7 +54,6 @@ const reducer = (state: State, action: Action): State => {
     }
     case "set-field-key-value": {
       const { index, value, key } = action.payload;
-      // console.log(`fire change[${index}].${key} = VALUE(${value})`);
       return produce(state, (df) => {
         // @ts-expect-error
         df.fields[index][key] = value;
@@ -113,7 +112,7 @@ export const FormBuilderContextProvider = function ({
 }) {
   const ctx = React.useReducer(
     reducer,
-    initialState ?? INITIAL_FORM_BUILDER_CONTEXT
+    initialState ?? INITIAL_FORM_BUILDER_CONTEXT,
   );
   return (
     <FormBuilderContext.Provider value={ctx}>
@@ -126,7 +125,7 @@ export const useFormBuilderContext = function () {
   const ctx = React.useContext(FormBuilderContext);
   if (ctx == null) {
     throw new Error(
-      "invalid use of useFormBuilderContext. make sure <FormBuilderContextProvider> is being used"
+      "invalid use of useFormBuilderContext. make sure <FormBuilderContextProvider> is being used",
     );
   }
 

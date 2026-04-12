@@ -42,6 +42,7 @@ import { parseYYYYMMDD } from "@/utils/date"
 import { toggleStringInArray, isValidUUID } from "@/utils/misc"
 import { getTranslation, splitCheckboxValues, joinCheckboxValues } from "@/utils/parsers"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { Logger } from "@hh/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface PatientRecordEditorScreenProps extends PatientStackScreenProps<"PatientRecordEditor"> {}
@@ -144,7 +145,7 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
         setExistingGovtId(res)
       })
       .catch((error) => {
-        console.warn(error)
+        Logger.warn(error)
         setExistingGovtId(false)
       })
   }, [govtId])
@@ -152,7 +153,7 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
   /** Navigate to the patient file */
   const openPatientFile = (id: string) => () => {
     if (id.length < 5) {
-      console.error("Attempting to open a patient file with an invalid patient id")
+      Logger.error("Attempting to open a patient file with an invalid patient id")
       return
     }
     navigation.navigate("PatientView", {
@@ -222,7 +223,7 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
     }
 
     const onError = (error: unknown) => {
-      console.error(error)
+      Logger.error(error)
       if (typeof captureException === "function") {
         captureException(error as Error, {
           tags: {
@@ -247,11 +248,9 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
       if (isOnline) {
         if (isUpdate) {
           const input = patientRecordToUpdateInput(patientRecord)
-          console.log(
-            "[PatientEditor] Online update — id:",
-            editPatientId,
-            "input:",
-            JSON.stringify(input, null, 2),
+          Logger.log(
+            `[PatientEditor] Online update — id: ${editPatientId},
+            input: ${JSON.stringify(input, null, 2)}`,
           )
           await updatePatientMutation.mutateAsync({ id: editPatientId, data: input })
           onSuccess(editPatientId)
@@ -260,7 +259,10 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
             patientRecord,
             Option.getOrElse(clinicId, () => "Unknown"),
           )
-          console.log("[PatientEditor] Online create — input:", JSON.stringify(input, null, 2))
+          Logger.log({
+            msg: "[PatientEditor] Online create — input:",
+            data: JSON.stringify(input, null, 2),
+          })
           const result = await createPatientMutation.mutateAsync(input)
           onSuccess(result.id)
         }
@@ -274,7 +276,7 @@ export const PatientRecordEditorScreen: FC<PatientRecordEditorScreenProps> = ({
         }
       }
     } catch (error) {
-      console.error("[PatientEditor] Submit error:", error)
+      Logger.error({ msg: "[PatientEditor] Submit error:", error })
       onError(error)
     } finally {
       setIsSubmitting(false)

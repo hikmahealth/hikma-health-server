@@ -33,6 +33,7 @@ import type Clinic from "@/models/clinic";
 import type ClinicDepartment from "@/models/clinic-department";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { Logger } from "@hh/js-utils";
 
 export const Route = createFileRoute("/app/clinics/$id/")({
   loader: async ({ params }) => {
@@ -270,14 +271,13 @@ function RouteComponent() {
   ) => {
     let toastId = toast.loading("Toggling capability...");
     try {
-      console.log("Toggling capability:", capability);
       await toggleDepartmentCapability({
         data: { clinicId, departmentId, capability },
       });
 
       route.invalidate({ sync: true });
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       alert("Failed to toggle capability");
     } finally {
       toast.dismiss(toastId);
@@ -318,7 +318,7 @@ function RouteComponent() {
         navigate({ to: ".", replace: true });
       }
     } catch (error) {
-      console.error("Failed to create department:", error);
+      Logger.error({ msg: "Failed to create department:", error });
       alert("Failed to create department. Please try again.");
     } finally {
       setIsSubmitting(false);

@@ -6,6 +6,7 @@ import Appointment from "@/models/Appointment"
 
 import database from "../db"
 import AppointmentModel from "../db/model/Appointment"
+import { Logger } from "@hh/js-utils"
 
 type AppointmentsByDate = {
   date: Date
@@ -89,7 +90,7 @@ export function useDBAppointmentsList(
 
       setAppointments(fetchedAppointments)
     } catch (error) {
-      console.error("Error fetching appointments:", error)
+      Logger.error({ msg: "Error fetching appointments:", error })
     } finally {
       setIsLoading(false)
     }

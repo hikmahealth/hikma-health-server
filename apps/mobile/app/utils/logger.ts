@@ -6,7 +6,7 @@
  */
 
 const noop = (..._args: unknown[]) => {}
-
+// FIXME: Migrate to new package implementation
 export const logger = {
   log: __DEV__ ? console.log.bind(console) : noop,
   warn: __DEV__ ? console.warn.bind(console) : noop,

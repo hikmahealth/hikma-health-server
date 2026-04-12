@@ -6,6 +6,7 @@ import Toast from "react-native-root-toast"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { Logger } from "@hh/js-utils"
 
 export interface UpdateAvailableIndicatorProps {
   /**
@@ -53,7 +54,7 @@ export const UpdateAvailableIndicator = (props: UpdateAvailableIndicatorProps) =
                 hideOnPress: true,
                 delay: 0,
               })
-              console.error("Error applying update:", error)
+              Logger.error({ msg: "Error applying update:", error })
             }
           },
         },

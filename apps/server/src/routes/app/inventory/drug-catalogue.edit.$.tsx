@@ -24,6 +24,7 @@ import { SelectInput } from "@/components/select-input";
 import { upperFirst } from "es-toolkit/compat";
 import { getDrugById, saveDrug } from "@/lib/server-functions/drugs";
 import { currencyCodesOptions } from "@/data/currencies";
+import { Logger } from "@hh/js-utils";
 
 const DEFAULT_FORM_VALUES: Partial<DrugCatalogue.ApiDrug> = {
   barcode: null,
@@ -58,8 +59,6 @@ export const Route = createFileRoute("/app/inventory/drug-catalogue/edit/$")({
       drug: null,
       currentUser: null,
     };
-
-    console.log("drugId", drugId);
 
     if (drugId && typeof drugId === "string" && drugId !== "new") {
       const drugData = await getDrugById({ data: { id: drugId } });
@@ -110,7 +109,7 @@ function RouteComponent() {
       );
       navigate({ to: "/app/inventory/drug-catalogue", reloadDocument: true });
     } catch (error) {
-      console.error("Error saving drug:", error);
+      Logger.error({ msg: "Error saving drug:", error });
       toast.error("Failed to save drug");
     }
   };

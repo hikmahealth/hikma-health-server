@@ -12,6 +12,7 @@ import UserClinicPermissions from "@/models/UserClinicPermissions"
 import { extendedSanitizeLikeString } from "@/utils/parsers"
 
 import { useDebounce } from "./useDebounce"
+import { Logger } from "@hh/js-utils"
 
 export type SearchFilter = {
   query: string
@@ -203,7 +204,7 @@ export function usePatientsList(
         setCanViewHistoryClinicIds(res)
       })
       .catch((err) => {
-        console.error(err)
+        Logger.error(err)
         setCanViewHistoryClinicIds([])
       })
   }, [userId])

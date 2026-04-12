@@ -1,0 +1,22 @@
+layer: application
+language: typescript
+stack: frontend
+
+dependsOn:
+  - id: typescript-config
+    scope: peer
+  - id: eslint-config
+    scope: peer
+  - ui
+  - common
+  - js-utils
+
+tasks:
+  check-types:
+    command: pnpm run compile
+  lint:
+    command: pnpm run lint:check
+  test:
+    command: pnpm run test
+    options:
+      cache: false

@@ -12,9 +12,12 @@ import { useDataAccess } from "@/providers/DataAccessProvider"
 import { useProviderPatientVisits } from "@/hooks/useProviderPatientVisits"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { PatientNavigatorParamList } from "@/navigators/PatientNavigator"
+import { Logger } from "@hh/js-utils"
 
-interface PatientVisitsListScreenProps
-  extends NativeStackScreenProps<PatientNavigatorParamList, "PatientVisitsList"> {}
+interface PatientVisitsListScreenProps extends NativeStackScreenProps<
+  PatientNavigatorParamList,
+  "PatientVisitsList"
+> {}
 
 export const PatientVisitsListScreen: FC<PatientVisitsListScreenProps> = ({
   navigation,
@@ -56,7 +59,7 @@ export const PatientVisitsListScreen: FC<PatientVisitsListScreenProps> = ({
       [
         {
           text: "OK",
-          onPress: () => console.log("OK Pressed"),
+          onPress: () => Logger.log("OK Pressed"),
         },
       ],
       { cancelable: true },
@@ -68,14 +71,14 @@ export const PatientVisitsListScreen: FC<PatientVisitsListScreenProps> = ({
       [
         {
           text: "Cancel",
-          onPress: () => console.log("Cancel Pressed"),
+          onPress: () => Logger.log("Cancel Pressed"),
           style: "cancel",
         },
         {
           text: "Confirm",
           onPress: () => {
             api.deleteVisit(visitId).catch((error) => {
-              console.error(error)
+              Logger.error(error)
               Alert.alert("Error", "There was an error deleting this visit. Please try again")
             })
           },

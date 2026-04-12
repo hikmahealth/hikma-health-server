@@ -24,6 +24,7 @@ import Clinic from "./clinic";
 import type { RequestCaller } from "@/types";
 import { match, P } from "ts-pattern";
 import { uuidv7 } from "uuidv7";
+import { Logger } from "@hh/js-utils";
 
 namespace Appointment {
   export const StatusSchema = Schema.Union(
@@ -260,7 +261,10 @@ namespace Appointment {
         fallbackUserId?: string | null,
         fallbackClinicId?: string | null,
       ) => {
-        console.warn("Checking for", appointment.patient_id);
+        Logger.warn({
+          msg: "Checking for",
+          patient_id: appointment.patient_id,
+        });
         try {
           // Resolve required UUID fields, falling back to caller-provided values when the appointment data is invalid
           const resolvedClinicId = isValidUUID(appointment.clinic_id)
@@ -361,51 +365,58 @@ namespace Appointment {
                     : null,
               })
               .onConflict((oc) => {
-                return oc.column("id").doUpdateSet({
-                  id: (eb) => eb.ref("excluded.id"),
-                  clinic_id: resolvedClinicId,
-                  patient_id: (eb) => eb.ref("excluded.patient_id"),
-                  user_id: (eb) => eb.ref("excluded.user_id"),
-                  current_visit_id: (eb) => eb.ref("excluded.current_visit_id"),
-                  created_at: sql`${toSafeDateString(
-                    appointment.created_at,
-                  )}::timestamp with time zone`,
-                  updated_at: sql`${toSafeDateString(
-                    appointment.updated_at,
-                  )}::timestamp with time zone`,
-                  last_modified: sql`now()::timestamp with time zone`,
-                  deleted_at: (eb) => eb.ref("excluded.deleted_at"),
-                  departments: (eb) => eb.ref("excluded.departments"),
-                  is_walk_in: appointment.is_walk_in,
-                  metadata: (eb) => eb.ref("excluded.metadata"),
-                  duration: appointment.duration,
-                  reason: appointment.reason,
-                  notes: appointment.notes,
-                  status: appointment.status,
-                  //
-                  fulfilled_visit_id:
-                    appointment.fulfilled_visit_id &&
-                    isValidUUID(appointment.fulfilled_visit_id)
-                      ? appointment.fulfilled_visit_id
-                      : null,
-                  timestamp: sql`${toSafeDateString(
-                    appointment.timestamp,
-                  )}::timestamp with time zone`,
-                  is_deleted: false,
-                  provider_id:
-                    appointment.provider_id &&
-                    isValidUUID(appointment.provider_id)
-                      ? appointment.provider_id
-                      : null,
-                })
-                // Only update if the incoming record is newer than what's already stored
-                .where(sql<boolean>`excluded.updated_at > appointments.updated_at`);
+                return (
+                  oc
+                    .column("id")
+                    .doUpdateSet({
+                      id: (eb) => eb.ref("excluded.id"),
+                      clinic_id: resolvedClinicId,
+                      patient_id: (eb) => eb.ref("excluded.patient_id"),
+                      user_id: (eb) => eb.ref("excluded.user_id"),
+                      current_visit_id: (eb) =>
+                        eb.ref("excluded.current_visit_id"),
+                      created_at: sql`${toSafeDateString(
+                        appointment.created_at,
+                      )}::timestamp with time zone`,
+                      updated_at: sql`${toSafeDateString(
+                        appointment.updated_at,
+                      )}::timestamp with time zone`,
+                      last_modified: sql`now()::timestamp with time zone`,
+                      deleted_at: (eb) => eb.ref("excluded.deleted_at"),
+                      departments: (eb) => eb.ref("excluded.departments"),
+                      is_walk_in: appointment.is_walk_in,
+                      metadata: (eb) => eb.ref("excluded.metadata"),
+                      duration: appointment.duration,
+                      reason: appointment.reason,
+                      notes: appointment.notes,
+                      status: appointment.status,
+                      //
+                      fulfilled_visit_id:
+                        appointment.fulfilled_visit_id &&
+                        isValidUUID(appointment.fulfilled_visit_id)
+                          ? appointment.fulfilled_visit_id
+                          : null,
+                      timestamp: sql`${toSafeDateString(
+                        appointment.timestamp,
+                      )}::timestamp with time zone`,
+                      is_deleted: false,
+                      provider_id:
+                        appointment.provider_id &&
+                        isValidUUID(appointment.provider_id)
+                          ? appointment.provider_id
+                          : null,
+                    })
+                    // Only update if the incoming record is newer than what's already stored
+                    .where(
+                      sql<boolean>`excluded.updated_at > appointments.updated_at`,
+                    )
+                );
               })
               .executeTakeFirst();
 
             if (!res) {
               // Stale record skipped by the updated_at guard
-              console.info(
+              Logger.info(
                 `[sync] Skipped stale upsert for appointment ${appointment.id}`,
               );
             }
@@ -417,17 +428,21 @@ namespace Appointment {
             };
           });
         } catch (error) {
-          console.error("Appointment upsert operation failed:", {
-            operation: "appointment_upsert",
+          Logger.error({
+            msg: "Appointment upsert operation failed:",
             error: {
-              message: error instanceof Error ? error.message : String(error),
-              name: error instanceof Error ? error.constructor.name : "Unknown",
-              stack: error instanceof Error ? error.stack : undefined,
+              operation: "appointment_upsert",
+              error: {
+                message: error instanceof Error ? error.message : String(error),
+                name:
+                  error instanceof Error ? error.constructor.name : "Unknown",
+                stack: error instanceof Error ? error.stack : undefined,
+              },
+              context: {
+                appointmentId: appointment.id,
+              },
+              timestamp: new Date().toISOString(),
             },
-            context: {
-              appointmentId: appointment.id,
-            },
-            timestamp: new Date().toISOString(),
           });
           throw error;
         }

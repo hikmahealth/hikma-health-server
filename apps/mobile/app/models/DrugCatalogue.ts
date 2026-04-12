@@ -6,6 +6,7 @@ import ClinicInventoryModel from "@/db/model/ClinicInventory"
 import DispensingRecordModel from "@/db/model/DispensingRecord"
 import DrugCatalogueModel from "@/db/model/DrugCatalogue"
 import PrescriptionItemModel from "@/db/model/PrescriptionItem"
+import { Logger } from "@hh/js-utils"
 
 namespace DrugCatalogue {
   /**
@@ -162,7 +163,7 @@ namespace DrugCatalogue {
 
         return fromDB(drug)
       } catch (error) {
-        console.error(error)
+        Logger.error(error)
         Sentry.captureException(error)
         return null
       }

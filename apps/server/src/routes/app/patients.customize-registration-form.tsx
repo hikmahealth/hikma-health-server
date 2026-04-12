@@ -21,6 +21,7 @@ import React from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getPatientRegistrationForm } from "@/lib/server-functions/patient-registration-forms";
+import { Logger } from "@hh/js-utils";
 
 export const saveForm = createServerFn({ method: "POST" })
   .inputValidator((data: PatientRegistrationForm.EncodedT) => data)
@@ -452,7 +453,7 @@ function RouteComponent() {
     let ignoreErrors = false;
 
     if (!result.success) {
-      console.error(result.error);
+      Logger.error(result.error);
       if (result.error.issues.find((err) => err.path.includes("options"))) {
         // ther eis an error with one of the options supported for a select field
         return alert(
@@ -472,7 +473,7 @@ function RouteComponent() {
         const res = await saveForm({ data: state });
         alert("Form saved successfully!");
       } catch (error) {
-        console.error("Failed to save form:", error);
+        Logger.error({ msg: "Failed to save form:", error });
         alert("Failed to save the form. Please try again later.");
       } finally {
         setLoading(false);

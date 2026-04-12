@@ -22,6 +22,7 @@
 
 import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
+import { Logger } from "@hh/js-utils";
 import type { Database } from "../src/db/index";
 import "dotenv/config";
 import UserClinicPermissions from "../src/models/user-clinic-permissions";
@@ -67,7 +68,7 @@ function isValidRole(role: string | null | undefined): role is ValidRole {
  * Fix user roles that are missing or invalid
  */
 async function fixUserRoles(db: Kysely<Database>): Promise<void> {
-  console.log(`Starting role recovery${isDryRun ? " (DRY RUN)" : ""}...`);
+  Logger.log(`Starting role recovery${isDryRun ? " (DRY RUN)" : ""}...`);
 
   // Get all users (including deleted ones as they might need cleanup too)
   const users = await db
@@ -81,7 +82,7 @@ async function fixUserRoles(db: Kysely<Database>): Promise<void> {
   for (const user of users) {
     if (!isValidRole(user.role)) {
       // User has no role or invalid role - assign default role
-      console.log(
+      Logger.log(
         `User ${user.email} (${user.name}) has invalid role "${user.role}" - ${isDryRun ? "would assign" : "assigning"} "${DEFAULT_ROLE}"`,
       );
 
@@ -103,7 +104,7 @@ async function fixUserRoles(db: Kysely<Database>): Promise<void> {
     }
   }
 
-  console.log(
+  Logger.log(
     `Role recovery complete: ${rolesFixed} ${isDryRun ? "would be fixed" : "fixed"}, ${rolesKept} kept as-is`,
   );
 }
@@ -112,7 +113,7 @@ async function fixUserRoles(db: Kysely<Database>): Promise<void> {
  * Create missing clinic permissions for users
  */
 async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
-  console.log(
+  Logger.log(
     `Starting clinic permissions recovery${isDryRun ? " (DRY RUN)" : ""}...`,
   );
 
@@ -129,8 +130,8 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
     .execute();
 
   if (clinics.length === 0) {
-    console.error("No clinics found in the system");
-    console.error("Contact Hikma Health for support. Send this screenshot");
+    Logger.error("No clinics found in the system");
+    Logger.error("Contact Hikma Health for support. Send this screenshot");
     return;
   }
 
@@ -163,23 +164,23 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
         // Missing permission entry
         if (isPrimaryClinic) {
           // For primary clinic: create with role defaults
-          console.log(
+          Logger.log(
             `${isDryRun ? "Would create" : "Creating"} permissions for user ${user.email} (${userRole}) in their primary clinic ${clinic.name || clinic.id}`,
           );
 
           if (isDryRun) {
-            console.log(
+            Logger.log(
               `Permissions: register=${rolePermissions.can_register_patients}, view=${rolePermissions.can_view_history}, edit=${rolePermissions.can_edit_records}, delete=${rolePermissions.can_delete_records}, admin=${rolePermissions.is_clinic_admin}`,
             );
           }
         } else {
           // For non-primary clinic: create with all false permissions
-          console.log(
+          Logger.log(
             `${isDryRun ? "Would create" : "Creating"} no-access permissions for user ${user.email} in non-primary clinic ${clinic.name || clinic.id}`,
           );
 
           if (isDryRun) {
-            console.log(
+            Logger.log(
               `Permissions: register=false, view=false, edit=false, delete=false, admin=false`,
             );
           }
@@ -215,7 +216,7 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
               .execute();
           } catch (error) {
             // Handle potential race conditions or constraint violations
-            console.error(
+            Logger.error(
               `Failed to create permissions for user ${user.email} in clinic ${clinic.name}: ${error}`,
             );
           }
@@ -229,7 +230,7 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
     }
   }
 
-  console.log(
+  Logger.log(
     `Clinic permissions recovery complete: ${permissionsCreated} ${isDryRun ? "would be created" : "created"}, ${permissionsKept} kept as-is`,
   );
 }
@@ -238,35 +239,33 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
  * Main recovery function
  */
 export async function runRecovery(): Promise<void> {
-  console.log("Starting User Permissions Recovery Script");
+  Logger.log("Starting User Permissions Recovery Script");
   if (isDryRun) {
-    console.log("Running in DRY RUN mode - no changes will be made");
+    Logger.log("Running in DRY RUN mode - no changes will be made");
   }
-  console.log("=".repeat(50));
+  Logger.log("=".repeat(50));
 
   try {
     // These are going to be run sequentially
     await fixUserRoles(db);
-    console.log("\n");
+    Logger.log("\n");
 
     await fixClinicPermissions(db);
-    console.log("\n");
+    Logger.log("\n");
 
     // THERE is no need to clean up orphaned permissions. Hikma Health is a no delete system. only soft-deletes are allowed.
     // Therefore, all permissions without valid users or clinics will be kept as is.
 
-    console.log("=".repeat(50));
-    console.log(
+    Logger.log("=".repeat(50));
+    Logger.log(
       `✅ User Permissions Recovery ${isDryRun ? "simulation" : ""} completed successfully!`,
     );
     if (isDryRun) {
-      console.log("Run without DRY_RUN=true to apply changes");
+      Logger.log("Run without DRY_RUN=true to apply changes");
     }
   } catch (error) {
-    console.error("Error during recovery:", error);
-    console.error(
-      "Please contact Hikma Health tech team with this screenshot.",
-    );
+    Logger.error("Error during recovery:", error);
+    Logger.error("Please contact Hikma Health tech team with this screenshot.");
     throw error;
   } finally {
     await db.destroy();
@@ -277,11 +276,11 @@ export async function runRecovery(): Promise<void> {
 if (import.meta.url === `file://${process.argv[1]}`) {
   runRecovery()
     .then(() => {
-      console.log("\nExiting...");
+      Logger.log("\nExiting...");
       process.exit(0);
     })
     .catch((error) => {
-      console.error("\nFatal error:", error);
+      Logger.error("\nFatal error:", error);
       process.exit(1);
     });
 }

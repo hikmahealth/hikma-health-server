@@ -42,6 +42,7 @@ import {
   type PrescriptionFormValues,
   type PrescriptionItemValues,
 } from "@/components/prescription-form";
+import { Logger } from "@hh/js-utils";
 
 // Create a save prescription server function
 const savePrescription = createServerFn({ method: "POST" })
@@ -167,8 +168,6 @@ function RouteComponent() {
     },
   });
 
-  console.log({ currentUser });
-
   // Handle form submission
   const onSubmit = async (
     prescription: PrescriptionFormValues,
@@ -191,7 +190,7 @@ function RouteComponent() {
 
       navigate({ to: "/app/prescriptions" });
     } catch (error) {
-      console.error(error);
+      Logger.error(error);
       toast.error(`Failed to ${isEditing ? "update" : "create"} prescription`);
     }
   };
@@ -208,7 +207,7 @@ function RouteComponent() {
             onSubmit={(prescription, prescriptionItems) =>
               onSubmit(prescription, prescriptionItems)
             }
-            onPickupClinicChange={console.log}
+            onPickupClinicChange={Logger.log}
             providers={providers}
             clinics={clinics.map((cl) => ({ id: cl.id, name: cl.name }))}
             medications={[]}

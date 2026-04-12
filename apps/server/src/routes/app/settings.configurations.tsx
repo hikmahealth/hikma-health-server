@@ -90,36 +90,45 @@ const upsertServerVariable = createServerFn({ method: "POST" })
 export const Route = createFileRoute("/app/settings/configurations")({
   component: RouteComponent,
   loader: async ({ params }) => {
-    const [config, anthropicKeyVar, openaiKeyVar, geminiKeyVar, aiUrlVariable, aiProxyKeyVar] =
-      await Promise.all([
-        getAllConfigurations(),
-        getServerVariable({
-          data: { key: ServerVariable.Keys.ANTHROPIC_API_KEY },
-        }),
-        getServerVariable({
-          data: { key: ServerVariable.Keys.OPENAI_API_KEY },
-        }),
-        getServerVariable({
-          data: { key: ServerVariable.Keys.GEMINI_API_KEY },
-        }),
-        getServerVariable({
-          data: { key: ServerVariable.Keys.AI_DATA_ANALYSIS_URL },
-        }),
-        getServerVariable({
-          data: { key: ServerVariable.Keys.AI_PROXY_SERVICE_API_KEY },
-        }),
-      ]);
+    const [
+      config,
+      anthropicKeyVar,
+      openaiKeyVar,
+      geminiKeyVar,
+      aiUrlVariable,
+      aiProxyKeyVar,
+    ] = await Promise.all([
+      getAllConfigurations(),
+      getServerVariable({
+        data: { key: ServerVariable.Keys.ANTHROPIC_API_KEY },
+      }),
+      getServerVariable({
+        data: { key: ServerVariable.Keys.OPENAI_API_KEY },
+      }),
+      getServerVariable({
+        data: { key: ServerVariable.Keys.GEMINI_API_KEY },
+      }),
+      getServerVariable({
+        data: { key: ServerVariable.Keys.AI_DATA_ANALYSIS_URL },
+      }),
+      getServerVariable({
+        data: { key: ServerVariable.Keys.AI_PROXY_SERVICE_API_KEY },
+      }),
+    ]);
     const toBytes = (data: unknown): Uint8Array | null => {
       if (data == null) return null;
       if (data instanceof Uint8Array) return data;
       if (data instanceof ArrayBuffer) return new Uint8Array(data);
       // Serialized Uint8Array comes back as a plain object like { 0: 72, 1: 101, ... }
-      if (typeof data === "object") return new Uint8Array(Object.values(data as Record<string, number>));
+      if (typeof data === "object")
+        return new Uint8Array(Object.values(data as Record<string, number>));
       return null;
     };
 
     const aiServiceUrl = aiUrlVariable?.value_data
-      ? new TextDecoder().decode(toBytes(aiUrlVariable.value_data) ?? new Uint8Array())
+      ? new TextDecoder().decode(
+          toBytes(aiUrlVariable.value_data) ?? new Uint8Array(),
+        )
       : "";
     const hasValue = (v: { value_data: unknown } | null | undefined) => {
       if (v?.value_data == null) return false;
@@ -302,7 +311,6 @@ function RouteComponent() {
   };
 
   const handleSaveOrganizationName = () => {
-    console.log("handleSaveOrganizationName");
     // TODO: send to sign in page if there is no user
     if (!currentUser) return;
 
@@ -328,8 +336,6 @@ function RouteComponent() {
   };
 
   const handleToggleOverrideMobilePermissions = (checked: boolean) => {
-    console.log("handleToggleOverrideMobilePermissions", checked);
-
     // If it is currently enabled, just disable without confirmation
     if (!currentUser) return;
     if (checked === false) {
@@ -366,7 +372,6 @@ function RouteComponent() {
       confirmationText: overrideMobilePermissionsConfirmation,
       userInputText: "",
       onConfirm: (userInputText: string) => {
-        console.log({ userInputText });
         if (userInputText === overrideMobilePermissionsConfirmation) {
           saveConfiguration({
             data: {
@@ -396,8 +401,6 @@ function RouteComponent() {
       },
     });
   };
-
-  console.log({ organizationName });
 
   return (
     <div className="container py-6">

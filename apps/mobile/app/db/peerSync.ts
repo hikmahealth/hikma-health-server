@@ -30,6 +30,7 @@ import { safeStringify } from "@/utils/parsers"
 import { applyRemoteChanges, fetchLocalChanges, markLocalChangesAsSynced } from "./localSync"
 
 import database from "."
+import { Logger } from "@hh/js-utils"
 
 global.Buffer = require("buffer").Buffer
 
@@ -304,7 +305,7 @@ const syncCloud = async (peer: Peer.T, callbacks: SyncCallbacks): Promise<void> 
       updateDates(changes)
 
       const fetched = countRecordsInChanges(changes)
-      console.log(`[Cloud Sync] Pulled ${fetched} records (${Date.now() - pullStart}ms)`)
+      Logger.log({ msg: `[Cloud Sync] Pulled ${fetched} records (${Date.now() - pullStart}ms)` })
       callbacks.setSyncResolution(fetched)
 
       if (!callbacks.hasLocalChangesToPush) {
@@ -373,7 +374,7 @@ const syncHub = async (peer: Peer.T, callbacks: SyncCallbacks): Promise<void> =>
 
   const { changes, timestamp } = pullResult.data
   const fetchedCount = countRecordsInChanges(changes)
-  console.log("[Sync] fetched count: ", fetchedCount)
+  Logger.log({ msg: "[Sync] fetched count: ", fetchedCount })
   callbacks.setSyncResolution(fetchedCount)
 
   await applyRemoteChanges(changes)

@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/aiproxy"
+    },
+    {
+      "path": "./apps/local-hub"
+    },
+    {
+      "path": "./apps/mobile"
+    },
+    {
+      "path": "./apps/server"
+    },
+    {
+      "path": "./database"
+    },
+    {
+      "path": "./packages/client-native"
+    },
+    {
+      "path": "./packages/common"
+    },
+    {
+      "path": "./packages/data"
+    },
+    {
+      "path": "./packages/eslint-config"
+    },
+    {
+      "path": "./packages/hh-forms"
+    },
+    {
+      "path": "./packages/typescript-config"
+    },
+    {
+      "path": "./packages/ui"
+    },
+    {
+      "path": "./packages/utils/js"
+    }
+  ]
+}

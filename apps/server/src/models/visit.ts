@@ -18,6 +18,7 @@ import { cascadeSoftDelete } from "@/lib/soft-delete-registry";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import Patient from "./patient";
+import { Logger } from "@hh/js-utils";
 
 namespace Visit {
   export type T = {
@@ -194,19 +195,21 @@ namespace Visit {
           deleted_at: null,
         })
         .onConflict((oc) =>
-          oc.column("id").doUpdateSet({
-            patient_id: (eb) => eb.ref("excluded.patient_id"),
-            clinic_id: (eb) => eb.ref("excluded.clinic_id"),
-            provider_id: (eb) => eb.ref("excluded.provider_id"),
-            provider_name: (eb) => eb.ref("excluded.provider_name"),
-            check_in_timestamp: (eb) => eb.ref("excluded.check_in_timestamp"),
-            metadata: (eb) => eb.ref("excluded.metadata"),
-            is_deleted: (eb) => eb.ref("excluded.is_deleted"),
-            updated_at: sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-          })
-          // Only update if the incoming record is newer than what's already stored
-          .where(sql<boolean>`excluded.updated_at > visits.updated_at`),
+          oc
+            .column("id")
+            .doUpdateSet({
+              patient_id: (eb) => eb.ref("excluded.patient_id"),
+              clinic_id: (eb) => eb.ref("excluded.clinic_id"),
+              provider_id: (eb) => eb.ref("excluded.provider_id"),
+              provider_name: (eb) => eb.ref("excluded.provider_name"),
+              check_in_timestamp: (eb) => eb.ref("excluded.check_in_timestamp"),
+              metadata: (eb) => eb.ref("excluded.metadata"),
+              is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+              updated_at: sql`now()::timestamp with time zone`,
+              last_modified: sql`now()::timestamp with time zone`,
+            })
+            // Only update if the incoming record is newer than what's already stored
+            .where(sql<boolean>`excluded.updated_at > visits.updated_at`),
         )
         .executeTakeFirst();
       // InsertResult is undefined when the updated_at guard skips a stale record
@@ -296,14 +299,17 @@ namespace Visit {
         });
       } catch (error) {
         Sentry.captureException(error);
-        console.error("Visit soft delete operation failed:", {
-          operation: "visit_soft_delete",
+        Logger.error({
+          msg: "Visit soft delete operation failed:",
           error: {
-            message: error instanceof Error ? error.message : String(error),
-            name: error instanceof Error ? error.constructor.name : "Unknown",
+            operation: "visit_soft_delete",
+            error: {
+              message: error instanceof Error ? error.message : String(error),
+              name: error instanceof Error ? error.constructor.name : "Unknown",
+            },
+            context: { visitId: id },
+            timestamp: new Date().toISOString(),
           },
-          context: { visitId: id },
-          timestamp: new Date().toISOString(),
         });
         throw error;
       }

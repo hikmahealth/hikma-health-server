@@ -53,6 +53,7 @@ postserver
 
 *.local.txt
 *.local
+*.local.md
 
 # Rust/Cargo
 target/
@@ -126,3 +127,11 @@ venv/
 *.sqlite
 *.db
 *.wasm
+
+# ReScript build artifacts
+packages/utils/js/lib/
+packages/utils/js/dist/
+
+# moon
+.moon/cache
+.moon/docker

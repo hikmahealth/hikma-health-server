@@ -6,6 +6,7 @@ import ClinicInventoryModel from "@/db/model/ClinicInventory"
 import DrugCatalogueModel from "@/db/model/DrugCatalogue"
 import PrescriptionItemModel from "@/db/model/PrescriptionItem"
 import DispensingRecordModel from "@/db/model/DispensingRecord"
+import { Logger } from "@hh/js-utils"
 
 namespace PrescriptionItem {
   export type T = {
@@ -108,7 +109,7 @@ namespace PrescriptionItem {
         const item = await database.get<PrescriptionItemModel>(table_name).find(itemId)
         return fromDB(item)
       } catch (error) {
-        console.error("Error getting prescription item by ID:", error)
+        Logger.error({ msg: "Error getting prescription item by ID:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemId },
@@ -133,7 +134,7 @@ namespace PrescriptionItem {
 
         return items.map(fromDB)
       } catch (error) {
-        console.error("Error getting prescription items by prescription ID:", error)
+        Logger.error({ msg: "Error getting prescription items by prescription ID:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { prescriptionId },
@@ -156,7 +157,7 @@ namespace PrescriptionItem {
 
         return items.map(fromDB)
       } catch (error) {
-        console.error("Error getting prescription items by patient ID:", error)
+        Logger.error({ msg: "Error getting prescription items by patient ID:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { patientId },
@@ -185,7 +186,7 @@ namespace PrescriptionItem {
 
         return items.map(fromDB)
       } catch (error) {
-        console.error("Error getting active prescription items:", error)
+        Logger.error({ msg: "Error getting active prescription items:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { patientId },
@@ -230,7 +231,7 @@ namespace PrescriptionItem {
 
         return filteredItems
       } catch (error) {
-        console.error("Error searching prescription items:", error)
+        Logger.error({ msg: "Error searching prescription items:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { searchTerm, clinicId },
@@ -263,7 +264,7 @@ namespace PrescriptionItem {
           .filter((item) => item.refillsAuthorized - item.refillsUsed <= threshold)
           .map(fromDB)
       } catch (error) {
-        console.error("Error getting low refill items:", error)
+        Logger.error({ msg: "Error getting low refill items:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { clinicId, threshold },
@@ -290,7 +291,7 @@ namespace PrescriptionItem {
 
         return items.filter((item) => item.quantityDispensed < item.quantityPrescribed).map(fromDB)
       } catch (error) {
-        console.error("Error getting undispensed items:", error)
+        Logger.error({ msg: "Error getting undispensed items:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { clinicId },
@@ -327,7 +328,7 @@ namespace PrescriptionItem {
 
         return newItem.id
       } catch (error) {
-        console.error("Error creating prescription item:", error)
+        Logger.error({ msg: "Error creating prescription item:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemData },
@@ -366,7 +367,7 @@ namespace PrescriptionItem {
 
         return true
       } catch (error) {
-        console.error("Error updating prescription item:", error)
+        Logger.error({ msg: "Error updating prescription item:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemId, updates },
@@ -455,7 +456,7 @@ namespace PrescriptionItem {
           return true
         })
       } catch (error) {
-        console.error("Error dispensing medication:", error)
+        Logger.error({ msg: "Error dispensing medication:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemId, batchQuantities },
@@ -509,7 +510,7 @@ namespace PrescriptionItem {
           return true
         })
       } catch (error) {
-        console.error("Error dispensing medication:", error)
+        Logger.error({ msg: "Error dispensing medication:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemId, quantityToDispense, batchId },
@@ -562,7 +563,7 @@ namespace PrescriptionItem {
 
         return true
       } catch (error) {
-        console.error("Error deducting inventory quantity:", error)
+        Logger.error({ msg: "Error deducting inventory quantity:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { drugId, clinicId, batchId, quantityToDeduct },
@@ -594,7 +595,7 @@ namespace PrescriptionItem {
 
         return true
       } catch (error) {
-        console.error("Error processing refill:", error)
+        Logger.error({ msg: "Error processing refill:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemId },
@@ -626,7 +627,7 @@ namespace PrescriptionItem {
 
         return true
       } catch (error) {
-        console.error("Error cancelling prescription item:", error)
+        Logger.error({ msg: "Error cancelling prescription item:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemId, reason },
@@ -678,7 +679,7 @@ namespace PrescriptionItem {
 
         return stats
       } catch (error) {
-        console.error("Error getting dispensing statistics:", error)
+        Logger.error({ msg: "Error getting dispensing statistics:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { clinicId, startDate, endDate },
@@ -713,7 +714,7 @@ namespace PrescriptionItem {
 
         return totalAvailable >= requiredQuantity
       } catch (error) {
-        console.error("Error checking drug availability:", error)
+        Logger.error({ msg: "Error checking drug availability:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { drugId, clinicId, requiredQuantity },
@@ -736,7 +737,7 @@ namespace PrescriptionItem {
 
         return true
       } catch (error) {
-        console.error("Error deleting prescription item:", error)
+        Logger.error({ msg: "Error deleting prescription item:", error })
         Sentry.captureException(error, {
           level: "error",
           extra: { itemId },

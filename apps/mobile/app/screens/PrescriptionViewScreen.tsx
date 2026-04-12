@@ -27,10 +27,13 @@ import { useAppTheme } from "@/theme/context"
 import { calculateAge } from "@/utils/date"
 import { getPrescriptionItemStatusColor } from "@/utils/misc"
 import { enhancePrescribedDrugsItem } from "@/db/enhancers/enhancePrescribedDrugsItem"
+import { Logger } from "@hh/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
-interface PrescriptionViewScreenProps
-  extends NativeStackScreenProps<PharmacyNavigatorParamList, "PrescriptionView"> {}
+interface PrescriptionViewScreenProps extends NativeStackScreenProps<
+  PharmacyNavigatorParamList,
+  "PrescriptionView"
+> {}
 
 export const PrescriptionViewScreen: FC<PrescriptionViewScreenProps> = ({ route, navigation }) => {
   const { prescriptionId } = route.params
@@ -92,7 +95,7 @@ export const PrescriptionViewScreen: FC<PrescriptionViewScreenProps> = ({ route,
                 })
               })
               .catch((error) => {
-                console.error(error)
+                Logger.error(error)
                 Toast.show("Failed to mark prescription as picked up", {
                   position: Toast.positions.BOTTOM,
                   duration: Toast.durations.LONG,
@@ -117,7 +120,7 @@ export const PrescriptionViewScreen: FC<PrescriptionViewScreenProps> = ({ route,
         })
       })
       .catch((error) => {
-        console.error(error)
+        Logger.error(error)
         Toast.show(`Failed to mark prescription as ${status}`, {
           position: Toast.positions.BOTTOM,
           duration: Toast.durations.LONG,

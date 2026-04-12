@@ -13,6 +13,7 @@ import { useState, useCallback, useEffect } from "react"
 import Peer from "@/models/Peer"
 import type { HubSession } from "@/rpc/handshake"
 import { parseQRCode, isHubQR } from "@/rpc/qrParser"
+import { Logger } from "@hh/js-utils"
 
 export type PeerConnectionType = "sync_hub" | "cloud"
 
@@ -38,7 +39,7 @@ export function usePeerRegistration() {
     try {
       const qr = parseQRCode(data)
 
-      console.log({ qr })
+      Logger.log({ qr })
 
       // Hub QR: JSON with { type: "sync_hub", url: "..." }
       if (qr && isHubQR(qr)) {
@@ -93,7 +94,7 @@ export function usePeerRegistration() {
 
   /** Reset registration state (e.g., when switching flows) */
   const reset = useCallback(() => {
-    console.warn("🔥 Calling reset in usePeerRegistration hook")
+    Logger.warn("🔥 Calling reset in usePeerRegistration hook")
     setConnectionType(null)
     setHubSession(null)
     setIsRegistering(false)

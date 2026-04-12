@@ -17,6 +17,7 @@ import PatientVitals from "@/models/PatientVitals"
 import { PatientStackScreenProps } from "@/navigators/PatientNavigator"
 import { providerStore } from "@/store/provider"
 import { spacing } from "@/theme/spacing"
+import { Logger } from "@hh/js-utils"
 
 interface VitalFormScreenProps extends PatientStackScreenProps<"VitalForm"> {}
 
@@ -239,7 +240,7 @@ export const VitalFormScreen: FC<VitalFormScreenProps> = ({ route, navigation })
         { text: "OK", onPress: () => navigation.goBack() },
       ])
     } catch (error) {
-      console.error("Error saving vitals:", error)
+      Logger.error({ msg: "Error saving vitals:", error })
       Alert.alert("Error", "Failed to save vitals. Please try again.")
     }
   }

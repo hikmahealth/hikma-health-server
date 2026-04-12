@@ -1,0 +1,24 @@
+id: js-utils
+layer: library
+language: typescript
+stack: systems
+dependsOn:
+  - id: typescript-config
+    scope: peer
+
+tasks:
+  build:
+    command: pnpm run build
+    inputs:
+      - src/**/*.res
+      - src/**/*.resi
+      - rescript.json
+      - tsconfig.json
+    outputs:
+      - src/**/*.res.mjs
+      - src/**/*.gen.ts
+      - src/**/*.gen.d.ts
+  check-types:
+    command: pnpm run check-types
+    deps:
+      - ~:build

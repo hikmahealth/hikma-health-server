@@ -40,6 +40,7 @@ import { PatientVitalsCard } from "@/components/patient/PatientVitalsCard";
 import { RecentVisitsList } from "@/components/patient/RecentVisitsList";
 import { PrescriptionsList } from "@/components/patient/PrescriptionsList";
 import { PatientProblemsList } from "@/components/patient/PatientProblemsList";
+import { Logger } from "@hh/js-utils";
 
 export const Route = createFileRoute("/app/patients/$id")({
   component: RouteComponent,
@@ -101,13 +102,13 @@ export const Route = createFileRoute("/app/patients/$id")({
         vitals,
       ] = await Promise.all([
         getAppointmentsByPatientId({ data: { patientId } }).catch((e) => {
-          console.error("Failed to fetch appointments:", e);
+          Logger.error({ msg: "Failed to fetch appointments:", e });
           return { data: [], error: e };
         }),
         getPatientVisits({
           data: { patientId, limit: 10, offset: 0, includeEvents: true },
         }).catch((e) => {
-          console.error("Failed to fetch visits:", e);
+          Logger.error({ msg: "Failed to fetch visits:", e });
           return {
             ok: false as const,
             error: {
@@ -119,7 +120,7 @@ export const Route = createFileRoute("/app/patients/$id")({
         getPatientPrescriptions({
           data: { patientId, limit: 10, offset: 0 },
         }).catch((e) => {
-          console.error("Failed to fetch prescriptions:", e);
+          Logger.error({ msg: "Failed to fetch prescriptions:", e });
           return {
             ok: false as const,
             error: {
@@ -131,7 +132,7 @@ export const Route = createFileRoute("/app/patients/$id")({
         getPatientProblems({
           data: { patientId, limit: 5, offset: 0 },
         }).catch((e) => {
-          console.error("Failed to fetch problems:", e);
+          Logger.error({ msg: "Failed to fetch problems:", e });
           return {
             ok: false as const,
             error: {
@@ -141,7 +142,7 @@ export const Route = createFileRoute("/app/patients/$id")({
           };
         }),
         getPatientVitals({ data: { patientId } }).catch((e) => {
-          console.error("Failed to fetch vitals:", e);
+          Logger.error({ msg: "Failed to fetch vitals:", e });
           return [] as PatientVital.EncodedT[];
         }),
       ]);
@@ -173,7 +174,7 @@ export const Route = createFileRoute("/app/patients/$id")({
 
       return result;
     } catch (error) {
-      console.error("Failed to fetch patient:", error);
+      Logger.error({ msg: "Failed to fetch patient:", error });
       return result;
     }
   },
@@ -249,7 +250,7 @@ function RouteComponent() {
           setVisitsPag(res.data.pagination);
         }
       } catch (e) {
-        console.error("Failed to fetch visits page:", e);
+        Logger.error({ msg: "Failed to fetch visits page:", e });
       } finally {
         setVisitsLoading(false);
       }
@@ -270,7 +271,7 @@ function RouteComponent() {
           setRxPag(res.data.pagination);
         }
       } catch (e) {
-        console.error("Failed to fetch prescriptions page:", e);
+        Logger.error({ msg: "Failed to fetch prescriptions page:", e });
       } finally {
         setRxLoading(false);
       }
@@ -291,7 +292,7 @@ function RouteComponent() {
           setProblemsPag(res.data.pagination);
         }
       } catch (e) {
-        console.error("Failed to fetch problems page:", e);
+        Logger.error({ msg: "Failed to fetch problems page:", e });
       } finally {
         setProblemsLoading(false);
       }

@@ -66,8 +66,6 @@ export const PharmacyViewScreen: FC<PharmacyViewScreenProps> = ({ route, navigat
     })
   }
 
-  // console.log(prescriptions)
-
   if (isLoadingClinics) {
     return (
       <View style={$root}>

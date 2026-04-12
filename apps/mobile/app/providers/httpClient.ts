@@ -5,6 +5,7 @@
  * Wraps apisauce for testability — tests can mock the HttpClient type directly.
  */
 
+import { Logger } from "@hh/js-utils"
 import { create, ApisauceInstance } from "apisauce"
 
 export type HttpResponse<T> =
@@ -36,21 +37,24 @@ export function createApisauceClient(baseUrl: string, getAuthHeader: () => strin
     const auth = getAuthHeader()
     request.headers["Authorization"] = auth
     if (__DEV__) {
-      console.log(`[HttpClient] ${request.method?.toUpperCase()} ${request.url}`, {
-        hasAuth: auth.length > 0,
-        baseURL: baseUrl,
+      Logger.log({
+        msg: `[HttpClient] ${request.method?.toUpperCase()} ${request.url}`,
+        data: {
+          hasAuth: auth.length > 0,
+          baseURL: baseUrl,
+        },
       })
     }
   })
 
   function mapResponse<T>(response: Awaited<ReturnType<ApisauceInstance["get"]>>): HttpResponse<T> {
     if (response.ok && response.data !== undefined) {
-      if (__DEV__) console.log(`[HttpClient] Response OK — status: ${response.status}`)
+      if (__DEV__) Logger.log(`[HttpClient] Response OK — status: ${response.status}`)
       return { ok: true, data: response.data as T, status: response.status ?? 200 }
     }
     const errorMsg = (response.data as any)?.error ?? response.problem ?? "Unknown error"
     if (__DEV__) {
-      console.warn(
+      Logger.warn(
         `[HttpClient] Response FAIL — status: ${response.status}, problem: ${response.problem}, error: ${errorMsg}`,
       )
     }

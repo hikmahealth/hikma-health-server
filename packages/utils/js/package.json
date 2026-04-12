@@ -1,0 +1,39 @@
+{
+  "name": "@hh/js-utils",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "src",
+    "rescript.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/Index.gen.d.ts",
+      "import": "./src/Index.res.mjs",
+      "default": "./src/Index.res.mjs"
+    },
+    "./*": {
+      "types": "./src/*.gen.d.ts",
+      "import": "./src/*.res.mjs",
+      "default": "./src/*.res.mjs"
+    }
+  },
+  "scripts": {
+    "build": "rescript build && tsc",
+    "dev": "rescript build -w",
+    "clean": "rescript clean && rm -f src/*.gen.d.ts src/*.res.d.mts",
+    "check-types": "tsc --noEmit"
+  },
+  "keywords": [
+    "rescript"
+  ],
+  "dependencies": {
+    "rescript": "12.2.0"
+  },
+  "devDependencies": {
+    "@hh/typescript-config": "workspace:*",
+    "typescript": "^6.0.2"
+  }
+}

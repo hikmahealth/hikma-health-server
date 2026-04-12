@@ -12,7 +12,7 @@ build-server:
     # package the content needed to build the server in a single folder
     rm -rf $APP_FOLDER;
     mkdir -p "./$APP_FOLDER"/;
-    find ./.moon/docker/workspace -maxdepth 1 -mindepth 1 \
+    find ./.moon/docker/configs -maxdepth 1 -mindepth 1 \
         -not -path "*/database" \
         -not -path "*/apps" \
         -not -path "*/packages" \
@@ -22,10 +22,10 @@ build-server:
 
     cd $APP_FOLDER
     pnpm install
-    moon server:build
+    moon run server:build
 
 start-server:
     #!/usr/bin/env bash
     set -euxo pipefail
     cd $APP_FOLDER
-    moon server:start
+    moon run server:start

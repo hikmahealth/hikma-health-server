@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import db from "@/db";
 import Clinic from "@/models/clinic";
+import { Logger } from "@hh/js-utils";
 
 // Define the form schema
 const formSchema = z.object({
@@ -96,7 +97,7 @@ function RouteComponent() {
       );
       navigate({ to: "/app/clinics" });
     } catch (error) {
-      console.error("Error saving clinic:", error);
+      Logger.error({ msg: "Error saving clinic:", error });
       toast.error("Failed to save clinic");
     }
   };

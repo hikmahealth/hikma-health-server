@@ -1,4 +1,5 @@
 import { test, expect } from "./fixtures/auth";
+import { Logger } from "@hh/js-utils";
 
 test.describe("Authentication Flow", () => {
   test("should sign in, access dashboard, and sign out", async ({ page }) => {
@@ -7,7 +8,7 @@ test.describe("Authentication Flow", () => {
     const email = process.env.VITE_ADMIN_EMAIL;
     const password = process.env.VITE_ADMIN_PASS;
 
-    page.on("dialog", (dialog) => console.log(dialog.message()));
+    page.on("dialog", (dialog) => Logger.log(dialog.message()));
     page.on("dialog", (dialog) => dialog.accept());
 
     if (!email || !password) {
@@ -55,7 +56,7 @@ test.describe("Authentication Flow", () => {
             response.status() === 200,
           { timeout: 10000 },
         )
-        .catch(() => console.log("Sign-in API response timeout")),
+        .catch(() => Logger.log("Sign-in API response timeout")),
       loginButton.click(),
     ]);
 
@@ -132,7 +133,7 @@ test.describe("Authentication Flow", () => {
   //           response.status() === 200,
   //         { timeout: 10000 },
   //       )
-  //       .catch(() => console.log("Sign-in API response timeout")),
+  //       .catch(() => Logger.log("Sign-in API response timeout")),
   //     loginButton.click(),
   //   ]);
 

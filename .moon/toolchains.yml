@@ -1,0 +1,14 @@
+# Enable JavaScript with custom settings
+javascript:
+  packageManager: "pnpm"
+
+# Enable TypeScript
+typescript:
+  packageManager: "pnpm"
+
+node: {}
+
+pnpm: {}
+
+# Enable Rust
+rust: {}

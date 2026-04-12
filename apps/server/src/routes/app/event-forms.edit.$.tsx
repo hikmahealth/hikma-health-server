@@ -46,6 +46,7 @@ const DiagnosisSelect = lazy(() =>
   })),
 );
 import { toast } from "sonner";
+import { Logger } from "@hh/js-utils";
 
 const getFormById = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
@@ -81,8 +82,6 @@ const getFormById = createServerFn({ method: "GET" })
 
       return data;
     })();
-
-    // console.log({ formFields });
 
     return {
       ...res,
@@ -125,7 +124,6 @@ export const Route = createFileRoute("/app/event-forms/edit/$")({
 
 function RouteComponent() {
   const { form: initialForm, clinics } = Route.useLoaderData();
-  console.log({ initialForm });
   const navigate = Route.useNavigate();
   const formId = Route.useParams()._splat;
   const isEditing = !!initialForm?.id;
@@ -186,7 +184,7 @@ function RouteComponent() {
               | { label: string; value: string; __isNew__?: boolean }
               | string,
           ) => {
-            console.log({ option }); // Object { label: "Damas", value: "Damas", __isNew__: true }
+            Logger.log({ option }); // Object { label: "Damas", value: "Damas", __isNew__: true }
             if (typeof option === "string") {
               return option?.trim();
             } else if (typeof option === "object") {
@@ -235,13 +233,16 @@ function RouteComponent() {
     try {
       setIsSubmitting(true);
       await saveForm({
-        data: { form: { ...formState, form_fields: cleanedFields }, updateFormId },
+        data: {
+          form: { ...formState, form_fields: cleanedFields },
+          updateFormId,
+        },
       });
       toast.success("Form saved successfully");
       navigate({ to: "/app/event-forms" });
     } catch (error) {
       toast.error("Failed to save form");
-      console.error(error);
+      Logger.error(error);
     } finally {
       setIsSubmitting(false);
     }

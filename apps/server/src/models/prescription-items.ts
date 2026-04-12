@@ -19,6 +19,7 @@ import {
 import { isValidUUID, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import { v1 as uuidV1 } from "uuid";
+import { Logger } from "@hh/js-utils";
 
 // ============ VALIDATION HELPERS ============
 
@@ -290,7 +291,10 @@ namespace PrescriptionItem {
     );
 
     const buildUpsertValues = (
-      item: Partial<ApiPrescriptionItem> & { created_at?: string; updated_at?: string },
+      item: Partial<ApiPrescriptionItem> & {
+        created_at?: string;
+        updated_at?: string;
+      },
       id: string,
     ) => ({
       id,
@@ -325,33 +329,37 @@ namespace PrescriptionItem {
           .insertInto(Table.name)
           .values(values)
           .onConflict((oc) =>
-            oc.column("id").doUpdateSet((eb) => ({
-              prescription_id: eb.ref("excluded.prescription_id"),
-              patient_id: eb.ref("excluded.patient_id"),
-              drug_id: eb.ref("excluded.drug_id"),
-              clinic_id: eb.ref("excluded.clinic_id"),
-              dosage_instructions: eb.ref("excluded.dosage_instructions"),
-              quantity_prescribed: eb.ref("excluded.quantity_prescribed"),
-              quantity_dispensed: eb.ref("excluded.quantity_dispensed"),
-              refills_authorized: eb.ref("excluded.refills_authorized"),
-              refills_used: eb.ref("excluded.refills_used"),
-              item_status: eb.ref("excluded.item_status"),
-              notes: eb.ref("excluded.notes"),
-            }))
-            // Only update if the incoming record is newer than what's already stored
-            .where(sql<boolean>`excluded.updated_at > prescription_items.updated_at`),
+            oc
+              .column("id")
+              .doUpdateSet((eb) => ({
+                prescription_id: eb.ref("excluded.prescription_id"),
+                patient_id: eb.ref("excluded.patient_id"),
+                drug_id: eb.ref("excluded.drug_id"),
+                clinic_id: eb.ref("excluded.clinic_id"),
+                dosage_instructions: eb.ref("excluded.dosage_instructions"),
+                quantity_prescribed: eb.ref("excluded.quantity_prescribed"),
+                quantity_dispensed: eb.ref("excluded.quantity_dispensed"),
+                refills_authorized: eb.ref("excluded.refills_authorized"),
+                refills_used: eb.ref("excluded.refills_used"),
+                item_status: eb.ref("excluded.item_status"),
+                notes: eb.ref("excluded.notes"),
+              }))
+              // Only update if the incoming record is newer than what's already stored
+              .where(
+                sql<boolean>`excluded.updated_at > prescription_items.updated_at`,
+              ),
           )
           .returning("id")
           .executeTakeFirst();
 
         if (!result) {
-          console.info(
+          Logger.info(
             `[sync] Skipped stale upsert for prescription_item ${id}`,
           );
         }
         return result ?? { id };
       } catch (error) {
-        console.error("Error: ", error);
+        Logger.error({ msg: "Error: ", error });
         throw new DatabaseError("Upsert failed", error);
       }
     };

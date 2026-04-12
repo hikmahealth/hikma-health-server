@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/table";
 import { currencyCodesOptions } from "@/data/currencies";
 import Creatable from "react-select/creatable";
+import { Logger } from "@hh/js-utils";
 
 type NewBatchFormValues = {
   batch_number: string;
@@ -118,7 +119,10 @@ export const Route = createFileRoute(
     }
 
     result.currentUser = (await getCurrentUser()) as User.EncodedT | null;
-    result.clinics = Result.getOrElse(await getAllClinics(), []) as Clinic.EncodedT[];
+    result.clinics = Result.getOrElse(
+      await getAllClinics(),
+      [],
+    ) as Clinic.EncodedT[];
 
     return result;
   },
@@ -167,7 +171,7 @@ function RouteComponent() {
     }
   }, [batchNumber, existingBatches]);
 
-  console.log({ existingBatches });
+  Logger.log({ existingBatches });
 
   const handleDrugSelect = async (drug: DrugCatalogue.ApiDrug | null) => {
     setSelectedDrug(drug);
@@ -239,7 +243,7 @@ function RouteComponent() {
         toast.error(result?.error || "Failed to create batch");
       }
     } catch (error) {
-      console.error("Error creating batch:", error);
+      Logger.error({ msg: "Error creating batch:", error });
       toast.error("Failed to create batch and add to inventory");
     } finally {
       setIsLoading(false);
@@ -402,7 +406,7 @@ function RouteComponent() {
                               // value={value}
                               onChange={(field) => {
                                 if (field?.value) {
-                                  console.log({ value });
+                                  Logger.log({ value });
                                   onChange(field.value.trim());
                                 } else {
                                   onChange("");

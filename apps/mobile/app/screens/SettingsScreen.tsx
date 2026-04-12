@@ -27,6 +27,7 @@ import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
 import { generateDummyPatients, insertBenchmarkingData } from "@/utils/benchmarking"
 import Peer from "@/models/Peer"
+import { Logger } from "@hh/js-utils"
 
 interface SettingsScreenProps extends AppStackScreenProps<"Settings"> {}
 
@@ -64,7 +65,7 @@ export const SettingsScreen: FC<SettingsScreenProps> = ({ navigation }) => {
       if (supported) {
         Linking.openURL(url)
       } else {
-        console.log("Don't know how to open URI: " + url)
+        Logger.log({ msg: "Don't know how to open URI: ", url })
         Alert.alert("Failed to open: " + url)
       }
     })
@@ -89,7 +90,7 @@ export const SettingsScreen: FC<SettingsScreenProps> = ({ navigation }) => {
         appStateStore.trigger.SET_NOTIFICATIONS_ENABLED({ notificationsEnabled: false })
       }
     } catch (error) {
-      console.log(error)
+      Logger.log(error)
       alert("Error setting the notifications. Please try again later.")
     }
   }
@@ -148,7 +149,7 @@ export const SettingsScreen: FC<SettingsScreenProps> = ({ navigation }) => {
                 })
               })
               .catch((err) => {
-                console.log(err)
+                Logger.log(err)
                 Toast.show("Error creating synthetic patients: " + err, {
                   duration: Toast.durations.LONG,
                   containerStyle: {

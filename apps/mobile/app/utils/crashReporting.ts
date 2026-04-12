@@ -4,6 +4,8 @@
  */
 // import * as Sentry from "@sentry/react-native"
 
+import { Logger } from "@hh/js-utils"
+
 /**
  * If you're using Crashlytics: https://rnfirebase.io/crashlytics/usage
  */
@@ -50,8 +52,8 @@ export const reportCrash = (error: Error, type: ErrorType = ErrorType.FATAL) => 
   if (__DEV__) {
     // Log to console and Reactotron in development
     const message = error.message || "Unknown"
-    console.error(error)
-    console.log(message, type)
+    Logger.error(error)
+    Logger.log({ message, type })
   } else {
     // In production, utilize crash reporting service of choice below:
     // RN

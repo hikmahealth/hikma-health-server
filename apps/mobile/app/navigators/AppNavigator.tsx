@@ -31,6 +31,7 @@ import { AppointmentNavigator } from "./AppointmentNavigator"
 import { PharmacyNavigator } from "./PharmacyNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { PatientNavigator } from "./PatientNavigator"
+import { Logger } from "@hh/js-utils"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator
@@ -155,7 +156,7 @@ const AppStack = () => {
     return !!id && !!name && !!email
   })
 
-  console.warn({ isSignedIn, provider })
+  Logger.warn({ isSignedIn, provider })
 
   useEffect(() => {
     if (!isSignedIn) return
@@ -176,7 +177,7 @@ const AppStack = () => {
           try {
             await User.signIn(email, password)
           } catch (err) {
-            console.error("[Login] Error logging in with email and password")
+            Logger.error("[Login] Error logging in with email and password")
             Sentry.captureException(err, {
               level: "warning",
               extra: {
@@ -193,7 +194,7 @@ const AppStack = () => {
     }
 
     run().catch((err) => {
-      console.error("[Login] Failed to start sync:", err)
+      Logger.error({ msg: "[Login] Failed to start sync:", err })
       Sentry.captureException(err, {
         level: "error",
         extra: { message: "Failed to start sync" },
@@ -204,8 +205,9 @@ const AppStack = () => {
   return isSignedIn ? <MainDrawer /> : <AuthStack />
 }
 
-export interface NavigationProps
-  extends Partial<ComponentProps<typeof NavigationContainer<AppStackParamList>>> {}
+export interface NavigationProps extends Partial<
+  ComponentProps<typeof NavigationContainer<AppStackParamList>>
+> {}
 
 export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()

@@ -9,6 +9,7 @@ import { getCookie, deleteCookie } from "@tanstack/react-start/server";
 import Token from "@/models/token";
 
 import { Option } from "effect";
+import { Logger } from "@hh/js-utils";
 
 const checkToken = createServerFn({ method: "GET" }).handler(async () => {
   const token = Option.fromNullable(getCookie("token"));
@@ -49,7 +50,7 @@ function Login() {
   const navigate = Route.useNavigate();
 
   const handleLogin = async () => {
-    console.log({ email, password });
+    Logger.log({ email, password });
     setLoadingAuth(true);
     const res = await fetch(`/api/auth/sign-in`, {
       method: "POST",
@@ -63,10 +64,10 @@ function Login() {
     });
     const data: { user: User.T; token: string } | { error: string } =
       await res.json();
-    console.log({ data });
+    Logger.log({ data });
     if ("error" in data) {
       setLoadingAuth(false);
-      console.error(data);
+      Logger.error(data);
       alert(data.error);
     } else {
       navigate({ to: "/app" });

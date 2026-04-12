@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal } from "lucide-react";
+import { Logger } from "@hh/js-utils";
 
 // ── Server functions ──────────────────────────────────────────────
 
@@ -150,7 +151,7 @@ function RouteComponent() {
       router.invalidate({ sync: true });
       toast.success("Device deleted");
     } catch (e) {
-      console.error("Failed to delete device:", e);
+      Logger.error({ msg: "Failed to delete device:", e });
       toast.error("Failed to delete device");
     } finally {
       setLoadingId(null);
@@ -164,7 +165,7 @@ function RouteComponent() {
       router.invalidate({ sync: true });
       toast.success(`Device status changed to ${status}`);
     } catch (e) {
-      console.error("Failed to update device status:", e);
+      Logger.error({ msg: "Failed to update device status:", e });
       toast.error("Failed to update device status");
     } finally {
       setLoadingId(null);
@@ -178,7 +179,7 @@ function RouteComponent() {
       router.invalidate({ sync: true });
       toast.success("PIN attempts reset");
     } catch (e) {
-      console.error("Failed to reset PIN attempts:", e);
+      Logger.error({ msg: "Failed to reset PIN attempts:", e });
       toast.error("Failed to reset PIN attempts");
     } finally {
       setLoadingId(null);

@@ -8,6 +8,7 @@ import PatientModel from "@/db/model/Patient"
 import VisitModel from "@/db/model/Visit"
 
 import User from "./User"
+import { Logger } from "@hh/js-utils"
 
 namespace Appointment {
   export const Status = {
@@ -509,7 +510,7 @@ namespace Appointment {
 
         return results
       } catch (error) {
-        console.error("Error searching appointments:", error)
+        Logger.error({ msg: "Error searching appointments:", error })
         throw error
       }
     }

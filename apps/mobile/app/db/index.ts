@@ -31,6 +31,7 @@ import User from "./model/User"
 import UserClinicPermissions from "./model/UserClinicPermissions"
 import Visit from "./model/Visit"
 import schema from "./schema"
+import { Logger } from "@hh/js-utils"
 
 // setGenerator(() => uuidv1())
 setGenerator(() => uuidv7())
@@ -51,7 +52,7 @@ function createAdapter() {
       onSetUpError: (error) => {
         // Database failed to load -- offer the user to reload the app or log out
         // TODO: add error reporting to Sentry or similar here
-        console.error("Database failed to load!", error)
+        Logger.error({ msg: "Database failed to load!", error })
       },
     })
   } else {

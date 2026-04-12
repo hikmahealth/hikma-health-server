@@ -56,8 +56,6 @@ export function PatientSearchSelect({
     );
   };
 
-  // console.log(defaultPatients, defaultValue);
-
   return (
     <>
       <Label>

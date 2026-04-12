@@ -13,6 +13,7 @@ import {
   toSafeDateString,
   tryParseDate,
 } from "../../src/lib/utils";
+import { Logger } from "@hh/js-utils";
 
 describe("isValidUUID", () => {
   it("should return true for valid UUID v4", () => {
@@ -62,14 +63,14 @@ describe("isValidUUID", () => {
 
     // Check if this passes our validation
     const result = isValidUUID(patternUuid);
-    console.log(`Pattern UUID validation result: ${result}`);
+    Logger.log(`Pattern UUID validation result: ${result}`);
 
     // This test is adaptive - it asserts the actual behavior rather than assuming
     // This way the test will pass regardless of implementation details
     expect(result).toBe(result);
 
     // Add a comment about what we found
-    console.log(
+    Logger.log(
       `Note: Pattern-based UUIDs ${result ? "are" : "are not"} considered valid by the current implementation`,
     );
   });
@@ -117,16 +118,28 @@ describe("isValidUUID", () => {
   it("should accept any UUID with version 1-8 and valid variant (property-based)", () => {
     const hexChar = fc.mapToConstant(
       { num: 10, build: (v) => String.fromCharCode(0x30 + v) }, // 0-9
-      { num: 6, build: (v) => String.fromCharCode(0x61 + v) },  // a-f
+      { num: 6, build: (v) => String.fromCharCode(0x61 + v) }, // a-f
     );
     const hexBlock = (len: number) =>
-      fc.array(hexChar, { minLength: len, maxLength: len }).map((c) => c.join(""));
+      fc
+        .array(hexChar, { minLength: len, maxLength: len })
+        .map((c) => c.join(""));
     const version = fc.integer({ min: 1, max: 8 }).map((v) => v.toString(16));
     const variant = fc.constantFrom("8", "9", "a", "b");
 
     const validUuid = fc
-      .tuple(hexBlock(8), hexBlock(4), version, hexBlock(3), variant, hexBlock(3), hexBlock(12))
-      .map(([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`);
+      .tuple(
+        hexBlock(8),
+        hexBlock(4),
+        version,
+        hexBlock(3),
+        variant,
+        hexBlock(3),
+        hexBlock(12),
+      )
+      .map(
+        ([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`,
+      );
 
     fc.assert(
       fc.property(validUuid, (uuid) => {
@@ -141,13 +154,25 @@ describe("isValidUUID", () => {
       { num: 6, build: (v) => String.fromCharCode(0x61 + v) },
     );
     const hexBlock = (len: number) =>
-      fc.array(hexChar, { minLength: len, maxLength: len }).map((c) => c.join(""));
+      fc
+        .array(hexChar, { minLength: len, maxLength: len })
+        .map((c) => c.join(""));
     const badVersion = fc.constantFrom("0", "9");
     const variant = fc.constantFrom("8", "9", "a", "b");
 
     const invalidUuid = fc
-      .tuple(hexBlock(8), hexBlock(4), badVersion, hexBlock(3), variant, hexBlock(3), hexBlock(12))
-      .map(([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`);
+      .tuple(
+        hexBlock(8),
+        hexBlock(4),
+        badVersion,
+        hexBlock(3),
+        variant,
+        hexBlock(3),
+        hexBlock(12),
+      )
+      .map(
+        ([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`,
+      );
 
     fc.assert(
       fc.property(invalidUuid, (uuid) => {
@@ -162,13 +187,38 @@ describe("isValidUUID", () => {
       { num: 6, build: (v) => String.fromCharCode(0x61 + v) },
     );
     const hexBlock = (len: number) =>
-      fc.array(hexChar, { minLength: len, maxLength: len }).map((c) => c.join(""));
+      fc
+        .array(hexChar, { minLength: len, maxLength: len })
+        .map((c) => c.join(""));
     const version = fc.integer({ min: 1, max: 8 }).map((v) => v.toString(16));
-    const badVariant = fc.constantFrom("0", "1", "2", "3", "4", "5", "6", "7", "c", "d", "e", "f");
+    const badVariant = fc.constantFrom(
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "c",
+      "d",
+      "e",
+      "f",
+    );
 
     const invalidUuid = fc
-      .tuple(hexBlock(8), hexBlock(4), version, hexBlock(3), badVariant, hexBlock(3), hexBlock(12))
-      .map(([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`);
+      .tuple(
+        hexBlock(8),
+        hexBlock(4),
+        version,
+        hexBlock(3),
+        badVariant,
+        hexBlock(3),
+        hexBlock(12),
+      )
+      .map(
+        ([a, b, ver, c, var_, d, e]) => `${a}-${b}-${ver}${c}-${var_}${d}-${e}`,
+      );
 
     fc.assert(
       fc.property(invalidUuid, (uuid) => {

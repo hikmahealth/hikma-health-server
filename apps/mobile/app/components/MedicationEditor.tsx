@@ -100,7 +100,6 @@ export const MedicationEditor = function MedicationEditor(props: MedicationEdito
   }, [])
 
   const setValue = (key: keyof Prescription.MedicationEntry) => (value: string | number) => {
-    // console.log({ key, value })
     actions.set(key, value)
   }
 
@@ -111,7 +110,6 @@ export const MedicationEditor = function MedicationEditor(props: MedicationEdito
   const filterMedSuggestions = getMedicationsListFilterSimple(props.medicineOptions || [])
 
   const submit = () => {
-    // console.log({ map: Object.fromEntries(map.entries()) })
     const entry = Object.fromEntries(map.entries()) as Prescription.MedicationEntry
     onSubmit(entry)
   }

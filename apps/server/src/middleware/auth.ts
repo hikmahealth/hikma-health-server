@@ -7,6 +7,7 @@ import User from "@/models/user";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type Clinic from "@/models/clinic";
+import { Logger } from "@hh/js-utils";
 
 /** Middleware that rejects requests from users who are not super_admin. */
 export const superAdminMiddleware = createMiddleware({
@@ -41,7 +42,10 @@ export const authMiddleware = createMiddleware({ type: "function" })
     (data: { capabilities?: (typeof User.CapabilitySchema.Type)[] }) => data,
   )
   .server(async ({ next, data, context }) => {
-    console.log("context around authMiddleware", { context, data });
+    Logger.log({
+      msg: "context around authMiddleware",
+      data: { context, data },
+    });
 
     const { capabilities } = data;
 
@@ -62,8 +66,8 @@ export const authMiddleware = createMiddleware({ type: "function" })
       },
       onSome: (caller) => {
         const roleCapabilities = User.ROLE_CAPABILITIES[caller.role] || [];
-        console.log("!!!!!!!!!!!!!!");
-        console.log({ roleCapabilities, capabilities, caller });
+        Logger.log("!!!!!!!!!!!!!!");
+        Logger.log({ roleCapabilities, capabilities, caller });
         if (
           capabilities &&
           !capabilities.every((capability) =>
@@ -90,7 +94,7 @@ export const authMiddleware = createMiddleware({ type: "function" })
 export const capabilitiesMiddleware = createMiddleware({
   type: "function",
 }).server(async ({ next }) => {
-  console.log("Calling capabilities middlware");
+  Logger.log("Calling capabilities middlware");
   const token = getCookieToken();
   if (!token) {
     return next({
@@ -117,7 +121,7 @@ export const capabilitiesMiddleware = createMiddleware({
 export const permissionsMiddleware = createMiddleware({
   type: "function",
 }).server(async ({ next }) => {
-  console.log("Calling permssions middlware");
+  Logger.log("Calling permssions middlware");
   return Sentry.startSpan(
     { name: "Getting user clinic permissions" },
     async () => {

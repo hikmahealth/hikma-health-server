@@ -20,6 +20,7 @@ import Peer from "@/models/Peer"
 import database from "."
 import { Platform } from "react-native"
 import { toDateSafe } from "@/utils/date"
+import { Logger } from "@hh/js-utils"
 
 global.Buffer = require("buffer").Buffer
 
@@ -55,7 +56,7 @@ async function isTableEmpty(tableName: string): Promise<boolean> {
     const count = await collection.query().fetchCount()
     return count === 0
   } catch (error) {
-    console.error(`Error checking if table ${tableName} is empty:`, error)
+    Logger.error({ mgs: `Error checking if table ${tableName} is empty:`, error })
     Sentry.captureException(error, {
       tags: { component: "turbo-sync", operation: "table-empty-check" },
       extra: { tableName },
@@ -78,15 +79,15 @@ export async function isDatabaseEmpty(): Promise<boolean> {
   const startTime = Date.now()
 
   try {
-    console.log("[Turbo Sync Check] Starting database empty check...")
+    Logger.log("[Turbo Sync Check] Starting database empty check...")
 
     // Check the last pull timestamp - should be 0 for first sync
     const lastPullTimestamp = Sync.Server.getLastPullTimestamp("cloud")
-    console.log(`[Turbo Sync Check] Last pull timestamp: ${lastPullTimestamp}`)
+    Logger.log(`[Turbo Sync Check] Last pull timestamp: ${lastPullTimestamp}`)
 
     // If we have a non-zero timestamp, database is not empty (we've synced before)
     if (typeof lastPullTimestamp === "number" && lastPullTimestamp > 0) {
-      console.log(
+      Logger.log(
         "[Turbo Sync Check] Database not empty - lastPullTimestamp indicates previous sync",
       )
       return false
@@ -96,7 +97,7 @@ export async function isDatabaseEmpty(): Promise<boolean> {
     const tableChecks = await Promise.all(
       CRITICAL_TABLES_FOR_EMPTY_CHECK.map(async (tableName) => {
         const isEmpty = await isTableEmpty(tableName)
-        console.log(`[Turbo Sync Check] Table '${tableName}': ${isEmpty ? "EMPTY" : "HAS DATA"}`)
+        Logger.log(`[Turbo Sync Check] Table '${tableName}': ${isEmpty ? "EMPTY" : "HAS DATA"}`)
         return { tableName, isEmpty }
       }),
     )
@@ -108,14 +109,14 @@ export async function isDatabaseEmpty(): Promise<boolean> {
     const duration = Date.now() - startTime
 
     if (isCompletelyEmpty) {
-      console.log(
+      Logger.log(
         `[Turbo Sync Check] ✅ Database is EMPTY and safe for turbo sync (checked in ${duration}ms)`,
       )
     } else {
-      console.log(
-        `[Turbo Sync Check] ❌ Database is NOT EMPTY - ${tablesWithData.length} table(s) have data:`,
-        tablesWithData.map((t) => t.tableName).join(", "),
-      )
+      Logger.log({
+        mgs: `[Turbo Sync Check] ❌ Database is NOT EMPTY - ${tablesWithData.length} table(s) have data:`,
+        tablesWithData: tablesWithData.map((t) => t.tableName).join(", "),
+      })
     }
 
     // Log to Sentry for monitoring
@@ -134,10 +135,10 @@ export async function isDatabaseEmpty(): Promise<boolean> {
     return isCompletelyEmpty
   } catch (error) {
     const duration = Date.now() - startTime
-    console.error(
-      `[Turbo Sync Check] Error during database empty check (after ${duration}ms):`,
+    Logger.error({
+      mgs: `[Turbo Sync Check] Error during database empty check (after ${duration}ms):`,
       error,
-    )
+    })
     Sentry.captureException(error, {
       tags: { component: "turbo-sync", operation: "database-empty-check" },
       extra: { durationMs: duration },
@@ -176,7 +177,7 @@ export async function shouldUseTurboSync(): Promise<{ useTurbo: boolean; reason:
     // (database.adapter.constructor.name === "SQLiteAdapter" &&
     //   (global as any).__waterlonJSI !== undefined)
     if (isWeb || !hasJSI) {
-      console.warn(
+      Logger.warn(
         "[Turbo Sync Check] JSI not available - turbo sync not supported in this environment",
       )
       return {
@@ -186,13 +187,13 @@ export async function shouldUseTurboSync(): Promise<{ useTurbo: boolean; reason:
     }
 
     // All checks passed
-    console.log("[Turbo Sync Check] ✅ ALL CHECKS PASSED - Turbo sync will be used")
+    Logger.log("[Turbo Sync Check] ✅ ALL CHECKS PASSED - Turbo sync will be used")
     return {
       useTurbo: true,
       reason: "Database empty and JSI available",
     }
   } catch (error) {
-    console.error("[Turbo Sync Check] Error in shouldUseTurboSync:", error)
+    Logger.error({ mgs: "[Turbo Sync Check] Error in shouldUseTurboSync:", error })
     Sentry.captureException(error, {
       tags: { component: "turbo-sync", operation: "should-use-turbo-check" },
     })
@@ -306,9 +307,9 @@ export async function syncDB(
   if (email && password) {
     try {
       await User.signIn(email, password)
-      console.log("User info refreshed before sync")
+      Logger.log("User info refreshed before sync")
     } catch (error) {
-      console.error("Failed to refresh user info before sync:", error)
+      Logger.error({ mgs: "Failed to refresh user info before sync:", error })
       onSyncError("Authentication failed. Please sign in again.")
       throw new Error("Authentication failed")
       // return // Exit early - don't proceed with sync if authentication fails
@@ -335,7 +336,7 @@ export async function syncDB(
   const turboDecision = await shouldUseTurboSync()
   const useTurbo = turboDecision.useTurbo
 
-  console.log(
+  Logger.log(
     `[Sync] Turbo mode: ${useTurbo ? "ENABLED ✅" : "DISABLED ❌"} - Reason: ${turboDecision.reason}`,
   )
 
@@ -369,7 +370,7 @@ export async function syncDB(
         //   ....
         // }
 
-        console.log(`[Sync] Pulling changes from the server (Turbo: ${useTurbo})`)
+        Logger.log(`[Sync] Pulling changes from the server (Turbo: ${useTurbo})`)
         const pullStartTime = Date.now()
 
         // ============================================================================
@@ -377,7 +378,7 @@ export async function syncDB(
         // ============================================================================
         if (useTurbo) {
           // TURBO MODE: Return raw JSON text without parsing
-          console.log("[Sync Turbo] Using TURBO mode - fetching raw JSON")
+          Logger.log("[Sync Turbo] Using TURBO mode - fetching raw JSON")
 
           try {
             const urlParams = `last_pulled_at=${lastPulledAt || 0}&schema_version=${schemaVersion}&migration=${encodeURIComponent(JSON.stringify(migration))}`
@@ -394,7 +395,7 @@ export async function syncDB(
 
             if (!response.ok) {
               const errorText = await response.text()
-              console.error("[Sync Turbo] Error fetching data from server:", errorText)
+              Logger.error({ mgs: "[Sync Turbo] Error fetching data from server:", errorText })
 
               // PHASE 6: Track error with Sentry
               Sentry.captureException(new Error(`Turbo sync fetch failed: ${response.status}`), {
@@ -415,7 +416,7 @@ export async function syncDB(
             // PHASE 4: Validate backend response for turbo sync
             const validation = validateTurboResponse(rawJson)
             if (!validation.valid) {
-              console.error(`[Sync Turbo] ❌ Response validation failed: ${validation.reason}`)
+              Logger.error(`[Sync Turbo] ❌ Response validation failed: ${validation.reason}`)
 
               // PHASE 6: Track validation failure with Sentry
               Sentry.captureMessage("Turbo sync validation failed", {
@@ -430,7 +431,7 @@ export async function syncDB(
               throw new Error(`Turbo sync validation failed: ${validation.reason}`)
             }
 
-            console.log(
+            Logger.log(
               `[Sync Turbo] ✅ Successfully fetched and validated raw JSON (${rawJson.length} chars in ${pullDuration}ms)`,
             )
 
@@ -450,7 +451,10 @@ export async function syncDB(
             return { syncJson: rawJson }
           } catch (error) {
             const pullDuration = Date.now() - pullStartTime
-            console.error(`[Sync Turbo] ❌ Error in turbo mode (after ${pullDuration}ms):`, error)
+            Logger.error({
+              mgs: `[Sync Turbo] ❌ Error in turbo mode (after ${pullDuration}ms):`,
+              error,
+            })
 
             // PHASE 6: Capture exception with detailed context
             Sentry.captureException(error, {
@@ -467,7 +471,7 @@ export async function syncDB(
           }
         } else {
           // STANDARD MODE: Parse JSON and process normally
-          console.log("[Sync Standard] Using STANDARD mode - parsing JSON")
+          Logger.log("[Sync Standard] Using STANDARD mode - parsing JSON")
 
           let changes: SyncDatabaseChangeSet = {}
           let timestamp: Timestamp = lastPulledAt || 0
@@ -487,7 +491,7 @@ export async function syncDB(
                 }
               },
               onFailure: (error) => {
-                console.error("Error getting changes and timestamp", error)
+                Logger.error({ mgs: "Error getting changes and timestamp", error })
                 changes = {}
                 timestamp = lastPulledAt as number
                 Sentry.captureException(error)
@@ -500,7 +504,7 @@ export async function syncDB(
             const newRecordsToChange = countRecordsInChanges(changes)
             const pullDuration = Date.now() - pullStartTime
 
-            console.log(
+            Logger.log(
               `[Sync Standard] ✅ Successfully pulled ${newRecordsToChange} records (${pullDuration}ms)`,
             )
 
@@ -533,8 +537,8 @@ export async function syncDB(
             return { changes, timestamp }
           } catch (error) {
             const pullDuration = Date.now() - pullStartTime
-            console.error(`[Sync Standard] ❌ Error pulling changes (after ${pullDuration}ms)`)
-            console.error(error)
+            Logger.error(`[Sync Standard] ❌ Error pulling changes (after ${pullDuration}ms)`)
+            Logger.error(error)
 
             // PHASE 6: Capture exception with detailed context
             Sentry.captureException(error, {
@@ -565,10 +569,10 @@ export async function syncDB(
           // TODO: handle rejected ids - this is experimental, wait until the api is stable
           Exit.match(res, {
             onSuccess: (value) => {
-              console.log("Sync successful", value)
+              Logger.log({ mgs: "Sync successful", value })
             },
             onFailure: (error) => {
-              console.error("Sync rejected ids", error)
+              Logger.error({ mgs: "Sync rejected ids", error })
               throw new Error("Error pushing changes to the server")
               // onSyncError(String(error))
             },
@@ -576,13 +580,13 @@ export async function syncDB(
 
           // If there are no errors, update the last pull timestamp for the cloud server
           Sync.Server.setLastPullTimestamp("cloud", lastPulledAt).catch((error) => {
-            console.error(
-              "Failed to set last pull timestamp. This could be an issue, although unlikely to be serious since watermelondb tracks its own timestamps for this internally.",
+            Logger.error({
+              mgs: "Failed to set last pull timestamp. This could be an issue, although unlikely to be serious since watermelondb tracks its own timestamps for this internally.",
               error,
-            )
+            })
           })
         } catch (error) {
-          console.error(error)
+          Logger.error(error)
           onSyncError(String(error))
 
           throw new Error("Error pushing changes to the server")
@@ -596,7 +600,7 @@ export async function syncDB(
     // ============================================================================
     // If turbo sync fails and we haven't tried fallback yet, retry with standard sync
     if (useTurbo && canAttemptTurboFallback()) {
-      console.warn("[Sync Fallback] ⚠️ Turbo sync failed, attempting fallback to standard sync...")
+      Logger.warn("[Sync Fallback] ⚠️ Turbo sync failed, attempting fallback to standard sync...")
 
       // PHASE 6: Track fallback attempt with Sentry
       Sentry.captureMessage("Turbo sync failed, falling back to standard sync", {
@@ -613,7 +617,7 @@ export async function syncDB(
       // Retry the entire sync with standard mode
       // Recursively call syncDB with turbo disabled (fallback flag will prevent infinite loop)
       try {
-        console.log("[Sync Fallback] Retrying sync in standard mode...")
+        Logger.log("[Sync Fallback] Retrying sync in standard mode...")
 
         // The shouldUseTurboSync check will now return false due to the fallback flag
         // or we can just directly call with a modified flow
@@ -622,7 +626,7 @@ export async function syncDB(
           sendCreatedAsUpdated: false,
           unsafeTurbo: false, // Force standard mode
           pullChanges: async ({ lastPulledAt, schemaVersion, migration }) => {
-            console.log("[Sync Fallback] Pulling changes in standard mode")
+            Logger.log("[Sync Fallback] Pulling changes in standard mode")
             const pullStartTime = Date.now()
 
             let changes: SyncDatabaseChangeSet = {}
@@ -643,7 +647,7 @@ export async function syncDB(
                   }
                 },
                 onFailure: (error) => {
-                  console.error("Error getting changes and timestamp", error)
+                  Logger.error({ mgs: "Error getting changes and timestamp", error })
                   changes = {}
                   timestamp = lastPulledAt as number
                   Sentry.captureException(error)
@@ -654,7 +658,7 @@ export async function syncDB(
               const newRecordsToChange = countRecordsInChanges(changes)
               const pullDuration = Date.now() - pullStartTime
 
-              console.log(
+              Logger.log(
                 `[Sync Fallback] ✅ Fallback successful - pulled ${newRecordsToChange} records (${pullDuration}ms)`,
               )
 
@@ -679,7 +683,7 @@ export async function syncDB(
 
               return { changes, timestamp }
             } catch (fallbackError) {
-              console.error("[Sync Fallback] ❌ Fallback also failed:", fallbackError)
+              Logger.error({ mgs: "[Sync Fallback] ❌ Fallback also failed:", fallbackError })
 
               // PHASE 6: Track failed fallback
               Sentry.captureException(fallbackError, {
@@ -702,19 +706,19 @@ export async function syncDB(
 
               Exit.match(res, {
                 onSuccess: (value) => {
-                  console.log("[Sync Fallback] Push successful", value)
+                  Logger.log({ mgs: "[Sync Fallback] Push successful", value })
                 },
                 onFailure: (error) => {
-                  console.error("[Sync Fallback] Push rejected ids", error)
+                  Logger.error({ mgs: "[Sync Fallback] Push rejected ids", error })
                   throw new Error("Error pushing changes to the server")
                 },
               })
 
               Sync.Server.setLastPullTimestamp("cloud", lastPulledAt).catch((error) => {
-                console.error("Failed to set last pull timestamp.", error)
+                Logger.error({ mgs: "Failed to set last pull timestamp.", error })
               })
             } catch (error) {
-              console.error(error)
+              Logger.error(error)
               onSyncError(String(error))
               throw new Error("Error pushing changes to the server")
             }
@@ -722,7 +726,7 @@ export async function syncDB(
           migrationsEnabledAtVersion: 1,
         })
 
-        console.log("[Sync Fallback] ✅ Fallback sync completed successfully")
+        Logger.log("[Sync Fallback] ✅ Fallback sync completed successfully")
 
         // PHASE 6: Track successful complete fallback
         Sentry.captureMessage("Turbo sync fallback completed successfully", {
@@ -730,7 +734,7 @@ export async function syncDB(
           tags: { component: "sync", mode: "fallback", phase: "complete" },
         })
       } catch (fallbackError) {
-        console.error("[Sync Fallback] ❌ Fallback sync failed:", fallbackError)
+        Logger.error({ mgs: "[Sync Fallback] ❌ Fallback sync failed:", fallbackError })
 
         // PHASE 6: Track complete fallback failure
         Sentry.captureException(fallbackError, {
@@ -746,7 +750,7 @@ export async function syncDB(
       }
     } else {
       // Either not using turbo, or already attempted fallback - just propagate the error
-      console.error("[Sync] ❌ Sync failed:", error)
+      Logger.error({ mgs: "[Sync] ❌ Sync failed:", error })
 
       // PHASE 6: Track sync failure
       Sentry.captureException(error, {
@@ -797,7 +801,7 @@ export function convertToTimestamp(
 
     // Validate the timestamp is valid
     if (isNaN(timestamp)) {
-      console.warn(
+      Logger.warn(
         `Invalid ${fieldName} for record ${recordId || "unknown"}: ${value}. Using fallback.`,
       )
       return fallback.getTime()
@@ -805,7 +809,10 @@ export function convertToTimestamp(
 
     return timestamp
   } catch (error) {
-    console.error(`Error converting ${fieldName} for record ${recordId || "unknown"}:`, error)
+    Logger.error({
+      mgs: `Error converting ${fieldName} for record ${recordId || "unknown"}:`,
+      error,
+    })
     return fallback.getTime()
   }
 }
@@ -951,7 +958,7 @@ export function updateDates(changes: SyncDatabaseChangeSet) {
                 const date = toDateSafe(dob, new Date())
 
                 if (isNaN(date.getTime())) {
-                  console.warn(`Invalid date_of_birth for record ${recordId}: ${dob}`)
+                  Logger.warn(`Invalid date_of_birth for record ${recordId}: ${dob}`)
                   record.date_of_birth = null
                 } else {
                   // Use UTC methods to avoid timezone shifting
@@ -962,7 +969,7 @@ export function updateDates(changes: SyncDatabaseChangeSet) {
                 }
               }
             } catch (error) {
-              console.error(`Error formatting date_of_birth for record ${recordId}:`, error)
+              Logger.error({ mgs: `Error formatting date_of_birth for record ${recordId}:`, error })
               record.date_of_birth = null
             }
           }
@@ -1079,7 +1086,7 @@ type LocalSyncRecords = {
 //     for (const tableName in stats) {
 //       const tableStats = stats[tableName]
 //       if (tableStats.created > 0 || tableStats.deleted > 0) {
-//         console.log(
+//         Logger.log(
 //           `Moved records for table ${tableName}: ${tableStats.created} from created, ${tableStats.deleted} from deleted to updated`,
 //         )
 //       }

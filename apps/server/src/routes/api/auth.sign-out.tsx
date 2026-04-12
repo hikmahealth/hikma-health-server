@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { deleteCookie, getCookie } from "@tanstack/react-start/server";
 import Token from "@/models/token";
+import { Logger } from "@hh/js-utils";
 
 export const Route = createFileRoute("/api/auth/sign-out")({
   server: {
@@ -30,16 +31,13 @@ export const Route = createFileRoute("/api/auth/sign-out")({
             status: 200,
           });
         } catch (error) {
-          console.error("Error during sign-out:", error);
-          return new Response(
-            JSON.stringify({ error: "Failed to sign out" }),
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-              status: 500,
+          Logger.error({ msg: "Error during sign-out:", error });
+          return new Response(JSON.stringify({ error: "Failed to sign out" }), {
+            headers: {
+              "Content-Type": "application/json",
             },
-          );
+            status: 500,
+          });
         }
       },
     },

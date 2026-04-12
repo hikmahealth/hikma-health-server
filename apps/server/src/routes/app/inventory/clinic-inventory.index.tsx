@@ -35,6 +35,7 @@ import { getClinicInventory } from "@/lib/server-functions/inventory";
 import { Result } from "@/lib/result";
 import { LucidePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Logger } from "@hh/js-utils";
 
 const ITEMS_PER_PAGE = 100;
 
@@ -94,7 +95,7 @@ function RouteComponent() {
       setInventory(Result.getOrElse(result, { items: [], hasMore: false }));
       setCurrentPage(page);
     } catch (error) {
-      console.error("Error loading inventory:", error);
+      Logger.error({ msg: "Error loading inventory:", error });
       toast.error("Failed to load inventory");
     } finally {
       setLoading(false);
@@ -149,7 +150,7 @@ function RouteComponent() {
   const pageNumbers = getPageNumbers();
   const selectedClinic = clinics?.find((c: any) => c.id === selectedClinicId);
 
-  console.log({ inventory });
+  Logger.log({ inventory });
 
   return (
     <div className="container py-6">

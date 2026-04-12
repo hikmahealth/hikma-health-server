@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getClinicInventory } from "@/lib/server-functions/inventory";
 import type ClinicInventory from "@/models/clinic-inventory";
 import { useDebounceValue } from "usehooks-ts";
+import { Logger } from "@hh/js-utils";
 
 export interface InventoryItem extends ClinicInventory.DrugWithBatchInfo {
   // Additional properties if needed can be added here
@@ -49,7 +50,7 @@ export function useClinicInventory(): UseClinicInventoryReturn {
         setItems([]);
       }
     } catch (err) {
-      console.error("Error fetching clinic inventory:", err);
+      Logger.error({ msg: "Error fetching clinic inventory:", err });
       setError(
         err instanceof Error ? err.message : "Failed to fetch inventory",
       );

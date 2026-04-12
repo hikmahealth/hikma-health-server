@@ -15,6 +15,7 @@ import type Patient from "./patient";
 import type User from "./user";
 import type PrescriptionItem from "./prescription-items";
 import DrugCatalogue from "./drug-catalogue";
+import { Logger } from "@hh/js-utils";
 
 namespace DispensingRecord {
   export interface DispensingRecordData {
@@ -369,31 +370,36 @@ namespace DispensingRecord {
             deleted_at: null,
           })
           .onConflict((oc) =>
-            oc.column("id").doUpdateSet({
-              drug_id: (eb) => eb.ref("excluded.drug_id"),
-              batch_id: (eb) => eb.ref("excluded.batch_id"),
-              prescription_item_id: (eb) =>
-                eb.ref("excluded.prescription_item_id"),
-              quantity_dispensed: (eb) => eb.ref("excluded.quantity_dispensed"),
-              dosage_instructions: (eb) =>
-                eb.ref("excluded.dosage_instructions"),
-              days_supply: (eb) => eb.ref("excluded.days_supply"),
-              dispensed_by: (eb) => eb.ref("excluded.dispensed_by"),
-              dispensed_at: (eb) => eb.ref("excluded.dispensed_at"),
-              recorded_by_user_id: (eb) =>
-                eb.ref("excluded.recorded_by_user_id"),
-              metadata: (eb) => eb.ref("excluded.metadata"),
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-            })
-            // Only update if the incoming record is newer than what's already stored
-            .where(sql<boolean>`excluded.updated_at > dispensing_records.updated_at`),
+            oc
+              .column("id")
+              .doUpdateSet({
+                drug_id: (eb) => eb.ref("excluded.drug_id"),
+                batch_id: (eb) => eb.ref("excluded.batch_id"),
+                prescription_item_id: (eb) =>
+                  eb.ref("excluded.prescription_item_id"),
+                quantity_dispensed: (eb) =>
+                  eb.ref("excluded.quantity_dispensed"),
+                dosage_instructions: (eb) =>
+                  eb.ref("excluded.dosage_instructions"),
+                days_supply: (eb) => eb.ref("excluded.days_supply"),
+                dispensed_by: (eb) => eb.ref("excluded.dispensed_by"),
+                dispensed_at: (eb) => eb.ref("excluded.dispensed_at"),
+                recorded_by_user_id: (eb) =>
+                  eb.ref("excluded.recorded_by_user_id"),
+                metadata: (eb) => eb.ref("excluded.metadata"),
+                updated_at: sql`now()::timestamp with time zone`,
+                last_modified: sql`now()::timestamp with time zone`,
+              })
+              // Only update if the incoming record is newer than what's already stored
+              .where(
+                sql<boolean>`excluded.updated_at > dispensing_records.updated_at`,
+              ),
           )
           .returningAll()
           .executeTakeFirst();
 
         if (!result) {
-          console.info(
+          Logger.info(
             `[sync] Skipped stale upsert for dispensing_record ${id}`,
           );
           return null;

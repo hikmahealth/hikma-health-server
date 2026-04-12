@@ -20,6 +20,7 @@ import { jsonObjectFrom } from "kysely/helpers/postgres";
 import { v1 as uuidV1 } from "uuid";
 import Visit from "./visit";
 import Patient from "./patient";
+import { Logger } from "@hh/js-utils";
 
 namespace Event {
   export type T = {
@@ -126,7 +127,7 @@ namespace Event {
               visitExists = true;
             } else {
               visitExists = false;
-              console.error("Visit not found");
+              Logger.error("Visit not found");
             }
           }
 
@@ -138,7 +139,7 @@ namespace Event {
               .limit(1)
               .executeTakeFirst();
             if (!user) {
-              console.error("User not found");
+              Logger.error("User not found");
               return;
             }
             const insertVisitId =
@@ -223,17 +224,21 @@ namespace Event {
             .executeTakeFirst();
           // InsertResult is undefined when the updated_at guard skips a stale record
         } catch (error) {
-          console.error("Event upsert operation failed:", {
-            operation: "event_upsert",
+          Logger.error({
+            msg: "Event upsert operation failed:",
             error: {
-              message: error instanceof Error ? error.message : String(error),
-              name: error instanceof Error ? error.constructor.name : "Unknown",
-              stack: error instanceof Error ? error.stack : undefined,
+              operation: "event_upsert",
+              error: {
+                message: error instanceof Error ? error.message : String(error),
+                name:
+                  error instanceof Error ? error.constructor.name : "Unknown",
+                stack: error instanceof Error ? error.stack : undefined,
+              },
+              context: {
+                eventId: event.id,
+              },
+              timestamp: new Date().toISOString(),
             },
-            context: {
-              eventId: event.id,
-            },
-            timestamp: new Date().toISOString(),
           });
           throw error;
         }

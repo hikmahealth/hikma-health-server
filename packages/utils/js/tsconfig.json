@@ -1,0 +1,21 @@
+{
+  "extends": "@hh/typescript-config/base.json",
+  "compilerOptions": {
+    "incremental": true,
+    "composite": true,
+    "rootDir": "src",
+    "module": "ESNext",
+    "outDir": "src",
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+  },
+  "include": ["src/**/*.gen.ts", "src/res-modules.d.ts"],
+  "exclude": ["node_modules", "lib"],
+  "references": [
+    {
+      "path": "../../typescript-config",
+    },
+  ],
+}

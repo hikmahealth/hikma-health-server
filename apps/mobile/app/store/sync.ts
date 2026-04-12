@@ -2,6 +2,7 @@ import { createStore } from "@xstate/store"
 import { Option } from "effect"
 
 import Sync from "@/models/Sync"
+import { Logger } from "@hh/js-utils"
 
 export const syncStore = createStore({
   context: {
@@ -27,7 +28,7 @@ export const syncStore = createStore({
 
     start_resolve: (context, event: { fetched: number }) => {
       if (context.state !== Sync.State.FETCHING) {
-        console.error("Sync is not in fetching state")
+        Logger.error("Sync is not in fetching state")
         return { ...context }
       }
       return {
@@ -39,7 +40,7 @@ export const syncStore = createStore({
 
     start_push: (context, event: { pushed: number }) => {
       if (context.state !== Sync.State.RESOLVING) {
-        console.error("Sync is not in resolving state")
+        Logger.error("Sync is not in resolving state")
         return { ...context }
       }
       return {
@@ -56,7 +57,7 @@ export const syncStore = createStore({
         context.state !== Sync.State.RESOLVING &&
         context.state !== Sync.State.ERROR
       ) {
-        console.error("Sync is not in pushing state")
+        Logger.error("Sync is not in pushing state")
         return { ...context }
       }
       return {
@@ -69,7 +70,7 @@ export const syncStore = createStore({
     error_sync: (context, event: { error: string }) => {
       // TOMBSTONE: Nov 11 2025 - do we really need to check what state we are in? errors can occur at any time/state
       // if (context.state !== Sync.State.PUSHING && context.state !== Sync.State.RESOLVING) {
-      //   console.error("Sync is not in pushing or resolving state")
+      //   Logger.error("Sync is not in pushing or resolving state")
       //   return { ...context }
       // }
       return {
@@ -81,7 +82,7 @@ export const syncStore = createStore({
 
     clear_error: (context) => {
       if (context.state !== Sync.State.ERROR) {
-        console.error("Sync is not in error state")
+        Logger.error("Sync is not in error state")
         return { ...context }
       }
       return {

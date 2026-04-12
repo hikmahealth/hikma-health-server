@@ -12,6 +12,7 @@ import { providerStore } from "@/store/provider"
 import AppConfig from "./AppConfig"
 import User from "./User"
 import { ok, err, type Result, type DataError } from "../../types/data"
+import { Logger } from "@hh/js-utils"
 
 namespace UserClinicPermissions {
   export type T = {
@@ -348,7 +349,7 @@ namespace UserClinicPermissions {
       check: PermissionCheck,
       permissions: UserClinicPermissions.T | null,
     ): Result<true, PermissionDeniedError> => {
-      console.log("✅ : ", ctx.isPermissionsDisabled, ctx.role)
+      Logger.log({ msg: "✅ : ", isPermissionDisabled: ctx.isPermissionsDisabled, role: ctx.role })
       if (ctx.isPermissionsDisabled) return ok(true)
       if (ctx.role === "super_admin") return ok(true)
 

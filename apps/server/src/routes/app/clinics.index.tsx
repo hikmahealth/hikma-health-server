@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { Result } from "@/lib/result";
 import { Link } from "@tanstack/react-router";
+import { Logger } from "@hh/js-utils";
 
 const deleteClinic = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
@@ -50,8 +51,6 @@ function RouteComponent() {
   const navigate = useNavigate();
   const router = useRouter();
 
-  console.log("Clinics:", clinics);
-
   const handleEdit = (id: string) => {
     navigate({ to: `/app/clinics/edit/${id}` });
   };
@@ -68,7 +67,7 @@ function RouteComponent() {
 
     deleteClinic({ data: { id } })
       .catch((error) => {
-        console.error(error);
+        Logger.error(error);
         toast.error(error.message);
       })
       .then(() => {
@@ -90,7 +89,7 @@ function RouteComponent() {
 
     archiveClinic({ data: { id, isArchived: true } })
       .catch((error) => {
-        console.error(error);
+        Logger.error(error);
         toast.error(error.message);
       })
       .then(() => {

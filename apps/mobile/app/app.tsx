@@ -44,7 +44,7 @@ import { useOperationModeInit } from "./hooks/useOperationModeInit"
 import { ThemeProvider, useAppTheme } from "./theme/context"
 import { customFontsToLoad } from "./theme/typography"
 import { loadDateFnsLocale } from "./utils/formatDate"
-import { logger } from "./utils/logger"
+import { Logger } from "@hh/js-utils"
 import * as storage from "./utils/storage"
 
 export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
@@ -93,7 +93,7 @@ export function App() {
   useEffect(() => {
     hydrateAppState()
     // Migrate legacy SecureStore API URL → Peer table (one-time, safe to call repeatedly)
-    Peer.migrateFromLegacyApiUrl().catch(console.error)
+    Peer.migrateFromLegacyApiUrl().catch((d) => Logger.error(d))
   }, [])
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export function App() {
         const email = await SecureStorage.getItemAsync("provider_email")
         const password = await SecureStorage.getItemAsync("provider_password")
 
-        logger.warn("First one 🚩🚩🚩: ", { storedProvider, email, password })
+        Logger.warn({ msg: "First one 🚩🚩🚩: ", data: { storedProvider, email, password } })
 
         // Fallback to old storage method for backward compatibility
         let credentials = { email: "", password: "" }
@@ -123,8 +123,6 @@ export function App() {
 
         const finalEmail = email || credentials.email
         const finalPassword = password || credentials.password
-
-        logger.warn("🚩🚩🚩: ", { storedProvider, finalEmail, finalPassword })
 
         if (storedProvider && finalEmail && finalPassword) {
           const payload = JSON.parse(storedProvider)
@@ -143,7 +141,7 @@ export function App() {
           providerStore.send({ type: "reset" })
         }
       } catch (error) {
-        console.error("Failed to load provider store:", error)
+        Logger.error({ msg: "Failed to load provider store:", error })
         providerStore.send({ type: "reset" })
       }
     }

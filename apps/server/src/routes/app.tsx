@@ -27,6 +27,7 @@ import React from "react";
 import { getCurrentUser } from "@/lib/server-functions/auth";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { Result } from "@/lib/result";
+import { Logger } from "@hh/js-utils";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
@@ -60,7 +61,7 @@ function RouteComponent() {
           window.location.href = "/";
         })
         .catch((error) => {
-          console.error("Error during sign-out:", error);
+          Logger.error({ msg: "Error during sign-out:", error });
         });
     }
   };

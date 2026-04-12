@@ -149,7 +149,6 @@ const getEventDisplay = (event: EventModel, language: string): React.JSX.Element
     <View>
       {formData.map((field, idx) => {
         const { fieldId, fieldType, inputType, name, value } = field
-        // console.log({ fieldId, fieldType, inputType, name, value })
         // const displayValue = inputType === "select" ? translate(value, language) : value
 
         return (

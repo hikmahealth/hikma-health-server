@@ -39,14 +39,13 @@ import type { UpdatePatientInput } from "../../types/patient"
 import type { CreateProblemInput, UpdateProblemInput } from "../../types/problem"
 import type { CreateVisitInput } from "../../types/visit"
 import type { CreateVitalsInput } from "../../types/vitals"
+import { Logger } from "@hh/js-utils"
 
 /** Map HTTP error to DataError */
 function toDataError(error: { message: string; statusCode: number }): DataError {
-  console.warn(
-    "[OnlineProvider] toDataError — statusCode:",
-    error.statusCode,
-    "message:",
-    error.message,
+  Logger.warn(
+    `[OnlineProvider] toDataError — statusCode: ${error.statusCode},
+      message: ${error.message}`,
   )
   if (error.statusCode === 401) return { _tag: "Unauthorized", message: error.message }
   if (error.statusCode === 404) return { _tag: "NotFound", entity: "Resource", id: "" }
@@ -67,7 +66,6 @@ export function createOnlineProvider(httpClient: HttpClient): DataProvider {
           data: ServerPatient[]
           pagination: PaginatedResult<any>["pagination"]
         }>("/api/patients", params)
-        console.log("⭐️", { params, response })
         if (!response.ok) return err(toDataError(response.error))
         return ok({
           data: response.data.data.map(patientFromServer),

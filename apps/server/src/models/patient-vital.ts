@@ -13,6 +13,7 @@ import { createServerOnlyFn } from "@tanstack/react-start";
 import { v1 as uuidV1 } from "uuid";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
+import { Logger } from "@hh/js-utils";
 
 namespace PatientVital {
   export const PatientVitalSchema = Schema.Struct({
@@ -177,46 +178,48 @@ namespace PatientVital {
             deleted_at: vital.deleted_at,
           })
           .onConflict((oc) =>
-            oc.column("id").doUpdateSet({
-              patient_id: (eb) => eb.ref("excluded.patient_id"),
-              diastolic_bp: (eb) => eb.ref("excluded.diastolic_bp"),
-              systolic_bp: (eb) => eb.ref("excluded.systolic_bp"),
-              timestamp: (eb) => eb.ref("excluded.timestamp"),
-              visit_id: (eb) => eb.ref("excluded.visit_id"),
-              bp_position: (eb) => eb.ref("excluded.bp_position"),
-              height_cm: (eb) => eb.ref("excluded.height_cm"),
-              weight_kg: (eb) => eb.ref("excluded.weight_kg"),
-              bmi: (eb) => eb.ref("excluded.bmi"),
-              waist_circumference_cm: (eb) =>
-                eb.ref("excluded.waist_circumference_cm"),
-              heart_rate: (eb) => eb.ref("excluded.heart_rate"),
-              pulse_rate: (eb) => eb.ref("excluded.pulse_rate"),
-              oxygen_saturation: (eb) => eb.ref("excluded.oxygen_saturation"),
-              respiratory_rate: (eb) => eb.ref("excluded.respiratory_rate"),
-              temperature_celsius: (eb) =>
-                eb.ref("excluded.temperature_celsius"),
-              pain_level: (eb) => eb.ref("excluded.pain_level"),
-              recorded_by_user_id: (eb) =>
-                eb.ref("excluded.recorded_by_user_id"),
-              metadata: (eb) => eb.ref("excluded.metadata"),
-              is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+            oc
+              .column("id")
+              .doUpdateSet({
+                patient_id: (eb) => eb.ref("excluded.patient_id"),
+                diastolic_bp: (eb) => eb.ref("excluded.diastolic_bp"),
+                systolic_bp: (eb) => eb.ref("excluded.systolic_bp"),
+                timestamp: (eb) => eb.ref("excluded.timestamp"),
+                visit_id: (eb) => eb.ref("excluded.visit_id"),
+                bp_position: (eb) => eb.ref("excluded.bp_position"),
+                height_cm: (eb) => eb.ref("excluded.height_cm"),
+                weight_kg: (eb) => eb.ref("excluded.weight_kg"),
+                bmi: (eb) => eb.ref("excluded.bmi"),
+                waist_circumference_cm: (eb) =>
+                  eb.ref("excluded.waist_circumference_cm"),
+                heart_rate: (eb) => eb.ref("excluded.heart_rate"),
+                pulse_rate: (eb) => eb.ref("excluded.pulse_rate"),
+                oxygen_saturation: (eb) => eb.ref("excluded.oxygen_saturation"),
+                respiratory_rate: (eb) => eb.ref("excluded.respiratory_rate"),
+                temperature_celsius: (eb) =>
+                  eb.ref("excluded.temperature_celsius"),
+                pain_level: (eb) => eb.ref("excluded.pain_level"),
+                recorded_by_user_id: (eb) =>
+                  eb.ref("excluded.recorded_by_user_id"),
+                metadata: (eb) => eb.ref("excluded.metadata"),
+                is_deleted: (eb) => eb.ref("excluded.is_deleted"),
 
-              created_at: sql`now()::timestamp with time zone`,
-              server_created_at: sql`now()::timestamp with time zone`,
-              updated_at: sql`now()::timestamp with time zone`,
-              last_modified: sql`now()::timestamp with time zone`,
-              deleted_at: vital.deleted_at,
-            })
-            // Only update if the incoming record is newer than what's already stored
-            .where(sql<boolean>`excluded.updated_at > patient_vitals.updated_at`),
+                created_at: sql`now()::timestamp with time zone`,
+                server_created_at: sql`now()::timestamp with time zone`,
+                updated_at: sql`now()::timestamp with time zone`,
+                last_modified: sql`now()::timestamp with time zone`,
+                deleted_at: vital.deleted_at,
+              })
+              // Only update if the incoming record is newer than what's already stored
+              .where(
+                sql<boolean>`excluded.updated_at > patient_vitals.updated_at`,
+              ),
           )
           .returningAll()
           .executeTakeFirst();
 
         if (!result) {
-          console.info(
-            `[sync] Skipped stale upsert for patient_vital ${id}`,
-          );
+          Logger.info(`[sync] Skipped stale upsert for patient_vital ${id}`);
         }
 
         return result;

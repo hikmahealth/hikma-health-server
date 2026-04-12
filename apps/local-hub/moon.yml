@@ -1,0 +1,23 @@
+layer: application
+language: typescript
+stack: frontend
+
+dependsOn:
+  - id: typescript-config
+    scope: peer
+  - id: eslint-config
+    scope: peer
+
+tasks:
+  build:
+    command: pnpm run build
+    outputs:
+      - dist/**/*
+  dev:
+    command: pnpm run dev
+    preset: server
+    options:
+      cache: false
+      persistent: true
+  test:
+    command: pnpm run test:frontend

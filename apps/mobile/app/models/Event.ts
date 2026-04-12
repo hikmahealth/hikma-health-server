@@ -8,6 +8,7 @@ import VisitModel from "@/db/model/Visit"
 
 import ICDEntry from "./ICDEntry"
 import { isValid } from "date-fns"
+import { Logger } from "@hh/js-utils"
 
 namespace Event {
   export type FormDataItem =
@@ -72,7 +73,7 @@ namespace Event {
 
     formData.forEach((field, idx) => {
       const { fieldId, fieldType, inputType, name, value } = field
-      // console.log({ fieldId, fieldType, inputType, name, value })
+      // Logger.log({ fieldId, fieldType, inputType, name, value })
       // const displayValue = inputType === "select" ? translate(value, language) : value
 
       display += `<div style="margin: 5px 0px;">`
@@ -126,7 +127,7 @@ namespace Event {
       checkInTimestamp: number,
       eventId?: string | null | undefined,
     ): Promise<{ eventId: string; visitId: string }> => {
-      // console.log({
+      // Logger.log({
       //   event: JSON.stringify(event, null, 2),
       //   visitId,
       //   clinicId,
@@ -182,7 +183,7 @@ namespace Event {
               }
             })
           } catch (error) {
-            console.error(error)
+            Logger.error(error)
             Sentry.captureException(error, {
               level: "error",
               extra: {

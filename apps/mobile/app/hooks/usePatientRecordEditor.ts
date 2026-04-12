@@ -5,6 +5,7 @@ import RegistrationFormModel from "@/db/model/PatientRegistrationForm"
 import Language from "@/models/Language"
 import Patient from "@/models/Patient"
 import PatientRegistrationForm from "@/models/PatientRegistrationForm"
+import { Logger } from "@hh/js-utils"
 
 /**
  * As per the spec of mandatory fields, we need to have a set of fields that are required for all registration forms
@@ -267,7 +268,7 @@ export function usePatientRecordEditor(
           setPatientRecord(record)
         })
         .catch((error) => {
-          console.warn("Error fetching a patient with the id: ", patientId, ". [Error]: ", error)
+          Logger.warn({ msg: "Error fetching a patient with the id: ", patientId, error })
           setPatientRecord(record)
         })
         .finally(() => {
@@ -287,14 +288,14 @@ export function usePatientRecordEditor(
       .observe()
       .subscribe((res) => {
         if (res.length === 0) {
-          console.info("There are no patient registration forms. This could be an error")
-          console.warn("Overriding absent form with default form")
+          Logger.info("There are no patient registration forms. This could be an error")
+          Logger.warn("Overriding absent form with default form")
           setRegistrationForm(initialFormState as unknown as RegistrationFormModel)
           setIsLoadingForm(false)
           return
         }
         if (res.length > 1) {
-          console.warn(
+          Logger.warn(
             "There are more than one registration form. Are you supporting multiple forms?",
           )
         }
@@ -336,7 +337,7 @@ export function usePatientRecordEditor(
   // get the default values for each field
   // get the exisiting patient record
 
-  console.log({
+  Logger.log({
     isLoadingForm,
     isLoadingPatient,
   })

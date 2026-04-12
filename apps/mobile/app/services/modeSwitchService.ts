@@ -35,6 +35,7 @@ import { MODE_PREFERENCE_KEY } from "@/hooks/useOperationModeInit"
 import Peer from "@/models/Peer"
 import { operationModeStore } from "@/store/operationMode"
 import { saveString } from "@/utils/storage"
+import { Logger } from "@hh/js-utils"
 
 export type SwitchResult =
   | { ok: true }
@@ -74,7 +75,7 @@ export const checkUnsyncedChanges = async (peer: Peer.T | null): Promise<boolean
  */
 export async function switchToOnlineMode(): Promise<SwitchResult> {
   const { mode } = operationModeStore.getSnapshot().context
-  console.log("[ModeSwitch] switchToOnlineMode called, current mode:", mode)
+  Logger.log({ msg: "[ModeSwitch] switchToOnlineMode called, current mode:", mode })
   if (mode === "online") return { ok: false, reason: "already_in_mode", message: "Already online" }
 
   try {
@@ -82,7 +83,7 @@ export async function switchToOnlineMode(): Promise<SwitchResult> {
 
     const activePeer = await Peer.DB.resolveActive()
     const hasChanges = await checkUnsyncedChanges(activePeer)
-    console.log("[ModeSwitch] hasUnsyncedChanges:", hasChanges, "peerType:", activePeer?.peerType)
+    Logger.log(`[ModeSwitch] hasUnsyncedChanges: ${hasChanges}, peerType: ${activePeer?.peerType}`)
 
     if (hasChanges) {
       operationModeStore.send({ type: "end_transition", mode: "offline" })
@@ -95,10 +96,10 @@ export async function switchToOnlineMode(): Promise<SwitchResult> {
 
     saveString(MODE_PREFERENCE_KEY, "online")
     operationModeStore.send({ type: "end_transition", mode: "online" })
-    console.log("[ModeSwitch] Successfully switched to online")
+    Logger.log("[ModeSwitch] Successfully switched to online")
     return { ok: true }
   } catch (e) {
-    console.error("[ModeSwitch] Error switching to online:", e)
+    Logger.error({ msg: "[ModeSwitch] Error switching to online:", e })
     operationModeStore.send({ type: "end_transition", mode: "offline" })
     return { ok: false, reason: "error", message: String(e) }
   }

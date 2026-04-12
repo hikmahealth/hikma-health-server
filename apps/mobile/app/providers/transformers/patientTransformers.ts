@@ -9,6 +9,7 @@ import type {
   UpdatePatientInput,
   PatientAdditionalAttributeInput,
 } from "../../../types/patient"
+import { Logger } from "@hh/js-utils"
 
 /** Server-side patient shape (snake_case) */
 export type ServerPatient = {
@@ -109,13 +110,10 @@ export function patientToServer(p: Patient.T): ServerPatient {
 export function createPatientToServer(input: CreatePatientInput): ServerCreatePatientDTO {
   const now = new Date().toISOString()
   if (__DEV__) {
-    console.log(
-      "[PatientTransformer] createPatientToServer — givenName:",
-      input.patient.givenName,
-      "surname:",
-      input.patient.surname,
-      "attrs:",
-      input.additionalAttributes.length,
+    Logger.log(
+      `[PatientTransformer] createPatientToServer — givenName: ${input.patient.givenName},
+      surname: ${input.patient.surname},
+      attrs: ${input.additionalAttributes.length}`,
     )
   }
   const dto: ServerCreatePatientDTO = {
@@ -151,7 +149,7 @@ export function createPatientToServer(input: CreatePatientInput): ServerCreatePa
     })),
   }
   if (__DEV__) {
-    console.log("[PatientTransformer] server DTO body:", JSON.stringify(dto, null, 2))
+    Logger.log({ msg: "[PatientTransformer] server DTO body:", data: JSON.stringify(dto, null, 2) })
   }
   return dto
 }
@@ -274,10 +272,7 @@ function typedAttributeValue(v: string | number | boolean | Date) {
 }
 
 /** Build the additional_attributes array for register_patient */
-function attributesToRegister(
-  attrs: PatientAdditionalAttributeInput[],
-  now: string,
-) {
+function attributesToRegister(attrs: PatientAdditionalAttributeInput[], now: string) {
   return attrs.map((attr) => ({
     id: attr.id,
     patient_id: attr.patientId,

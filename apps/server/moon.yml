@@ -1,6 +1,8 @@
+layer: application
 dependsOn:
   - ui
   - database
+  - js-utils
 language: typescript
 
 tasks:
@@ -14,6 +16,7 @@ tasks:
       - .output/**/*
     env:
       NODE_OPTIONS: --max-old-space-size=5120
+      NODE_ENV: "production"
   dev:
     command: pnpm run dev
     options:
@@ -32,6 +35,9 @@ tasks:
     inputs:
       - .output/**/*
     command: pnpm run start-only
+    env:
+      NODE_ENV: "production"
     # should ensure the migration runs successfully before starting the service
-    deps:
-      - server:recovery
+    # FIXME: Recovery is failing due to kysely/pg config issue with DB_SSL
+    # deps:
+    #   - server:recovery

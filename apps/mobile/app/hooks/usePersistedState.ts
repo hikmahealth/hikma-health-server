@@ -1,4 +1,5 @@
 import { storage } from "@/utils/storage"
+import { Logger } from "@hh/js-utils"
 import { useState, useEffect, useCallback } from "react"
 
 /**
@@ -45,7 +46,7 @@ export function useAsyncPersistedState<T>(
           setState(JSON.parse(storedValue, jsonReviver))
         }
       } catch (error) {
-        console.error("Error loading state:", error)
+        Logger.error({ msg: "Error loading state:", error })
       } finally {
         setLoading(false)
       }
@@ -61,7 +62,7 @@ export function useAsyncPersistedState<T>(
         try {
           storage.set(key, JSON.stringify(newState, jsonReplacer))
         } catch (error) {
-          console.error("Error saving state:", error)
+          Logger.error({ msg: "Error saving state:", error })
         }
         return newState
       })

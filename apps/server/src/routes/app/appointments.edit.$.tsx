@@ -41,6 +41,7 @@ import { getPatientById } from "@/lib/server-functions/patients";
 import type Patient from "@/models/patient";
 import If from "@/components/if";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Logger } from "@hh/js-utils";
 
 const saveAppointment = createServerFn({ method: "POST" })
   .inputValidator(
@@ -52,7 +53,7 @@ const saveAppointment = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { appointment, id, currentUserName } = data;
-    console.log({ appointment, id, currentUserName });
+    Logger.log({ appointment, id, currentUserName });
     return await Appointment.API.save(id, appointment, currentUserName);
   });
 
@@ -174,7 +175,7 @@ function RouteComponent() {
   const appointmentId = params._splat;
   const isEditing = !!appointmentId;
 
-  console.log({ appointment });
+  Logger.log({ appointment });
 
   const [submitting, setSubmitting] = useState(false);
   const [availableDepartments, setAvailableDepartments] = useState<
@@ -214,7 +215,7 @@ function RouteComponent() {
       );
       navigate({ to: "/app/appointments" });
     } catch (error) {
-      console.error("Error saving appointment:", error);
+      Logger.error({ msg: "Error saving appointment:", error });
       toast.error("Failed to save appointment");
     } finally {
       setSubmitting(false);
@@ -222,7 +223,7 @@ function RouteComponent() {
   };
 
   // print out the selected clinic
-  console.log("Selected Clinic:", form.watch("clinic_id"));
+  Logger.log({ mgs: "Selected Clinic:", clinicId: form.watch("clinic_id") });
 
   const selectedClinic = form.watch("clinic_id");
 
@@ -245,7 +246,7 @@ function RouteComponent() {
             }
           }
         } catch (error) {
-          console.error("Failed to fetch departments:", error);
+          Logger.error({ msg: "Failed to fetch departments:", error });
           setAvailableDepartments([]);
         }
       } else {
@@ -259,7 +260,7 @@ function RouteComponent() {
 
   // TODO: Default provider and clinic selection based on who is the current use
 
-  console.log(form.watch());
+  Logger.log(form.watch());
 
   return (
     <div className="">

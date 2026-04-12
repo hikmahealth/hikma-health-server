@@ -70,6 +70,7 @@ import {
 import { forEach } from "ramda";
 import { useEffect } from "react";
 import { useImmerReducer } from "use-immer";
+import { Logger } from "@hh/js-utils";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(
@@ -199,8 +200,13 @@ function searchReducer(draft: SearchState, action: SearchAction) {
 }
 
 function RouteComponent() {
-  const { currentUser, patients, pagination, patientRegistrationForm, clinics } =
-    Route.useLoaderData();
+  const {
+    currentUser,
+    patients,
+    pagination,
+    patientRegistrationForm,
+    clinics,
+  } = Route.useLoaderData();
 
   const [patientsList, setPatientsList] =
     React.useState<(typeof Patient.PatientWithAttributesSchema.Encoded)[]>(
@@ -281,9 +287,7 @@ function RouteComponent() {
         visitsDateEnd:
           searchState.visitsInDateRange[1]?.toISOString() ?? undefined,
         clinicIds:
-          searchState.clinicIds.length > 0
-            ? searchState.clinicIds
-            : undefined,
+          searchState.clinicIds.length > 0 ? searchState.clinicIds : undefined,
       },
     })
       .then((res) => {
@@ -361,9 +365,7 @@ function RouteComponent() {
         );
       }
       if (error) {
-        console.error(
-          `Error deleting patients ${selectedPatientIds}: ${error}`,
-        );
+        Logger.error(`Error deleting patients ${selectedPatientIds}: ${error}`);
         toast.error(`Error deleting patient(s)`);
       }
       actions.reset();
@@ -645,26 +647,26 @@ function RouteComponent() {
 
   const handleExport = async () => {
     try {
-      toast(
-        "Export started. Please be patient as this could take some time.",
-        { dismissible: true, duration: 2000 },
-      );
+      toast("Export started. Please be patient as this could take some time.", {
+        dismissible: true,
+        duration: 2000,
+      });
       const exportData = await getAllPatientsForExport({});
       const workbook = await buildExportWorkbook(exportData as any);
       const fileName = `patients_export_${new Date().toISOString().split("T")[0]}.xlsx`;
       await downloadWorkbook(workbook, fileName);
     } catch (error: any) {
-      console.error("Error exporting patients:", error, error.message);
+      Logger.error({ msg: "Error exporting patients:", error });
       toast.error("Failed to export patients", error.message);
     }
   };
 
   const handleFilteredExport = async () => {
     try {
-      toast(
-        "Export started. Please be patient as this could take some time.",
-        { dismissible: true, duration: 2000 },
-      );
+      toast("Export started. Please be patient as this could take some time.", {
+        dismissible: true,
+        duration: 2000,
+      });
       const exportData = await getFilteredPatientsForExport({
         data: {
           searchQuery: searchState.searchQuery,
@@ -686,13 +688,12 @@ function RouteComponent() {
       const fileName = `patients_filtered_export_${new Date().toISOString().split("T")[0]}.xlsx`;
       await downloadWorkbook(workbook, fileName);
     } catch (error: any) {
-      console.error("Error exporting filtered patients:", error, error.message);
+      Logger.error({ msg: "Error exporting filtered patients:", error });
       toast.error("Failed to export filtered patients");
     }
   };
 
   const openPatientChart = (patientId: string) => {
-    console.log({ patientId });
     navigate({ to: `/app/patients/${patientId}` });
   };
 

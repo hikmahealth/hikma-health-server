@@ -37,6 +37,7 @@ import { colors } from "@/theme/colors"
 import { toDateSafe } from "@/utils/date"
 import { resolveFormTranslations } from "@/utils/eventFormTranslations"
 import { formatDate } from "@/utils/formatDate"
+import { Logger } from "@hh/js-utils"
 
 interface NewVisitScreenProps extends NativeStackScreenProps<
   PatientNavigatorParamList,
@@ -91,7 +92,7 @@ export const NewVisitScreen: FC<NewVisitScreenProps> = ({ route, navigation }) =
     filters.language === "all" ? Option.none() : Option.some(filters.language)
   const { forms, isLoading: _isLoadingForms } = useEventForms(formLanguageFilter)
 
-  console.log({ forms })
+  Logger.log({ forms })
 
   const snapPoints = useMemo(() => ["40%", "40%"], [])
   // ref
@@ -102,7 +103,7 @@ export const NewVisitScreen: FC<NewVisitScreenProps> = ({ route, navigation }) =
     bottomSheetModalRef.current?.present()
   }, [])
   const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index)
+    Logger.log({ msg: "handleSheetChanges", index })
   }, [])
 
   const handleLanguageFilterChange = useCallback(

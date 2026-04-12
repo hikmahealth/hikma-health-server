@@ -6,6 +6,7 @@ import {
   withXcodeProject,
 } from "@expo/config-plugins"
 import { ExpoConfig } from "@expo/config-types"
+import { Logger } from "@hh/js-utils"
 import filesys from "fs"
 import path from "path"
 import resolveFrom from "resolve-from"
@@ -22,19 +23,19 @@ type Options = {
 function settingGradle(gradleConfig: ExpoConfig): ExpoConfig {
   return withSettingsGradle(gradleConfig, (mod) => {
     if (!mod.modResults.contents.includes(":watermelondb-jsi")) {
-      console.log("[WatermelonDB] Adding watermelondb-jsi to settings.gradle")
+      Logger.log("[WatermelonDB] Adding watermelondb-jsi to settings.gradle")
 
-      // Keep original implementation but with logging
+      // NOTE: point at the workspace-root node_modules so WatermelonDB's
+      // CMakeLists.txt relative walk to react-native, @nozbe/sqlite, and
+      // @nozbe/simdjson finds them as siblings. With pnpm's hoisted linker
+      // all deps live at the workspace root, not in apps/mobile.
       mod.modResults.contents += `
           include ':watermelondb-jsi'
-          project(':watermelondb-jsi').projectDir = new File([
-              "node", "--print",
-              "require.resolve('@nozbe/watermelondb/package.json')"
-          ].execute(null, rootProject.projectDir).text.trim(), "../native/android-jsi")
+          project(':watermelondb-jsi').projectDir = new File(rootProject.projectDir, '../../../node_modules/@nozbe/watermelondb/native/android-jsi')
         `
-      console.log("[WatermelonDB] Successfully added watermelondb-jsi configuration")
+      Logger.log("[WatermelonDB] Successfully added watermelondb-jsi configuration")
     } else {
-      console.log("[WatermelonDB] watermelondb-jsi already configured in settings.gradle")
+      Logger.log("[WatermelonDB] watermelondb-jsi already configured in settings.gradle")
     }
     return mod
   }) as ExpoConfig
@@ -42,10 +43,10 @@ function settingGradle(gradleConfig: ExpoConfig): ExpoConfig {
 // 3. In android/app/build.gradle, add:
 function buildGradle(config: ExpoConfig): ExpoConfig {
   return withAppBuildGradle(config, (mod) => {
-    console.log("[WatermelonDB] Checking android/app/build.gradle configuration...")
+    Logger.log("[WatermelonDB] Checking android/app/build.gradle configuration...")
 
     if (!mod.modResults.contents.includes("pickFirst '**/libc++_shared.so'")) {
-      console.log("[WatermelonDB] Adding pickFirst configuration for libc++_shared.so")
+      Logger.log("[WatermelonDB] Adding pickFirst configuration for libc++_shared.so")
       mod.modResults.contents = mod.modResults.contents.replace(
         "android {",
         `
@@ -56,11 +57,11 @@ function buildGradle(config: ExpoConfig): ExpoConfig {
         `,
       )
     } else {
-      console.log("[WatermelonDB] pickFirst configuration already exists")
+      Logger.log("[WatermelonDB] pickFirst configuration already exists")
     }
 
     if (!mod.modResults.contents.includes("implementation project(':watermelondb-jsi')")) {
-      console.log("[WatermelonDB] Adding watermelondb-jsi implementation to dependencies")
+      Logger.log("[WatermelonDB] Adding watermelondb-jsi implementation to dependencies")
       mod.modResults.contents = mod.modResults.contents.replace(
         "dependencies {",
         `
@@ -68,9 +69,9 @@ function buildGradle(config: ExpoConfig): ExpoConfig {
           implementation project(':watermelondb-jsi')
         `,
       )
-      console.log("[WatermelonDB] Successfully added watermelondb-jsi dependency")
+      Logger.log("[WatermelonDB] Successfully added watermelondb-jsi dependency")
     } else {
-      console.log("[WatermelonDB] watermelondb-jsi dependency already exists")
+      Logger.log("[WatermelonDB] watermelondb-jsi dependency already exists")
     }
 
     return mod
@@ -106,7 +107,7 @@ import com.nozbe.watermelondb.jsi.WatermelonDBJSIPackage;`,
         return packages`,
         )
       } else {
-        console.warn(
+        Logger.warn(
           "[WatermelonDB] Could not find suitable pattern to inject WatermelonDBJSIPackage(). Please add it manually.",
         )
       }
@@ -148,23 +149,23 @@ function withSDK50(options: Options) {
 
     // Android Configuration
     if (options?.disableJsi !== true) {
-      console.log("[WatermelonDB] Configuring Android...")
+      Logger.log("[WatermelonDB] Configuring Android...")
       currentConfig = settingGradle(config)
       currentConfig = buildGradle(currentConfig)
       currentConfig = proGuardRules(currentConfig)
       // Only manual link package on sdk 52+ as descripted here:
       // https://github.com/Nozbe/WatermelonDB/issues/1769#issuecomment-2600274652
       currentConfig = mainApplicationSDK52(currentConfig)
-      console.log("[WatermelonDB] Android configuration completed")
+      Logger.log("[WatermelonDB] Android configuration completed")
     }
 
     // iOS Configuration
-    console.log("[WatermelonDB] Configuring iOS...")
+    Logger.log("[WatermelonDB] Configuring iOS...")
     currentConfig = withCocoaPods(currentConfig)
     if (options?.excludeSimArch === true) {
       currentConfig = withExcludedSimulatorArchitectures(currentConfig)
     }
-    console.log("[WatermelonDB] iOS configuration completed")
+    Logger.log("[WatermelonDB] iOS configuration completed")
 
     return currentConfig as ExpoConfig
   }
@@ -183,26 +184,26 @@ function withCocoaPods(config: ExpoConfig): ExpoConfig {
   return withDangerousMod(config, [
     "ios",
     async (config) => {
-      console.log("[WatermelonDB] Configuring iOS Podfile...")
+      Logger.log("[WatermelonDB] Configuring iOS Podfile...")
       const filePath = path.join(config.modRequest.platformProjectRoot, "Podfile")
       const contents = await fs.readFile(filePath, "utf-8")
 
       const watermelonPath = isWatermelonDBInstalled(config.modRequest.projectRoot)
       if (watermelonPath) {
         if (!contents.includes("pod 'simdjson'")) {
-          console.log("[WatermelonDB] Adding simdjson pod to Podfile")
+          Logger.log("[WatermelonDB] Adding simdjson pod to Podfile")
           const patchKey = "post_install"
           const slicedContent = contents.split(patchKey)
           // Tombstone Aug 20 2025
           // slicedContent[0] += `\n  # WatermelonDB dependency\n  pod 'simdjson', path: File.join(File.dirname(\`node --print "require.resolve('../node_modules/@nozbe/simdjson/package.json')"\`)), :modular_headers => true \n\n  `
-          slicedContent[0] += `\n  # WatermelonDB dependency\n  pod 'simdjson', path: '../node_modules/@nozbe/simdjson', :modular_headers => true \n\n  `
+          slicedContent[0] += `\n  # WatermelonDB dependency\n  pod 'simdjson', path: '../../../node_modules/@nozbe/simdjson', :modular_headers => true \n\n  `
           await fs.writeFile(filePath, slicedContent.join(patchKey))
-          console.log("[WatermelonDB] Successfully added simdjson pod")
+          Logger.log("[WatermelonDB] Successfully added simdjson pod")
         } else {
-          console.log("[WatermelonDB] simdjson pod already configured")
+          Logger.log("[WatermelonDB] simdjson pod already configured")
         }
       } else {
-        console.error(
+        Logger.error(
           "[WatermelonDB] Error: WatermelonDB not found. Please make sure you have @nozbe/watermelondb installed",
         )
         throw new Error("Please make sure you have @nozbe/watermelondb installed")
@@ -217,7 +218,7 @@ function withCocoaPods(config: ExpoConfig): ExpoConfig {
  * Without this, production builds targeting simulators will fail.
  */
 function setExcludedArchitectures(project: any): any {
-  console.log("[WatermelonDB] Setting excluded architectures for iOS simulator")
+  Logger.log("[WatermelonDB] Setting excluded architectures for iOS simulator")
   const configurations = project.pbxXCBuildConfigurationSection()
 
   for (const { buildSettings } of Object.values(configurations || {}) as any[]) {
@@ -227,7 +228,7 @@ function setExcludedArchitectures(project: any): any {
       buildSettings['"EXCLUDED_ARCHS[sdk=iphonesimulator*]"'] = '"arm64"'
     }
   }
-  console.log("[WatermelonDB] Successfully configured excluded architectures")
+  Logger.log("[WatermelonDB] Successfully configured excluded architectures")
   return project
 }
 

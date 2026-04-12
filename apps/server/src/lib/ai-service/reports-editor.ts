@@ -252,7 +252,10 @@ const fetchAllComponentDataInternal = async (
         const rows = await executeComponentQuery(c.compiledSql, startAt, endAt);
         return { componentId: c.id, rows, error: null };
       } catch (err: any) {
-        console.error("[Report] Error fetching component of report: ", err);
+        Logger.error({
+          msg: "[Report] Error fetching component of report: ",
+          err,
+        });
         return {
           componentId: c.id,
           rows: [],
@@ -296,6 +299,7 @@ const INCLUDED_TABLES = [
 import ServerVariable from "@/models/server_variable";
 import { Result } from "../result";
 import { match } from "ts-pattern";
+import { Logger } from "@hh/js-utils";
 
 type ManagerReportRequest = {
   user_prompt: string;
@@ -579,8 +583,8 @@ export const editReportComponent = createServerFn({ method: "POST" })
       });
     }
 
-    console.log("[editReportComponent]");
-    console.log(data);
+    Logger.log("[editReportComponent]");
+    Logger.log(data);
 
     const dbInfo = await getAIReportingInfo();
     if (Result.isErr(dbInfo)) {

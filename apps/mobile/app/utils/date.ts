@@ -1,3 +1,4 @@
+import { Logger } from "@hh/js-utils"
 import { differenceInYears, differenceInMonths, differenceInDays, format, Locale } from "date-fns"
 import * as locales from "date-fns/locale"
 import i18nLib from "i18next"
@@ -41,7 +42,7 @@ export function localeDate(
   }
 
   if (isNaN(dateObj.getTime())) {
-    console.warn(`Invalid date provided to localeDate: ${date}, ${dateObj}`)
+    Logger.warn(`Invalid date provided to localeDate: ${date}, ${dateObj}`)
     return ""
   }
 

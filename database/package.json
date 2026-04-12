@@ -22,7 +22,7 @@
     "migrate_down_only:dev": "dotenv -e ../.env -- npx kysely migrate down",
     "migrate:dev:up": "pnpm run migrate_only:dev; pnpm run create_schema",
     "migrate:dev:down": "pnpm run migrate_down_only:dev; pnpm run create_schema",
-    "migrate:prod": "DB_MIGRATION=true npx kysely migrate latest",
+    "migrate:prod": "DB_SSL=true DB_MIGRATION=true npx kysely migrate latest",
     "create_schema": "dotenv -e ../.env -- npx kysely-codegen --config-file=server.kysely-codegen.json"
   },
   "devDependencies": {
@@ -37,6 +37,6 @@
     "pg": "^8.16.3",
     "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   }
 }

@@ -1,3 +1,4 @@
+import { Logger } from "@hh/js-utils";
 import { clsx, type ClassValue } from "clsx";
 import {
   differenceInDays,
@@ -35,7 +36,7 @@ export const camelCaseKeys = <T extends Record<string, any>>(obj: T): T => {
     // prevent circular references
     JSON.parse(JSON.stringify(obj));
   } catch (e) {
-    console.error(e);
+    Logger.error(e);
     return obj;
   }
 

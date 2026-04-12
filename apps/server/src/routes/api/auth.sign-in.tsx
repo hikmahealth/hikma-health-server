@@ -8,6 +8,7 @@ import {
   tooManyRequestsResponse,
 } from "@/lib/rate-limiter";
 import { minutesToMilliseconds } from "date-fns";
+import { Logger } from "@hh/js-utils";
 
 const authLimiter = createRateLimiter({
   windowMs: minutesToMilliseconds(15),
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/api/auth/sign-in")({
 
         try {
           const { user, token } = await User.signIn(email, password);
-          console.log({ user, token });
+          Logger.log({ user, token });
 
           const clinic = user.clinic_id
             ? await Clinic.getById(user.clinic_id)
@@ -57,7 +58,7 @@ export const Route = createFileRoute("/api/auth/sign-in")({
             },
           );
         } catch (error) {
-          console.error("[sign-in error]", error);
+          Logger.error({ msg: "[sign-in error]", error });
           return new Response(
             JSON.stringify({ error: "Invalid credentials" }),
             {

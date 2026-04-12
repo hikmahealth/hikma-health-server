@@ -18,6 +18,7 @@ import { SyncDatabaseChangeSet, SyncTableChangeSet } from "@nozbe/watermelondb/s
 import { chunk } from "es-toolkit/compat"
 
 import database from "."
+import { Logger } from "@hh/js-utils"
 
 // ── Constants ─────────────────────────────────────────────────────────
 
@@ -98,11 +99,11 @@ export const resolveConflict = (local: DirtyRaw, remote: DirtyRaw): DirtyRaw => 
  */
 export async function applyRemoteChanges(changes: SyncDatabaseChangeSet): Promise<void> {
   if (!changes || Object.keys(changes).length === 0) {
-    console.log("[localSync] No changes to apply")
+    Logger.log("[localSync] No changes to apply")
     return
   }
 
-  console.log("[localSync] Applying remote changes to local database")
+  Logger.log("[localSync] Applying remote changes to local database")
 
   await database.write(async () => {
     for (const [tableName, tableChanges] of Object.entries(changes)) {
@@ -215,7 +216,7 @@ export async function applyRemoteChanges(changes: SyncDatabaseChangeSet): Promis
     }
   })
 
-  console.log("[localSync] Successfully applied all remote changes")
+  Logger.log("[localSync] Successfully applied all remote changes")
 }
 
 // ── Fetch local changes (_status-based, for normal hub push) ──────────
@@ -250,7 +251,7 @@ export async function fetchLocalChanges(): Promise<SyncDatabaseChangeSet> {
         } as SyncTableChangeSet
       }
     } catch (error) {
-      console.error(`[localSync] Error fetching changes for ${tableName}:`, error)
+      Logger.error({ msg: `[localSync] Error fetching changes for ${tableName}:`, error })
     }
   }
 
@@ -390,7 +391,7 @@ async function getTableChangesSince(
 
     return { tableName, created, updated, deleted }
   } catch (error) {
-    console.error(`[localSync] Error getting changes for table ${tableName}:`, error)
+    Logger.error({ msg: `[localSync] Error getting changes for table ${tableName}:`, error })
     return { tableName, created: [], updated: [], deleted: [] }
   }
 }

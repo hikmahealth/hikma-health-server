@@ -31,6 +31,7 @@ import { colors } from "@/theme/colors"
 import { spacing } from "@/theme/spacing"
 import { If } from "@/components/If"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { Logger } from "@hh/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface AppointmentEditorFormScreenProps extends NativeStackScreenProps<
@@ -84,7 +85,6 @@ export const AppointmentEditorFormScreen: FC<AppointmentEditorFormScreenProps> =
   const { can } = usePermissionGuard()
 
   const { visitId, patientId, visitDate } = route.params
-  // console.log({ visitId, patientId, visitDate })
 
   const [openPicker, setOpenPicker] = useState<
     "clinic" | "duration" | "reason" | "department" | null
@@ -139,7 +139,6 @@ export const AppointmentEditorFormScreen: FC<AppointmentEditorFormScreenProps> =
       createdAt: new Date(),
       updatedAt: new Date(),
     }
-    // console.log(data)
     try {
       const res = await Appointment.DB.create(Appointment.decode(data), {
         id: providerId,
@@ -167,7 +166,7 @@ export const AppointmentEditorFormScreen: FC<AppointmentEditorFormScreenProps> =
       // })
       navigation.goBack()
     } catch (error) {
-      console.error("Failed to create appointment:", error)
+      Logger.error({ msg: "Failed to create appointment:", error })
       Toast.show("❌ Failed to create appointment", {
         position: Toast.positions.BOTTOM,
         containerStyle: {
@@ -192,12 +191,12 @@ export const AppointmentEditorFormScreen: FC<AppointmentEditorFormScreenProps> =
   }
 
   const handleDepartmentChange = (data: string[]) => {
-    console.log({ data })
+    Logger.log({ data })
     const depts = data
       // .filter((departmentId) => clinicDepartments.some((dept) => dept.id === departmentId))
       .map((departmentId) => {
         const department = getDepartmentById(departmentId)
-        console.log({ found: department, id: departmentId })
+        Logger.log({ found: department, id: departmentId })
         return {
           id: departmentId,
           name: department?.name || "Unnamed Department",
@@ -294,12 +293,10 @@ export const AppointmentEditorFormScreen: FC<AppointmentEditorFormScreenProps> =
               }) || []
             }
             onSelectItem={(items) => {
-              // console.log({ item })
               handleDepartmentChange(items.map((it) => it.value).filter(Boolean) || [])
             }}
             // setValue={(cb) => {
             //   const depts = getValues("departments")
-            //   console.log({ depts })
             //   const data = cb(depts)
 
             //   handleDepartmentChange(data)

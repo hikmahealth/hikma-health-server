@@ -17,6 +17,7 @@ import Event from "./Event"
 import PatientRegistrationForm from "./PatientRegistrationForm"
 import UserClinicPermissions from "./UserClinicPermissions"
 import Visit from "./Visit"
+import { Logger } from "@hh/js-utils"
 
 namespace Patient {
   export type T = {
@@ -150,17 +151,21 @@ namespace Patient {
     const attr = fields.find((f) => f.id === attributeId)
 
     if (!attr) {
-      console.warn(
-        "Attribute column name not found. Returning 'string_value' default. AttributeId: ",
+      Logger.warn({
+        msg: "Attribute column name not found. Returning 'string_value' default. AttributeId: ",
         fields,
         attributeId,
-      )
+      })
       return "string_value"
     }
 
     if (attr.fieldType === "number") {
       return "number_value"
-    } else if (attr.fieldType === "select" || attr.fieldType === "text" || attr.fieldType === "checkbox") {
+    } else if (
+      attr.fieldType === "select" ||
+      attr.fieldType === "text" ||
+      attr.fieldType === "checkbox"
+    ) {
       return "string_value"
     } else if (attr.fieldType === "date") {
       return "date_value"
@@ -458,7 +463,7 @@ namespace Patient {
           return false
         }
       } catch (error) {
-        console.error(error)
+        Logger.error(error)
         return false
       }
     }
@@ -494,7 +499,7 @@ namespace Patient {
 
         const patient = patients[0]
         if (patients.length > 1) {
-          console.error("Multiple patients with the same government id have been recorded")
+          Logger.error("Multiple patients with the same government id have been recorded")
         }
 
         formFields
@@ -517,7 +522,7 @@ namespace Patient {
           (prev, field) => {
             const key = field.attributeId
             if (key in prev) {
-              console.warn(
+              Logger.warn(
                 "Additional patient field duplicate detected. Overwiting with newer record",
               )
             }
@@ -542,7 +547,7 @@ namespace Patient {
         }
         return patientRecord
       } catch (error) {
-        console.error("Error getting the patient by govoernment id: ", error)
+        Logger.error({ msg: "Error getting the patient by govoernment id: ", error })
         return Promise.reject(error)
       }
     }
@@ -585,7 +590,7 @@ namespace Patient {
           (prev, field) => {
             const key = field.attributeId
             if (key in prev) {
-              console.warn(
+              Logger.warn(
                 "Additional patient field duplicate detected. Overwiting with newer record",
               )
             }
@@ -609,7 +614,7 @@ namespace Patient {
           ...values,
         }
       } catch (error) {
-        console.error("Error getting the patient by id: ", error)
+        Logger.error({ msg: "Error getting the patient by id: ", error })
       } finally {
         return patientRecord
       }
@@ -669,7 +674,7 @@ namespace Patient {
         "patient_additional_attributes",
       )
 
-      // console.log("Update: ", patientId, values)
+      // Logger.log({"Update: ", patientId, values})
 
       const attrQueries = fields
         // filter out base columns
@@ -720,7 +725,7 @@ namespace Patient {
             })
           } catch (error) {
             Sentry.captureException(error)
-            console.error(error)
+            Logger.error(error)
             return []
           }
         })

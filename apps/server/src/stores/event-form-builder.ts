@@ -1,5 +1,6 @@
 import EventForm from "@/models/event-form";
 import { arrayMove } from "@dnd-kit/sortable";
+import { Logger } from "@hh/js-utils";
 import { createStore } from "@xstate/store";
 import { Either, Option } from "effect";
 import type { Mutable } from "effect/Types";
@@ -104,7 +105,7 @@ const eventFormStore = createStore({
       return produce(context, (draft) => {
         Either.match(EventForm.toSchema(event.payload), {
           onLeft: (error) => {
-            console.error("Invalid field data", { error });
+            Logger.error({ msg: "Invalid field data", error });
           },
           onRight: (field) => {
             draft.form_fields.push(field);

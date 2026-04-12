@@ -19,16 +19,22 @@ import Event from "@/models/Event"
 import { PatientNavigatorParamList } from "@/navigators/PatientNavigator"
 import { languageStore } from "@/store/language"
 import { Screen } from "@/components/Screen"
+import { Logger } from "@hh/js-utils"
 
-interface FormEventsListScreenProps
-  extends NativeStackScreenProps<PatientNavigatorParamList, "FormEventsList"> {}
+interface FormEventsListScreenProps extends NativeStackScreenProps<
+  PatientNavigatorParamList,
+  "FormEventsList"
+> {}
 
 export const FormEventsListScreen: FC<FormEventsListScreenProps> = ({ navigation, route }) => {
   const { language } = useSelector(languageStore, (state) => state.context)
   const { patientId, formId } = route.params
   const { isOnline } = useDataAccess()
   const offlineEventsList = useDBFormEvents(formId, patientId)
-  const onlineEventsQuery = useProviderFormEvents(isOnline ? formId : null, isOnline ? patientId : null)
+  const onlineEventsQuery = useProviderFormEvents(
+    isOnline ? formId : null,
+    isOnline ? patientId : null,
+  )
   const eventsList = isOnline ? (onlineEventsQuery.data ?? []) : offlineEventsList
   const { can } = usePermissionGuard()
   const deleteEventMutation = useDeleteEvent()
@@ -75,14 +81,14 @@ export const FormEventsListScreen: FC<FormEventsListScreenProps> = ({ navigation
                 .mutateAsync(event.id)
                 .then(() => Alert.alert("Success", "Event deleted"))
                 .catch((error) => {
-                  console.log(error)
+                  Logger.log(error)
                   Alert.alert("Error", "Could not delete event")
                 })
             } else {
               Event.DB.softDelete(event.id)
                 .then(() => Alert.alert("Success", "Event deleted"))
                 .catch((error) => {
-                  console.log(error)
+                  Logger.log(error)
                   Alert.alert("Error", "Could not delete event")
                 })
             }
@@ -102,7 +108,11 @@ export const FormEventsListScreen: FC<FormEventsListScreenProps> = ({ navigation
         contentContainerStyle={$contentContainerStyle}
         renderItem={({ item }) =>
           isOnline ? (
-            <EventListItemPlain event={item} openEventOptions={openEventOptions} language={language} />
+            <EventListItemPlain
+              event={item}
+              openEventOptions={openEventOptions}
+              language={language}
+            />
           ) : (
             <EventListItem event={item} openEventOptions={openEventOptions} language={language} />
           )

@@ -3,6 +3,7 @@ import { superAdminMiddleware } from "@/middleware/auth";
 import db, { pool } from "@/db";
 import { sql } from "kysely";
 import { validateSQL } from "@/db/utils";
+import { Logger } from "@hh/js-utils";
 
 /**
  * Validate and update the compiled SQL of a single report component.
@@ -13,16 +14,22 @@ export const updateComponentSql = createServerFn({ method: "POST" })
   .middleware([superAdminMiddleware])
   .handler(async ({ data }) => {
     const { componentId, compiledSql } = data;
-    console.log("[updateComponentSql] called", {
-      componentId,
-      sqlLength: compiledSql.length,
+    Logger.log({
+      msg: "[updateComponentSql] called",
+      data: {
+        componentId,
+        sqlLength: compiledSql.length,
+      },
     });
 
-    console.log("[updateComponentSql] validating SQL...");
+    Logger.log({ msg: "[updateComponentSql] validating SQL..." });
     const validation = await validateSQL(pool, compiledSql);
-    console.log("[updateComponentSql] validation result:", validation);
+    Logger.log({ msg: "[updateComponentSql] validation result:", validation });
     if (!validation.valid) {
-      console.error("[updateComponentSql] invalid SQL:", validation.error);
+      Logger.error({
+        msg: "[updateComponentSql] invalid SQL:",
+        error: validation.error,
+      });
       return Promise.reject({
         message: `Invalid SQL: ${validation.error}`,
         source: "updateComponentSql",
@@ -30,10 +37,10 @@ export const updateComponentSql = createServerFn({ method: "POST" })
     }
 
     // SQL is valid — persist the update
-    console.log(
-      "[updateComponentSql] persisting update for component:",
+    Logger.log({
+      msg: "[updateComponentSql] persisting update for component:",
       componentId,
-    );
+    });
     const result = await db
       .updateTable("report_components")
       .set({
@@ -45,7 +52,7 @@ export const updateComponentSql = createServerFn({ method: "POST" })
       .where("is_deleted", "=", false)
       .executeTakeFirst();
 
-    console.log("[updateComponentSql] update result:", result);
-    console.log("[updateComponentSql] done");
+    Logger.log({ msg: "[updateComponentSql] update result:", result });
+    Logger.log("[updateComponentSql] done");
     return { componentId, compiledSql };
   });

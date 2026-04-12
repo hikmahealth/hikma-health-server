@@ -26,6 +26,7 @@ import Device from "./device";
 import DevicePinCode from "./device-pin-code";
 import UserClinicPermissions from "./user-clinic-permissions";
 import type { RequestCaller } from "@/types";
+import { Logger } from "@hh/js-utils";
 
 /** Returns true if the value looks like a raw epoch timestamp (10-13 digit numeric string or number, possibly negative for pre-1970 dates). */
 export const isEpochTimestamp = (value: unknown): boolean =>
@@ -216,7 +217,7 @@ namespace Sync {
     const days = Number(envValue);
 
     if (isNaN(days) || days <= 0 || !Number.isInteger(days)) {
-      console.error(
+      Logger.error(
         `MAX_HISTORY_DAYS_SYNC must be a valid positive integer, got: ${envValue}. Ignoring and using no limit.`,
       );
       return null;
@@ -314,7 +315,7 @@ namespace Sync {
     // Hub peers only receive data for their assigned clinics
     const hubClinicIds: string[] | null =
       peerType === "sync_hub" && "device" in caller
-        ? (caller.device.clinic_ids as unknown as string[]) ?? null
+        ? ((caller.device.clinic_ids as unknown as string[]) ?? null)
         : null;
 
     const clientLastSyncDate = new Date(lastSyncedAt);
@@ -518,7 +519,7 @@ namespace Sync {
       if (!newDeltaJson) {
         continue;
       }
-      console.log(`Processing table: ${tableName}`);
+      Logger.log(`Processing table: ${tableName}`);
       // Get the entity delta values with defaults
       const deltaData = {
         created: newDeltaJson?.created || [],
@@ -537,21 +538,21 @@ namespace Sync {
           Object.entries(record)
             .filter(([key]) => {
               if (knownColumns.has(key)) return true;
-              console.warn(
+              Logger.warn(
                 `[sync] Ignoring unknown column "${key}" for table "${tableName}"`,
               );
               return false;
             })
             .map(([key, value]) => {
               if (isEpochTimestamp(value)) {
-                console.warn(
+                Logger.warn(
                   `[sync] Converting epoch timestamp in "${tableName}.${key}": ${value}`,
                 );
                 return [key, toSafeDateString(value)];
               }
               // Mobile clients may send 0/"0" for empty date fields — coerce to null
               if ((value === 0 || value === "0") && isDateColumn(key)) {
-                console.warn(
+                Logger.warn(
                   `[sync] Converting zero date to null in "${tableName}.${key}"`,
                 );
                 return [key, null];
@@ -570,7 +571,7 @@ namespace Sync {
           )
         ) {
           const clinicColumn = CLINIC_COLUMN_BY_TABLE[tableName];
-          console.warn(
+          Logger.warn(
             `[sync] Hub not authorized to push "${tableName}" record ${cleaned.id} — ` +
               `clinic ${cleaned[clinicColumn!]} not in hub's authorized clinics`,
           );
@@ -592,13 +593,13 @@ namespace Sync {
     const knownTableNames = new Set(entitiesToPull.map((e) => e.Table.name));
     for (const tableName of Object.keys(data)) {
       if (!knownTableNames.has(tableName)) {
-        console.warn(
+        Logger.warn(
           `[sync] Table "${tableName}" not found in accepted entities for ${isHub ? "hub" : "mobile"} - ignoring`,
         );
       }
     }
 
-    console.log("Finished persisting client changes");
+    Logger.log("Finished persisting client changes");
   };
 }
 

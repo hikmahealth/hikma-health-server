@@ -172,7 +172,6 @@ namespace PatientRegistrationForm {
           return id;
         },
       });
-      // console.log(form);
       return db
         .insertInto(Table.name)
         .values({

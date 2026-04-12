@@ -8,10 +8,22 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": ".",
-    "types": ["node"],
-    "baseUrl": ".",
-    "resolveJsonModule": true,
+    "types": [
+      "node"
+    ],
+    "resolveJsonModule": true
   },
-  "include": ["api/**/*.ts"],
-  "exclude": ["node_modules", "dist", "lib"],
+  "include": [
+    "api/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "lib"
+  ],
+  "references": [
+    {
+      "path": "../../packages/utils/js"
+    }
+  ]
 }

@@ -9,6 +9,11 @@
     "kysely.config.ts",
   ],
   "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "lib": ["ES2022"],
+    "types": ["node"],
+
     /* Bundler mode */
     // "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": false,
@@ -25,7 +30,6 @@
     // "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": ".",
     "outDir": "./dist",
   },
 }

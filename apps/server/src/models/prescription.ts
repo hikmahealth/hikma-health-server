@@ -23,6 +23,7 @@ import type { RequestCaller } from "@/types";
 import { match, P } from "ts-pattern";
 import { Option as HHOption } from "@/lib/option";
 import Device from "./device";
+import { Logger } from "@hh/js-utils";
 
 namespace Prescription {
   export const PrioritySchema = Schema.Union(
@@ -400,31 +401,39 @@ namespace Prescription {
                 deleted_at: null,
               })
               .onConflict((oc) => {
-                return oc.column("id").doUpdateSet({
-                  patient_id: (eb) => eb.ref("excluded.patient_id"),
-                  provider_id: (eb) => eb.ref("excluded.provider_id"),
-                  pickup_clinic_id: (eb) => eb.ref("excluded.pickup_clinic_id"),
-                  filled_by: (eb) => eb.ref("excluded.filled_by"),
-                  visit_id: (eb) => eb.ref("excluded.visit_id"),
-                  priority: (eb) => eb.ref("excluded.priority"),
-                  expiration_date: (eb) => eb.ref("excluded.expiration_date"),
-                  status: (eb) => eb.ref("excluded.status"),
-                  items: (eb) => eb.ref("excluded.items"),
-                  notes: (eb) => eb.ref("excluded.notes"),
-                  metadata: (eb) => eb.ref("excluded.metadata"),
-                  updated_at: sql`${toSafeDateString(
-                    prescription.updated_at,
-                  )}::timestamp with time zone`,
-                  last_modified: sql`now()::timestamp with time zone`,
-                })
-                // Only update if the incoming record is newer than what's already stored
-                .where(sql<boolean>`excluded.updated_at > prescriptions.updated_at`);
+                return (
+                  oc
+                    .column("id")
+                    .doUpdateSet({
+                      patient_id: (eb) => eb.ref("excluded.patient_id"),
+                      provider_id: (eb) => eb.ref("excluded.provider_id"),
+                      pickup_clinic_id: (eb) =>
+                        eb.ref("excluded.pickup_clinic_id"),
+                      filled_by: (eb) => eb.ref("excluded.filled_by"),
+                      visit_id: (eb) => eb.ref("excluded.visit_id"),
+                      priority: (eb) => eb.ref("excluded.priority"),
+                      expiration_date: (eb) =>
+                        eb.ref("excluded.expiration_date"),
+                      status: (eb) => eb.ref("excluded.status"),
+                      items: (eb) => eb.ref("excluded.items"),
+                      notes: (eb) => eb.ref("excluded.notes"),
+                      metadata: (eb) => eb.ref("excluded.metadata"),
+                      updated_at: sql`${toSafeDateString(
+                        prescription.updated_at,
+                      )}::timestamp with time zone`,
+                      last_modified: sql`now()::timestamp with time zone`,
+                    })
+                    // Only update if the incoming record is newer than what's already stored
+                    .where(
+                      sql<boolean>`excluded.updated_at > prescriptions.updated_at`,
+                    )
+                );
               })
               .executeTakeFirst();
 
             if (!res) {
               // Stale record skipped by the updated_at guard — don't upsert items either
-              console.info(
+              Logger.info(
                 `[sync] Skipped stale upsert for prescription ${prescriptionId}`,
               );
               return { numInsertedOrUpdatedRows: BigInt(0) };
@@ -455,23 +464,27 @@ namespace Prescription {
             return res;
           });
         } catch (error) {
-          console.error("Prescription save operation failed:", {
-            operation: "prescription_save",
+          Logger.error({
+            msg: "Prescription save operation failed:",
             error: {
-              message: error instanceof Error ? error.message : String(error),
-              name: error instanceof Error ? error.constructor.name : "Unknown",
-              stack: error instanceof Error ? error.stack : undefined,
+              operation: "prescription_save",
+              error: {
+                message: error instanceof Error ? error.message : String(error),
+                name:
+                  error instanceof Error ? error.constructor.name : "Unknown",
+                stack: error instanceof Error ? error.stack : undefined,
+              },
+              context: {
+                prescriptionId: id || prescription.id,
+                patientId: prescription.patient_id,
+                providerId: prescription.provider_id,
+                clinicId: currentClinicId,
+                hasValidVisitId: !!(
+                  prescription.visit_id && isValidUUID(prescription.visit_id)
+                ),
+              },
+              timestamp: new Date().toISOString(),
             },
-            context: {
-              prescriptionId: id || prescription.id,
-              patientId: prescription.patient_id,
-              providerId: prescription.provider_id,
-              clinicId: currentClinicId,
-              hasValidVisitId: !!(
-                prescription.visit_id && isValidUUID(prescription.visit_id)
-              ),
-            },
-            timestamp: new Date().toISOString(),
           });
           throw error;
         }

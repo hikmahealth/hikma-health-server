@@ -4,6 +4,7 @@ import { Option } from "effect"
 
 import User from "@/models/User"
 import UserClinicPermissions from "@/models/UserClinicPermissions"
+import { Logger } from "@hh/js-utils"
 
 export const providerStore = createStore({
   context: {
@@ -48,7 +49,7 @@ export const providerStore = createStore({
   },
   on: {
     reset: (context, _, enque) => {
-      console.warn("🔥 Calling Reset")
+      Logger.warn("🔥 Calling Reset")
       const payload = {
         id: "",
         name: "",
@@ -66,7 +67,7 @@ export const providerStore = createStore({
     },
 
     set_provider: (context, event: User.Provider, enque) => {
-      console.log("Setting provider:", JSON.stringify(event, null, 2))
+      Logger.log({ msg: "Setting provider:", data: JSON.stringify(event, null, 2) })
       enque.emit.provider_changed(event)
       return {
         id: event.id,

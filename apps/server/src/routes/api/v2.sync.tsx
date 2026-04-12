@@ -14,6 +14,7 @@ import Clinic from "@/models/clinic";
 import { Option } from "@/lib/option";
 import { Result } from "@/lib/result";
 import { minutesToMilliseconds } from "date-fns";
+import { Logger } from "@hh/js-utils";
 
 const syncLimiter = createRateLimiter({
   windowMs: minutesToMilliseconds(1),
@@ -72,7 +73,7 @@ export const Route = createFileRoute("/api/v2/sync")({
                     entry.deleted.length,
                 )
                 .reduce((a, b) => a + b, 0);
-              console.log({
+              Logger.log({
                 timestamp: syncTimestamp,
                 dataPulled: changeSetSize,
               });
@@ -146,7 +147,7 @@ export const Route = createFileRoute("/api/v2/sync")({
             })
             .exhaustive();
         } catch (error) {
-          console.error(error);
+          Logger.error(error);
           const message =
             error instanceof Error ? error.message : "Internal server error";
           const isAuthError =
@@ -216,10 +217,10 @@ const authenticateRequest = createServerOnlyFn(
         token: user.token,
       });
     } catch (error: any) {
-      console.error(
-        "[authenticatedRequest] Error authenticating a request. Error: ",
+      Logger.error({
+        msg: "[authenticatedRequest] Error authenticating a request. Error: ",
         error,
-      );
+      });
       return Result.err({
         _tag: "Unauthorized",
         message: error?.message || "Permission Denied",

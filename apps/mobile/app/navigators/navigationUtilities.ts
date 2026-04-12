@@ -12,6 +12,7 @@ import * as storage from "@/utils/storage"
 import { useIsMounted } from "@/utils/useIsMounted"
 
 import type { AppStackParamList, NavigationProps } from "./AppNavigator"
+import { Logger } from "@hh/js-utils"
 
 type Storage = typeof storage
 
@@ -133,7 +134,7 @@ export function useNavigationPersistence(storage: Storage, persistenceKey: strin
       if (previousRouteName !== currentRouteName) {
         // track screens.
         if (__DEV__) {
-          console.log(currentRouteName)
+          Logger.log(currentRouteName)
         }
       }
 

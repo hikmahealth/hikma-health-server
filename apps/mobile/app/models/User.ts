@@ -8,6 +8,7 @@ import database from "@/db"
 import UserModel from "@/db/model/User"
 import { Q } from "@nozbe/watermelondb"
 import { LoginResponse } from "@/rpc/types"
+import { Logger } from "@hh/js-utils"
 
 namespace User {
   export const Roles = {
@@ -86,8 +87,7 @@ namespace User {
 
       const result = await response.json()
 
-      // console.log("Response:", response)
-      console.log("Result:", result)
+      Logger.log({ msg: "Result:", result })
 
       if (response.status === 200 && result.message === undefined) {
         // Store credentials securely (for offline sync + fallback)
@@ -104,16 +104,16 @@ namespace User {
           const tokenResult = await tokenResponse.json()
           if (tokenResponse.ok && tokenResult.token) {
             await SecureStorage.setItemAsync("provider_token", tokenResult.token)
-            console.log("[User.signIn] Bearer token stored")
+            Logger.log("[User.signIn] Bearer token stored")
           } else {
-            console.warn("[User.signIn] No token in response — online tRPC writes may not work")
+            Logger.warn("[User.signIn] No token in response — online tRPC writes may not work")
           }
         } catch (e) {
-          console.warn("[User.signIn] Failed to obtain Bearer token:", e)
+          Logger.warn("[User.signIn] Failed to obtain Bearer token:", e)
         }
 
         // update the provider store
-        console.log("🚩🚩 Set from Cloud Login")
+        Logger.log("🚩🚩 Set from Cloud Login")
         providerStore.send({
           type: "set_provider",
           id: result.id,
@@ -139,7 +139,7 @@ namespace User {
         throw new Error("Invalid credentials")
       }
     } catch (e) {
-      console.error(e)
+      Logger.error(e)
       throw e
     }
   }
@@ -168,8 +168,8 @@ namespace User {
       clinic_name: Option.none(),
     }
 
-    console.log("🚩🚩 Set from Hub Login")
-    console.log({ provider })
+    Logger.log("🚩🚩 Set from Hub Login")
+    Logger.log({ provider })
 
     providerStore.send({ type: "set_provider", ...provider })
     return provider

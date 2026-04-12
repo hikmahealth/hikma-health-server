@@ -2,9 +2,15 @@ import { ExpoConfig, ConfigContext } from "@expo/config"
 
 /**
  * Use ts-node here so we can use TypeScript for our Config Plugins
- * and not have to compile them to JavaScript
+ * and not have to compile them to JavaScript.
+ *
+ * The plugins run in Node, so we register with a Node-targeted tsconfig
+ * instead of inheriting the React Native one used by the app.
  */
-require("ts-node/register")
+require("ts-node").register({
+  project: require("path").join(__dirname, "plugins/tsconfig.json"),
+  transpileOnly: true,
+})
 
 /**
  * @param config ExpoConfig coming from the static config app.json if it exists

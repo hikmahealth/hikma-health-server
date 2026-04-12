@@ -9,6 +9,7 @@
 import type { RpcResult, RpcError, LoginResponse } from "./types"
 import type { HubSession } from "./handshake"
 import { encryptForWire, decryptFromWire } from "./wire"
+import { Logger } from "@hh/js-utils"
 
 /**
  * Transport defines how command/query payloads are sent and received.
@@ -67,19 +68,22 @@ export function createEncryptedTransport(session: HubSession): RpcTransport {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         })
-        console.debug("[RpcTransport:hub] sendQuery response received", {
+        Logger.info({
+          msg: "[RpcTransport:hub] sendQuery response received",
           query,
           status: response.status,
         })
         if (!response.ok) {
           if (response.status === 401) {
-            console.warn("[RpcTransport:hub] sendQuery auth failed", {
+            Logger.warn({
+              msg: "[RpcTransport:hub] sendQuery auth failed",
               query,
               status: response.status,
             })
             return rpcError("AUTH_FAILED", "Unauthorized")
           }
-          console.warn("[RpcTransport:hub] sendQuery HTTP error", {
+          Logger.warn({
+            msg: "[RpcTransport:hub] sendQuery HTTP error",
             query,
             status: response.status,
           })
@@ -88,13 +92,13 @@ export function createEncryptedTransport(session: HubSession): RpcTransport {
         const json = await response.json()
         const decrypted = decryptFromWire(sharedKey, json.payload, "query_response")
         if (!decrypted) {
-          console.error("[RpcTransport:hub] sendQuery decryption failed", { query })
+          Logger.error({ msg: "[RpcTransport:hub] sendQuery decryption failed", query })
           return rpcError("DECRYPTION_FAILED", "Failed to decrypt query response")
         }
-        console.debug("[RpcTransport:hub] sendQuery completed successfully", { query })
+        Logger.info({ msg: "[RpcTransport:hub] sendQuery completed successfully", query })
         return { ok: true, data: decrypted as T }
       } catch (e) {
-        console.error("[RpcTransport:hub] sendQuery exception", { query, error: String(e) })
+        Logger.error({ msg: "[RpcTransport:hub] sendQuery exception", query, error: String(e) })
         return rpcError("NETWORK_ERROR", String(e))
       }
     },

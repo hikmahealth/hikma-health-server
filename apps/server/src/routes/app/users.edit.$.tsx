@@ -4,6 +4,7 @@ import User from "@/models/user";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "@tanstack/react-router";
+import { Logger } from "@hh/js-utils";
 import {
   Form,
   FormControl,
@@ -70,12 +71,10 @@ const updateUser = createServerFn({ method: "POST" })
       });
     }
 
-    console.log("Before");
     await UserClinicPermissions.API.isAuthorizedWithClinic(
       data.user.clinic_id,
       "is_clinic_admin",
     );
-    console.log("After");
 
     const res = await User.API.update(data.id, data.user);
     return res;
@@ -184,7 +183,7 @@ function RouteComponent() {
         const res = Schema.encodeUnknownEither(User.UserSchema)(newUser);
         Either.match(res, {
           onLeft: (error) => {
-            console.error("Failed to encode user:", error);
+            Logger.error({ msg: "Failed to encode user:", error });
             toast.error("Failed to create user");
           },
           onRight: (user) => {
@@ -199,14 +198,14 @@ function RouteComponent() {
                 navigate({ to: "/app/users" });
               })
               .catch((error) => {
-                console.error("Failed to create user:", error);
+                Logger.error({ msg: "Failed to create user:", error });
                 toast.error(error.message);
               });
           },
         });
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      Logger.error({ msg: "Error submitting form:", error });
       toast.error("Failed to create user");
     } finally {
       setIsSubmitting(false);
@@ -483,7 +482,7 @@ function UserPasswordResetForm({ userId }: { userId: string }) {
           dispatch({ type: "RESET" });
         })
         .catch((error) => {
-          console.error("Failed to reset password:", error);
+          Logger.error({ msg: "Failed to reset password:", error });
           toast.error("Failed to reset password");
         })
         .finally(() => {

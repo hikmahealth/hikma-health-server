@@ -28,6 +28,7 @@ import { format } from "date-fns";
 import { createServerFn } from "@tanstack/react-start";
 import User from "@/models/user";
 import { getCurrentUser } from "@/lib/server-functions/auth";
+import { Logger } from "@hh/js-utils";
 
 // Function endpoint to get all the event data for exports (no pagination)
 // const getEventDataForExport = createServerFn({ method: "GET" }).handler(
@@ -108,7 +109,7 @@ function RouteComponent() {
       },
     })
       .then((res) => {
-        console.warn({ res });
+        Logger.warn({ res });
         setEventsList(res.events);
         setPaginationResults(res);
         setCurrentPage(page);
@@ -151,13 +152,9 @@ function RouteComponent() {
 
   const pageNumbers = getPageNumbers();
 
-  // console.log({ eventsList, paginationResults, forms, selectedForm });
-
   // Table column names are present in the event form
   const tableColumns =
     forms.find((form) => form.id === selectedForm)?.form_fields || [];
-
-  // console.log({ tableColumns });
 
   return (
     <div className="container py-6">
@@ -218,7 +215,7 @@ function RouteComponent() {
                     const field = event.form_data.find(
                       (c) => c.fieldId === column.id,
                     );
-                    console.log({
+                    Logger.log({
                       field,
                       column,
                       event_form_data: event.form_data,
@@ -310,8 +307,8 @@ function RenderDiagnosisField({
 }: {
   field?: { value: Array<{ code: string; desc: string }> };
 }) {
-  console.log(field?.value?.map((diagnosis) => diagnosis?.desc).join(", "));
-  console.log(field?.value);
+  Logger.log(field?.value?.map((diagnosis) => diagnosis?.desc).join(", "));
+  Logger.log(field?.value);
   return (
     <div>
       {field?.value
@@ -339,8 +336,8 @@ function RenderMedicineField({
     }>;
   };
 }) {
-  console.log(field?.value?.map((medicine) => medicine?.name)?.join(", "));
-  console.log(field?.value);
+  Logger.log(field?.value?.map((medicine) => medicine?.name)?.join(", "));
+  Logger.log(field?.value);
   return (
     <div>
       {field?.value?.map((medicine) => (

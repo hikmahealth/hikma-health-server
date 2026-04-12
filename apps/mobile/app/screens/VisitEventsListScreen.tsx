@@ -34,6 +34,7 @@ import { useDataAccess } from "@/providers/DataAccessProvider"
 import { languageStore } from "@/store/language"
 import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
+import { Logger } from "@hh/js-utils"
 
 interface VisitEventsListScreenProps extends PatientStackScreenProps<"VisitEventsList"> {}
 
@@ -95,7 +96,7 @@ export const openPrescriptionPage = (
                   })
                 })
                 .catch((error) => {
-                  console.error(error)
+                  Logger.error(error)
                   Sentry.captureException(error)
                   Toast.show("❌ Error marking prescription as picked up", {
                     position: Toast.positions.BOTTOM,
@@ -123,7 +124,10 @@ export const VisitEventsListScreen: FC<VisitEventsListScreenProps> = ({ navigati
 
   // Offline: WatermelonDB observable events. Online: React Query events.
   const offlineEventsList = useDBVisitEvents(visitId, patientId)
-  const onlineEvents = useProviderVisitEvents(isOnline ? visitId : null, isOnline ? patientId : null)
+  const onlineEvents = useProviderVisitEvents(
+    isOnline ? visitId : null,
+    isOnline ? patientId : null,
+  )
   const eventsList = isOnline ? ((onlineEvents.data ?? []) as any) : offlineEventsList
   const appointmentsList = useDBVisitAppointments(visitId)
   const { prescriptions } = usePatientVisitPrescriptions(patientId, visitId)

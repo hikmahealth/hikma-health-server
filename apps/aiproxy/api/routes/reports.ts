@@ -21,6 +21,7 @@ import { compile_prql } from "../../src/compiler.js";
 import { resolve_ai_api_key, type client } from "../../src/clients.js";
 import { swap_uuids } from "../../src/uuid_swap.js";
 import { create_validator, type pg_validator } from "../../src/pg-validator.js";
+import { Logger } from "@hh/js-utils";
 
 type app_env = { Variables: { client: client } };
 
@@ -41,7 +42,7 @@ function log_usage(
   route: string,
   usage: { input_tokens: number; output_tokens: number },
 ) {
-  console.log(
+  Logger.log(
     `[${route}] tokens — input: ${usage.input_tokens}, output: ${usage.output_tokens}`,
   );
 }
@@ -74,7 +75,7 @@ async function retry_failed_component(
       "PostgreSQL validation error:",
     );
     const error_kind = is_validation_error ? "validation" : "compilation";
-    // console.log(
+    // Logger.log(
     //   `[retry] component="${current.title}" attempt=${attempt}/${RETRY_LIMIT} error_kind=${error_kind}\n` +
     //     `  prql:\n${current.prql_source}\n` +
     //     `  error: ${current.compile_error}`,
@@ -347,7 +348,7 @@ reports.post("/update-component", async (c) => {
           compile_error: null,
         };
       } else {
-        // console.log(
+        // Logger.log(
         //   `[update-component] validation failed for "${parsed.data.title}"\n` +
         //     `  sql:\n${result.sql}\n` +
         //     `  error: ${validation.error}`,
@@ -360,7 +361,7 @@ reports.post("/update-component", async (c) => {
         };
       }
     } else {
-      // console.log(
+      // Logger.log(
       //   `[update-component] compilation failed for "${parsed.data.title}"\n` +
       //     `  prql:\n${restored_prql}\n` +
       //     `  error: ${result.error}`,
@@ -385,7 +386,7 @@ reports.post("/update-component", async (c) => {
     }
 
     if (compiled.compile_error) {
-      console.error("PRQL compilation failure after retries:", {
+      Logger.error("PRQL compilation failure after retries:", {
         title: compiled.title,
         error: compiled.compile_error,
       });
@@ -454,8 +455,8 @@ reports.post("/manage", async (c) => {
     string,
     string,
   ];
-  // console.log("=== SYSTEM PROMPT ===\n" + system_prompt);
-  // console.log("=== USER MSG ===\n" + user_msg);
+  // Logger.log("=== SYSTEM PROMPT ===\n" + system_prompt);
+  // Logger.log("=== USER MSG ===\n" + user_msg);
 
   let message;
   try {
@@ -499,7 +500,7 @@ reports.post("/manage", async (c) => {
         const restored_prql = restore(comp.prql_source);
         const result = compile_prql(restored_prql);
         if (!result.ok) {
-          // console.log(
+          // Logger.log(
           //   `[manage] compilation failed for "${comp.title}"\n` +
           //     `  prql:\n${restored_prql}\n` +
           //     `  error: ${result.error}`,
@@ -513,7 +514,7 @@ reports.post("/manage", async (c) => {
         }
         const validation = await validator.validate(result.sql);
         if (!validation.ok) {
-          // console.log(
+          // Logger.log(
           //   `[manage] validation failed for "${comp.title}"\n` +
           //     `  sql:\n${result.sql}\n` +
           //     `  error: ${validation.error}`,
@@ -551,7 +552,7 @@ reports.post("/manage", async (c) => {
 
     const still_failed = results.filter((c) => c.compile_error);
     if (still_failed.length > 0) {
-      console.error(
+      Logger.error(
         "PRQL compilation failures after retries:",
         still_failed.map((f) => ({ title: f.title, error: f.compile_error })),
       );

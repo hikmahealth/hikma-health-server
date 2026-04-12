@@ -33,6 +33,7 @@ import PatientVital from "./patient-vital";
 import PatientProblem from "./patient-problem";
 import PatientObservation from "./patient-observation";
 import { cascadeSoftDelete } from "@/lib/soft-delete-registry";
+import { Logger } from "@hh/js-utils";
 
 namespace Patient {
   // export type T = {
@@ -845,47 +846,54 @@ namespace Patient {
               deleted_at: null,
             })
             .onConflict((oc) =>
-              oc.column("id").doUpdateSet({
-                given_name: (eb) => eb.ref("excluded.given_name"),
-                surname: (eb) => eb.ref("excluded.surname"),
-                date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
-                citizenship: (eb) => eb.ref("excluded.citizenship"),
-                photo_url: (eb) => eb.ref("excluded.photo_url"),
-                image_timestamp: (eb) => eb.ref("excluded.image_timestamp"),
-                hometown: (eb) => eb.ref("excluded.hometown"),
-                additional_data: (eb) => eb.ref("excluded.additional_data"),
-                government_id: (eb) => eb.ref("excluded.government_id"),
-                external_patient_id: (eb) =>
-                  eb.ref("excluded.external_patient_id"),
-                primary_clinic_id: (eb) => eb.ref("excluded.primary_clinic_id"),
-                last_modified_by: (eb) => eb.ref("excluded.last_modified_by"),
-                phone: (eb) => eb.ref("excluded.phone"),
-                sex: (eb) => eb.ref("excluded.sex"),
-                camp: (eb) => eb.ref("excluded.camp"),
-                metadata: (eb) => eb.ref("excluded.metadata"),
-                is_deleted: (eb) => eb.ref("excluded.is_deleted"),
-                updated_at: sql`${toSafeDateString(
-                  patient.updated_at,
-                )}::timestamp with time zone`,
-                last_modified: sql`now()::timestamp with time zone`,
-              })
-              // Only update if the incoming record is newer than what's already stored
-              .where(sql<boolean>`excluded.updated_at > patients.updated_at`),
+              oc
+                .column("id")
+                .doUpdateSet({
+                  given_name: (eb) => eb.ref("excluded.given_name"),
+                  surname: (eb) => eb.ref("excluded.surname"),
+                  date_of_birth: (eb) => eb.ref("excluded.date_of_birth"),
+                  citizenship: (eb) => eb.ref("excluded.citizenship"),
+                  photo_url: (eb) => eb.ref("excluded.photo_url"),
+                  image_timestamp: (eb) => eb.ref("excluded.image_timestamp"),
+                  hometown: (eb) => eb.ref("excluded.hometown"),
+                  additional_data: (eb) => eb.ref("excluded.additional_data"),
+                  government_id: (eb) => eb.ref("excluded.government_id"),
+                  external_patient_id: (eb) =>
+                    eb.ref("excluded.external_patient_id"),
+                  primary_clinic_id: (eb) =>
+                    eb.ref("excluded.primary_clinic_id"),
+                  last_modified_by: (eb) => eb.ref("excluded.last_modified_by"),
+                  phone: (eb) => eb.ref("excluded.phone"),
+                  sex: (eb) => eb.ref("excluded.sex"),
+                  camp: (eb) => eb.ref("excluded.camp"),
+                  metadata: (eb) => eb.ref("excluded.metadata"),
+                  is_deleted: (eb) => eb.ref("excluded.is_deleted"),
+                  updated_at: sql`${toSafeDateString(
+                    patient.updated_at,
+                  )}::timestamp with time zone`,
+                  last_modified: sql`now()::timestamp with time zone`,
+                })
+                // Only update if the incoming record is newer than what's already stored
+                .where(sql<boolean>`excluded.updated_at > patients.updated_at`),
             )
             .executeTakeFirst();
           // InsertResult is undefined when the updated_at guard skips a stale record
         } catch (error) {
-          console.error("Patient upsert operation failed:", {
-            operation: "patient_upsert",
+          Logger.error({
+            msg: "Patient upsert operation failed:",
             error: {
-              message: error instanceof Error ? error.message : String(error),
-              name: error instanceof Error ? error.constructor.name : "Unknown",
-              stack: error instanceof Error ? error.stack : undefined,
+              operation: "patient_upsert",
+              error: {
+                message: error instanceof Error ? error.message : String(error),
+                name:
+                  error instanceof Error ? error.constructor.name : "Unknown",
+                stack: error instanceof Error ? error.stack : undefined,
+              },
+              context: {
+                patientId: patient.id,
+              },
+              timestamp: new Date().toISOString(),
             },
-            context: {
-              patientId: patient.id,
-            },
-            timestamp: new Date().toISOString(),
           });
           throw error;
         }
@@ -964,17 +972,21 @@ namespace Patient {
           });
         } catch (error) {
           const idArray = Array.isArray(id) ? id : [id];
-          console.error("Patient soft delete operation failed:", {
-            operation: "patient_soft_delete",
+          Logger.error({
+            msg: "Patient soft delete operation failed:",
             error: {
-              message: error instanceof Error ? error.message : String(error),
-              name: error instanceof Error ? error.constructor.name : "Unknown",
-              stack: error instanceof Error ? error.stack : undefined,
+              operation: "patient_soft_delete",
+              error: {
+                message: error instanceof Error ? error.message : String(error),
+                name:
+                  error instanceof Error ? error.constructor.name : "Unknown",
+                stack: error instanceof Error ? error.stack : undefined,
+              },
+              context: {
+                patientId: idArray,
+              },
+              timestamp: new Date().toISOString(),
             },
-            context: {
-              patientId: idArray,
-            },
-            timestamp: new Date().toISOString(),
           });
           throw error;
         }

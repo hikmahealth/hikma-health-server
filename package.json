@@ -2,6 +2,8 @@
   "name": "hhmammoth",
   "private": true,
   "scripts": {
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "build": "APP_FOLDER=.server just build-server",
     "start": "APP_FOLDER=.server just start-server",
     "server:build": "APP_FOLDER=.server just build-server",
@@ -10,15 +12,17 @@
     "aiproxy:start": "moon aiproxy:start"
   },
   "devDependencies": {
-    "@moonrepo/cli": "^1.41.7",
+    "@moonrepo/cli": "^2.2.0",
+    "oxlint": "^1.60.0",
     "prettier": "^3.7.4",
     "rescript": "12.2.0",
     "rust-just": "^1.47.1",
-    "typescript": "5.9.2"
+    "typescript": "^6.0.2"
   },
-  "packageManager": "pnpm@10.28.1",
+  "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": "24.14.0"
+    "node": "24.14.0",
+    "pnpm": ">=10.28.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

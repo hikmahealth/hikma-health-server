@@ -21,13 +21,11 @@ import upperFirst from "lodash/upperFirst";
 import { v1 as uuidv1 } from "uuid";
 import { SelectInput } from "@/components/select-input";
 import { getAllClinics } from "@/lib/server-functions/clinics";
-import {
-  joinCheckboxValues,
-  splitCheckboxValues,
-} from "@/lib/utils";
+import { joinCheckboxValues, splitCheckboxValues } from "@/lib/utils";
 import { Result } from "@/lib/result";
 import { getCookie } from "@tanstack/react-start/server";
 import { createServerCaller } from "@/integrations/trpc/router";
+import { Logger } from "@hh/js-utils";
 
 type RegisterPatientInput = {
   patient: {
@@ -108,9 +106,10 @@ function RouteComponent() {
       id: patientId,
       given_name: data.given_name ?? null,
       surname: data.surname ?? null,
-      date_of_birth: data.date_of_birth instanceof Date
-        ? data.date_of_birth.toISOString()
-        : data.date_of_birth ?? null,
+      date_of_birth:
+        data.date_of_birth instanceof Date
+          ? data.date_of_birth.toISOString()
+          : (data.date_of_birth ?? null),
       sex: data.sex ?? null,
       citizenship: data.citizenship ?? null,
       hometown: data.hometown ?? null,
@@ -163,7 +162,7 @@ function RouteComponent() {
       });
       navigate({ to: `/app/patients/${result.patientId}` });
     } catch (error) {
-      console.error("Failed to register patient:", error);
+      Logger.error({ msg: "Failed to register patient:", error });
       alert("Failed to register patient. Please try again.");
     }
   };
@@ -222,7 +221,10 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
+                      {fieldLabel}
+                      {field.required && (
+                        <span className="text-destructive"> *</span>
+                      )}
                     </Label>
                     <Input
                       data-testid={"register-patient-" + idx}
@@ -234,7 +236,9 @@ function RouteComponent() {
                       })}
                     />
                     {fieldError && (
-                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                      <p className="text-sm text-destructive">
+                        {fieldError.message as string}
+                      </p>
                     )}
                   </div>
                 );
@@ -252,13 +256,20 @@ function RouteComponent() {
                         value: clinic.id,
                       }))}
                       value={watch(field.column)}
-                      onChange={(v) => setValue(field.column, v, { shouldValidate: true })}
+                      onChange={(v) =>
+                        setValue(field.column, v, { shouldValidate: true })
+                      }
                     />
-                    <input type="hidden" {...register(field.column, {
-                      required: field.required && `${fieldLabel} is required`,
-                    })} />
+                    <input
+                      type="hidden"
+                      {...register(field.column, {
+                        required: field.required && `${fieldLabel} is required`,
+                      })}
+                    />
                     {fieldError && (
-                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                      <p className="text-sm text-destructive">
+                        {fieldError.message as string}
+                      </p>
                     )}
                   </div>
                 );
@@ -270,7 +281,10 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
+                      {fieldLabel}
+                      {field.required && (
+                        <span className="text-destructive"> *</span>
+                      )}
                     </Label>
                     <Input
                       data-inputtype={"number"}
@@ -281,7 +295,9 @@ function RouteComponent() {
                       })}
                     />
                     {fieldError && (
-                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                      <p className="text-sm text-destructive">
+                        {fieldError.message as string}
+                      </p>
                     )}
                   </div>
                 );
@@ -293,25 +309,26 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
+                      {fieldLabel}
+                      {field.required && (
+                        <span className="text-destructive"> *</span>
+                      )}
                     </Label>
                     <Select
                       key={field.id}
                       value={watch(field.column)}
                       data-inputtype="select"
                       data-testid={"register-patient-" + idx}
-                      onValueChange={(value) => setValue(field.column, value, { shouldValidate: true })}
+                      onValueChange={(value) =>
+                        setValue(field.column, value, { shouldValidate: true })
+                      }
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue
-                          placeholder={`Select ${fieldLabel}`}
-                        />
+                        <SelectValue placeholder={`Select ${fieldLabel}`} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          <SelectLabel>
-                            {fieldLabel}
-                          </SelectLabel>
+                          <SelectLabel>{fieldLabel}</SelectLabel>
                           {field.options.map((opt) => (
                             <SelectItem
                               key={Language.getTranslation(opt, "en")}
@@ -324,11 +341,16 @@ function RouteComponent() {
                         </SelectGroup>
                       </SelectContent>
                     </Select>
-                    <input type="hidden" {...register(field.column, {
-                      required: field.required && `${fieldLabel} is required`,
-                    })} />
+                    <input
+                      type="hidden"
+                      {...register(field.column, {
+                        required: field.required && `${fieldLabel} is required`,
+                      })}
+                    />
                     {fieldError && (
-                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                      <p className="text-sm text-destructive">
+                        {fieldError.message as string}
+                      </p>
                     )}
                   </div>
                 );
@@ -342,7 +364,10 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
+                      {fieldLabel}
+                      {field.required && (
+                        <span className="text-destructive"> *</span>
+                      )}
                     </Label>
                     <div className="space-y-1">
                       {field.options.map((opt) => {
@@ -383,11 +408,16 @@ function RouteComponent() {
                         );
                       })}
                     </div>
-                    <input type="hidden" {...register(field.column, {
-                      required: field.required && `${fieldLabel} is required`,
-                    })} />
+                    <input
+                      type="hidden"
+                      {...register(field.column, {
+                        required: field.required && `${fieldLabel} is required`,
+                      })}
+                    />
                     {fieldError && (
-                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                      <p className="text-sm text-destructive">
+                        {fieldError.message as string}
+                      </p>
                     )}
                   </div>
                 );
@@ -399,7 +429,10 @@ function RouteComponent() {
                       htmlFor={field.column}
                       className="text-muted-foreground"
                     >
-                      {fieldLabel}{field.required && <span className="text-destructive"> *</span>}
+                      {fieldLabel}
+                      {field.required && (
+                        <span className="text-destructive"> *</span>
+                      )}
                     </Label>
                     <DatePickerInput
                       required={field.required}
@@ -407,13 +440,20 @@ function RouteComponent() {
                       data-testid={"register-patient-" + idx}
                       data-inputtype="date"
                       value={watch(field.column)}
-                      onChange={(date) => setValue(field.column, date, { shouldValidate: true })}
+                      onChange={(date) =>
+                        setValue(field.column, date, { shouldValidate: true })
+                      }
                     />
-                    <input type="hidden" {...register(field.column, {
-                      required: field.required && `${fieldLabel} is required`,
-                    })} />
+                    <input
+                      type="hidden"
+                      {...register(field.column, {
+                        required: field.required && `${fieldLabel} is required`,
+                      })}
+                    />
                     {fieldError && (
-                      <p className="text-sm text-destructive">{fieldError.message as string}</p>
+                      <p className="text-sm text-destructive">
+                        {fieldError.message as string}
+                      </p>
                     )}
                   </div>
                 );

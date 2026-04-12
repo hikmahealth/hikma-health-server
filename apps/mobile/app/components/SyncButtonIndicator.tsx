@@ -11,6 +11,7 @@ import Animated, {
 
 import { useSync } from "@/hooks/useSync"
 import { colors } from "@/theme/colors"
+import { Logger } from "@hh/js-utils"
 
 export interface SyncButtonIndicatorProps {
   /**
@@ -62,7 +63,7 @@ export const SyncButtonIndicator = (props: SyncButtonIndicatorProps) => {
         })
         .catch((err) => {
           forceReset()
-          console.log("Failed to start sync:", err)
+          Logger.log({ msg: "Failed to start sync:", err })
         })
     }
   }

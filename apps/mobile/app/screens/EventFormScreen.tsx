@@ -56,6 +56,7 @@ import {
 } from "@/utils/eventFormTranslations"
 import { sanitizeFieldName, unsanitizeFormData } from "@/utils/fieldNameSanitizer"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { Logger } from "@hh/js-utils"
 
 type ModalState =
   | { activeModal: null }
@@ -129,16 +130,6 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
     departmentId = null,
   } = route.params
 
-  // console.log({
-  //   patientId,
-  //   formId,
-  //   visitId,
-  //   eventId,
-  //   visitDate,
-  //   appointmentId,
-  //   departmentId,
-  // })
-
   const language = useSelector(languageStore, (state) => state.context.language)
   const provider = useSelector(providerStore, (state) => state.context)
   const { isOnline } = useDataAccess()
@@ -158,7 +149,7 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
   // Debug: log all form state changes
   useEffect(() => {
     const subscription = watch((formValues, { name, type }) => {
-      console.log("[FormState change]", { changedField: name, type, formValues })
+      Logger.log({ msg: "[FormState change]", changedField: name, type, formValues })
     })
     return () => subscription.unsubscribe()
   }, [watch])
@@ -267,7 +258,7 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
 
   const onSubmit = async (rawData: Record<string, any>) => {
     const data = unsanitizeFormData(rawData)
-    console.log("onSubmit", data)
+    Logger.log({ msg: "onSubmit", data })
     if (loading) {
       return
     }
@@ -300,12 +291,8 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
         fileUploads,
       })
       if (missingFields.length > 0) {
-        console.log(
-          "[EventForm] Missing required fields:",
-          missingFields,
-          "Form data:",
-          JSON.stringify(data, null, 2),
-        )
+        Logger.log(`[EventForm] Missing required fields: ${missingFields},
+          Form data: ${JSON.stringify(data, null, 2)}`)
         Toast.show(`Please fill in required fields: ${missingFields.join(", ")}`, {
           duration: Toast.durations.LONG,
           position: Toast.positions.BOTTOM,
@@ -422,14 +409,14 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
             provider.id,
             "completed",
           ).catch((e) => {
-            console.error("Error updating appointment department status", e)
+            Logger.error({ msg: "Error updating appointment department status", e })
             Sentry.captureException(e)
           })
         }
         Appointment.DB.markComplete(appointmentId, provider.id, resVisitId ?? "", {
           preserveStatus: departmentId ? true : false,
         }).catch((e) => {
-          console.error("Error updating appointment with visitId", e)
+          Logger.error({ msg: "Error updating appointment with visitId", e })
           Sentry.captureException(e)
         })
       }
@@ -440,7 +427,7 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
         navigation.popTo("NewVisit", { patientId, visitDate, visitId: resVisitId })
       }
     } catch (e) {
-      console.error(e)
+      Logger.error(e)
       Alert.alert("Error connecting to the database")
       Sentry.captureException(e, {
         level: "error",
@@ -548,7 +535,7 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
       })
 
       if (result.canceled) {
-        console.log("Document picking canceled by user")
+        Logger.log("Document picking canceled by user")
         setFileUploads((prev) => ({
           ...prev,
           [fieldName]: {
@@ -563,10 +550,10 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
       }
 
       const file = result.assets[0]
-      console.log(`File selected: ${file.name}, type: ${file.mimeType}, size: ${file.size} bytes`)
+      Logger.log(`File selected: ${file.name}, type: ${file.mimeType}, size: ${file.size} bytes`)
 
       // Create FormData object
-      console.log("Creating FormData for upload")
+      Logger.log("Creating FormData for upload")
       const formData = new FormData()
       formData.append("file", {
         uri: file.uri,
@@ -577,7 +564,7 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
       // Upload to server
       const apiUrl = await Peer.getActiveUrl()
       if (!apiUrl) throw new Error("No server URL configured")
-      console.log(`Uploading to ${apiUrl}/v1/api/forms/resources`)
+      Logger.log(`Uploading to ${apiUrl}/v1/api/forms/resources`)
       const response = await fetch(`${apiUrl}/v1/api/forms/resources`, {
         method: "PUT",
         body: formData,
@@ -586,16 +573,16 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
         },
       })
 
-      console.log(`Server response status: ${response.status}`)
+      Logger.log(`Server response status: ${response.status}`)
       if (!response.ok) {
         throw new Error(`Upload failed with status ${response.status}`)
       }
 
       const responseData = await response.json()
-      console.log("Upload successful, response data:", responseData)
+      Logger.log({ msg: "Upload successful, response data:", responseData })
 
       // Update state with successful upload
-      console.log(`Updating state for successful upload of ${file.name}`)
+      Logger.log(`Updating state for successful upload of ${file.name}`)
       setFileUploads((prev) => ({
         ...prev,
         [fieldName]: {
@@ -608,15 +595,15 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
       }))
 
       // Update form control value
-      console.log(`Setting form value for ${fieldName} to ${responseData.id}`)
+      Logger.log(`Setting form value for ${fieldName} to ${responseData.id}`)
       setValue(fieldName as never, responseData.id as never)
     } catch (error: unknown) {
-      console.error("File upload error:", error)
+      Logger.error({ msg: "File upload error:", error })
       Sentry.captureException(error)
 
       // Update state with error
       const errorMessage = error instanceof Error ? error.message : "Failed to upload file"
-      console.log(`Updating state for failed upload: ${errorMessage}`)
+      Logger.log(`Updating state for failed upload: ${errorMessage}`)
       setFileUploads((prev) => ({
         ...prev,
         [fieldName]: {
@@ -647,8 +634,6 @@ export const EventFormScreen: FC<EventFormScreenProps> = ({ navigation, route })
       <Screen style={$root} preset="scroll">
         <View gap={12} pb={24}>
           {form.formFields.map((field, idx) => {
-            // console.log(field.fieldType, "as a ", field.inputType, "options: ", field.options)
-            // console.log("is Multi", field.multi)
             return (
               <View key={`formField-${idx}`}>
                 {/* Static text display (read-only) */}
@@ -1078,7 +1063,7 @@ function useEventForm(
         })
       })
       .catch((error) => {
-        console.error(error)
+        Logger.error(error)
         if (!cancelled) {
           setForm(null)
           formReady = true

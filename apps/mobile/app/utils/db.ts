@@ -1,3 +1,4 @@
+import { Logger } from "@hh/js-utils"
 import * as Sentry from "@sentry/react-native"
 /**
  * A sanitizer function for the metadata JSON field.
@@ -21,7 +22,7 @@ export function sanitizeMetadata(rawJson: any): string {
       return rawJson // It's a valid JSON string
     } catch (error) {
       Sentry.captureException(error)
-      console.error(error)
+      Logger.error(error)
       return "{}" // Not a valid JSON string
     }
   }

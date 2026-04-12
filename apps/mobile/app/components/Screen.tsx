@@ -285,8 +285,6 @@ export function Screen(props: ScreenProps) {
     systemBarStyle,
   } = props
 
-  console.log({ defaultSafeAreaEdges })
-
   const $containerInsets = useSafeAreaInsetsStyle(safeAreaEdges)
 
   return (

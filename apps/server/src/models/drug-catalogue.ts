@@ -23,6 +23,7 @@ import {
 import { isValidUUID, safeJSONParse, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import { v1 as uuidV1 } from "uuid";
+import { Logger } from "@hh/js-utils";
 
 const validateDrugId = (id: string): Effect.Effect<string, ValidationError> => {
   if (!id || id.length === 0) {
@@ -354,63 +355,72 @@ namespace DrugCatalogue {
       const values = buildUpsertValues(drug, id);
 
       // executeQueryTakeFirst returns undefined when the WHERE guard skips a stale record
-      return pipe(executeQueryTakeFirst(
-        trx
-          .insertInto(Table.name)
-          .values({
-            ...values,
-            metadata: sql`${JSON.stringify(
-              safeJSONParse(values.metadata, {}),
-            )}::jsonb`,
-            created_at: drug.created_at
-              ? sql`${toSafeDateString(drug.created_at)}::timestamp with time zone`
-              : sql`now()::timestamp with time zone`,
-            updated_at: drug.updated_at
-              ? sql`${toSafeDateString(drug.updated_at)}::timestamp with time zone`
-              : sql`now()::timestamp with time zone`,
-            last_modified: sql`now()::timestamp with time zone`,
-            server_created_at: sql`now()::timestamp with time zone`,
-            deleted_at: drug.deleted_at
-              ? sql`${toSafeDateString(drug.deleted_at)}::timestamp with time zone`
-              : null,
-          })
-          .onConflict((oc) =>
-            oc.column("id").doUpdateSet((eb) => ({
-              barcode: eb.ref("excluded.barcode"),
-              generic_name: eb.ref("excluded.generic_name"),
-              brand_name: eb.ref("excluded.brand_name"),
-              form: eb.ref("excluded.form"),
-              route: eb.ref("excluded.route"),
-              dosage_quantity: eb.ref("excluded.dosage_quantity"),
-              dosage_units: eb.ref("excluded.dosage_units"),
-              manufacturer: eb.ref("excluded.manufacturer"),
-              sale_price: eb.ref("excluded.sale_price"),
-              sale_currency: eb.ref("excluded.sale_currency"),
-              min_stock_level: eb.ref("excluded.min_stock_level"),
-              max_stock_level: eb.ref("excluded.max_stock_level"),
-              is_controlled: eb.ref("excluded.is_controlled"),
-              requires_refrigeration: eb.ref("excluded.requires_refrigeration"),
-              is_active: eb.ref("excluded.is_active"),
-              notes: eb.ref("excluded.notes"),
-              recorded_by_user_id: eb.ref("excluded.recorded_by_user_id"),
-              metadata: eb.ref("excluded.metadata"),
-              is_deleted: eb.ref("excluded.is_deleted"),
-              updated_at: sql`now()::timestamp with time zone`,
+      return pipe(
+        executeQueryTakeFirst(
+          trx
+            .insertInto(Table.name)
+            .values({
+              ...values,
+              metadata: sql`${JSON.stringify(
+                safeJSONParse(values.metadata, {}),
+              )}::jsonb`,
+              created_at: drug.created_at
+                ? sql`${toSafeDateString(drug.created_at)}::timestamp with time zone`
+                : sql`now()::timestamp with time zone`,
+              updated_at: drug.updated_at
+                ? sql`${toSafeDateString(drug.updated_at)}::timestamp with time zone`
+                : sql`now()::timestamp with time zone`,
               last_modified: sql`now()::timestamp with time zone`,
+              server_created_at: sql`now()::timestamp with time zone`,
               deleted_at: drug.deleted_at
                 ? sql`${toSafeDateString(drug.deleted_at)}::timestamp with time zone`
-                : eb.ref("excluded.deleted_at"),
-            }))
-            // Only update if the incoming record is newer than what's already stored
-            .where(sql<boolean>`excluded.updated_at > drug_catalogue.updated_at`),
-          )
-          .returning("id"),
-      ), Effect.map((result) => {
-        if (!result) {
-          console.info(`[sync] Skipped stale upsert for drug_catalogue ${id}`);
-        }
-        return result ?? { id };
-      }));
+                : null,
+            })
+            .onConflict((oc) =>
+              oc
+                .column("id")
+                .doUpdateSet((eb) => ({
+                  barcode: eb.ref("excluded.barcode"),
+                  generic_name: eb.ref("excluded.generic_name"),
+                  brand_name: eb.ref("excluded.brand_name"),
+                  form: eb.ref("excluded.form"),
+                  route: eb.ref("excluded.route"),
+                  dosage_quantity: eb.ref("excluded.dosage_quantity"),
+                  dosage_units: eb.ref("excluded.dosage_units"),
+                  manufacturer: eb.ref("excluded.manufacturer"),
+                  sale_price: eb.ref("excluded.sale_price"),
+                  sale_currency: eb.ref("excluded.sale_currency"),
+                  min_stock_level: eb.ref("excluded.min_stock_level"),
+                  max_stock_level: eb.ref("excluded.max_stock_level"),
+                  is_controlled: eb.ref("excluded.is_controlled"),
+                  requires_refrigeration: eb.ref(
+                    "excluded.requires_refrigeration",
+                  ),
+                  is_active: eb.ref("excluded.is_active"),
+                  notes: eb.ref("excluded.notes"),
+                  recorded_by_user_id: eb.ref("excluded.recorded_by_user_id"),
+                  metadata: eb.ref("excluded.metadata"),
+                  is_deleted: eb.ref("excluded.is_deleted"),
+                  updated_at: sql`now()::timestamp with time zone`,
+                  last_modified: sql`now()::timestamp with time zone`,
+                  deleted_at: drug.deleted_at
+                    ? sql`${toSafeDateString(drug.deleted_at)}::timestamp with time zone`
+                    : eb.ref("excluded.deleted_at"),
+                }))
+                // Only update if the incoming record is newer than what's already stored
+                .where(
+                  sql<boolean>`excluded.updated_at > drug_catalogue.updated_at`,
+                ),
+            )
+            .returning("id"),
+        ),
+        Effect.map((result) => {
+          if (!result) {
+            Logger.info(`[sync] Skipped stale upsert for drug_catalogue ${id}`);
+          }
+          return result ?? { id };
+        }),
+      );
     };
 
     const withTransaction = <T>(

@@ -10,6 +10,7 @@ import { result } from "es-toolkit/compat"
 
 import { storage } from "@/utils/storage"
 import Peer from "@/models/Peer"
+import { Logger } from "@hh/js-utils"
 
 namespace Sync {
   export type StateT = "idle" | "fetching" | "resolving" | "pushing" | "error"
@@ -63,7 +64,7 @@ namespace Sync {
         storage.set(`${serverType}LastPullTimestamp`, timestamp)
         return Promise.resolve()
       } catch (error) {
-        console.error("Failed to set last pull timestamp", error)
+        Logger.error({ msg: "Failed to set last pull timestamp", error })
         return Promise.reject(error)
       }
     }
@@ -79,14 +80,14 @@ namespace Sync {
         try {
           result["local-sync-server"] = JSON.parse(local)
         } catch (error) {
-          console.error("Failed to parse local sync server", error)
+          Logger.error({ msg: "Failed to parse local sync server", error })
         }
       }
       if (cloud) {
         try {
           result["cloud-sync-server"] = JSON.parse(cloud)
         } catch (error) {
-          console.error("Failed to parse cloud sync server", error)
+          Logger.error({ msg: "Failed to parse cloud sync server", error })
         }
       }
       return Promise.resolve(result)
@@ -119,7 +120,7 @@ namespace Sync {
         storage.set(`${serverType}-sync-server`, JSON.stringify(server))
         return Promise.resolve()
       } catch (error) {
-        console.error("Failed to set sync server", error)
+        Logger.error({ msg: "Failed to set sync server", error })
         return Promise.reject(error)
       }
     }
@@ -136,7 +137,7 @@ namespace Sync {
         storage.delete(`${serverType}-sync-server`)
         return Promise.resolve()
       } catch (error) {
-        console.error("Failed to remove sync server", error)
+        Logger.error({ msg: "Failed to remove sync server", error })
         return Promise.reject(error)
       }
     }
@@ -220,7 +221,7 @@ namespace Sync {
     }
     const SYNC_API = `${HH_API}/api/v2/sync`
 
-    console.warn("SYNC_API:", SYNC_API)
+    Logger.warn({ msg: "SYNC_API:", SYNC_API })
 
     const result = await fetch(`${SYNC_API}?${urlParams}`, {
       // Headers include the username and password in base64 encoded string
@@ -228,7 +229,7 @@ namespace Sync {
     })
 
     if (!result.ok) {
-      console.error("Error fetching data from the server", { result })
+      Logger.error({ msg: "Error fetching data from the server", result })
       return Exit.fail(await result.text())
     }
 
@@ -261,7 +262,7 @@ namespace Sync {
     })
 
     if (!result.ok) {
-      console.error("Error pushing data to the server", { result })
+      Logger.error({ msg: "Error pushing data to the server", result })
       return Exit.fail(await result.text())
     }
 

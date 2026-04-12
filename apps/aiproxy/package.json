@@ -18,6 +18,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
     "@electric-sql/pglite": "^0.4.2",
+    "@hh/js-utils": "workspace:*",
     "@hono/node-server": "^1.19.13",
     "hono": "^4.12.12",
     "prqlc": "^0.13.11",

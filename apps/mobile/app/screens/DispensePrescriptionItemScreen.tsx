@@ -20,6 +20,7 @@ import { PharmacyNavigatorParamList } from "@/navigators/PharmacyNavigator"
 import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
+import { Logger } from "@hh/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface DispensePrescriptionItemScreenProps extends NativeStackScreenProps<
@@ -55,7 +56,7 @@ export const DispensePrescriptionItemScreen: FC<DispensePrescriptionItemScreenPr
           .then((res) => {
             setClinicInventory(res)
           })
-          .catch(console.error)
+          .catch(Logger.error)
 
         setPrescriptionItem(item)
       })

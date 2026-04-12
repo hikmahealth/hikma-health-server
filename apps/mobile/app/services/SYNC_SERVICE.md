@@ -31,9 +31,9 @@ await startSync('user@example.com')
 // With error handling
 try {
   await startSync(currentUser.email)
-  console.log('Sync completed successfully')
+  Logger.log('Sync completed successfully')
 } catch (error) {
-  console.error('Sync failed:', error)
+  Logger.error({msg: 'Sync failed:', error})
 }
 ```
 
@@ -58,9 +58,9 @@ function MyComponent() {
   const handleSync = async () => {
     try {
       await startSync()
-      console.log('Sync completed')
+      Logger.log('Sync completed')
     } catch (error) {
-      console.error('Sync failed:', error)
+      Logger.error({msg: 'Sync failed:', error})
     }
   }
 
@@ -95,7 +95,7 @@ export const SyncButtonIndicator = () => {
 
   const handlePress = () => {
     if (isIdle) {
-      startSync().catch(console.error)
+      startSync().catch(Logger.error)
     }
   }
 

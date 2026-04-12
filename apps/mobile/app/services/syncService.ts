@@ -26,6 +26,7 @@ import Sync from "@/models/Sync"
 import { appStateStore } from "@/store/appState"
 import { operationModeStore } from "@/store/operationMode"
 import { syncStore } from "@/store/sync"
+import { Logger } from "@hh/js-utils"
 
 /**
  * Find the active peer to sync with.
@@ -66,9 +67,9 @@ const resolveActivePeer = async (): Promise<Peer.T | null> => {
  * // With error handling
  * try {
  *   await startSync(currentUser.email)
- *   console.log('Sync completed successfully')
+ *   Logger.log('Sync completed successfully')
  * } catch (error) {
- *   console.error('Sync failed:', error)
+ *   Logger.error({msg: 'Sync failed:', error})
  * }
  * ```
  *
@@ -81,7 +82,7 @@ const resolveActivePeer = async (): Promise<Peer.T | null> => {
 export const startSync = async (providerEmail?: string): Promise<void> => {
   // Skip sync in online mode — data flows directly via RPC
   if (operationModeStore.getSnapshot().context.mode === "online") {
-    console.log("Skipping sync: app is in online mode")
+    Logger.log("Skipping sync: app is in online mode")
     return Promise.resolve()
   }
 
@@ -94,7 +95,7 @@ export const startSync = async (providerEmail?: string): Promise<void> => {
   // Check if already syncing
   const currentState = syncStore.getSnapshot().context.state
   if (currentState !== Sync.State.IDLE) {
-    console.log("Sync already in progress, skipping...")
+    Logger.log("Sync already in progress, skipping...")
     return Promise.resolve()
   }
 
@@ -122,12 +123,12 @@ export const startSync = async (providerEmail?: string): Promise<void> => {
       setSyncStart: () => syncStore.send({ type: "start_sync" }),
       setSyncResolution: (fetched: number) => syncStore.send({ type: "start_resolve", fetched }),
       setPushStart: (pushed: number) => syncStore.send({ type: "start_push", pushed }),
-      updateSyncStatistic: console.log,
+      updateSyncStatistic: Logger.log,
       onSyncError: (error: string) => syncStore.send({ type: "error_sync", error }),
       onSyncCompleted: finishSync,
     }).catch((err) => {
       finishSync()
-      console.error("Sync error:", err)
+      Logger.error({ msg: "Sync error:", err })
 
       const isConcurrent = String(err).includes("Concurrent synchronization")
       if (!isConcurrent) {
@@ -148,7 +149,7 @@ export const startSync = async (providerEmail?: string): Promise<void> => {
       throw err
     })
   } catch (error) {
-    console.error("Sync initialization error:", error)
+    Logger.error({ msg: "Sync initialization error:", error })
     Sentry.captureException(error)
     throw error
   }

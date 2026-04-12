@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { Logger } from "@hh/js-utils";
 import reports from "./routes/reports.js";
 import { auth_middleware } from "../src/clients.js";
 
@@ -15,6 +16,6 @@ app.route("/reports", reports);
 
 const port = Number(process.env.PORT) || 3003;
 
-console.log(`Server running on http://localhost:${port}`);
+Logger.info(`Server running on http://localhost:${port}`);
 
 serve({ fetch: app.fetch, port });

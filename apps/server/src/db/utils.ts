@@ -12,7 +12,7 @@ import type { Client, Pool } from "pg";
  * @example
  * const result = await validateSQL(pool, 'SELECT * FROM users WHERE id = 1');
  * if (!result.valid) {
- *   console.error(result.error);
+ *   Logger.error(result.error);
  * }
  */
 export async function validateSQL(

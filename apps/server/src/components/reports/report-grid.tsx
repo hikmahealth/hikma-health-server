@@ -4,6 +4,7 @@ import { ReportComponentCard } from "./report-component-card";
 import { updateComponentSql } from "@/lib/server-functions/reports";
 import { useCallback } from "react";
 import type { reportComponent } from "@/lib/ai-service/report.gen";
+import { Logger } from "@hh/js-utils";
 
 type ReportGridProps = ReportWithData & {
   isSuperAdmin?: boolean;
@@ -60,7 +61,7 @@ export const ReportGrid = ({
           },
         },
       });
-      console.log({ updated });
+      Logger.log({ updated });
 
       // Preserve the original id and reportId so the grid mapping stays consistent
       const merged: reportComponent = {

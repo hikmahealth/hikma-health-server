@@ -1,3 +1,4 @@
+import { Logger } from "@hh/js-utils";
 import { test, expect } from "./fixtures/auth";
 
 test.describe("Patient Registration", () => {
@@ -142,7 +143,7 @@ test.describe("Patient Registration", () => {
     });
     await expect(patientRow).toBeVisible();
 
-    console.log(
+    Logger.log(
       `✓ Successfully registered and found patient: ${testPatientData.firstName} ${testPatientData.lastName}`,
     );
   });

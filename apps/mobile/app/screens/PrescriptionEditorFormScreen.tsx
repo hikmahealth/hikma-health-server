@@ -44,9 +44,12 @@ import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { calculateAge } from "@/utils/date"
 import { friendlyString } from "@/utils/misc"
+import { Logger } from "@hh/js-utils"
 
-interface PrescriptionEditorFormScreenProps
-  extends NativeStackScreenProps<PharmacyNavigatorParamList, "PrescriptionEditorForm"> {}
+interface PrescriptionEditorFormScreenProps extends NativeStackScreenProps<
+  PharmacyNavigatorParamList,
+  "PrescriptionEditorForm"
+> {}
 
 export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps> = ({
   route,
@@ -110,7 +113,7 @@ export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps>
   const snapPoints = useMemo(() => ["70%", "70%"], [])
 
   const handleSheetChanges = useCallback((index: number) => {
-    console.log("handleSheetChanges", index)
+    Logger.log({ msg: "handleSheetChanges", index })
     if (index === -1) {
       setIsSheetOpen(false)
       return
@@ -179,7 +182,6 @@ export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps>
 
   const handleUpdatePrescriptionItemInstructions = (itemId: string, dosageInstructions: string) => {
     setPrescriptionItems((prevState) => {
-      // console.log("Updating instructions for item:", itemId, dosageInstructions)
       const updatedItems = prevState.map((item) => {
         if (item.id === itemId) {
           return { ...item, dosageInstructions }
@@ -212,8 +214,6 @@ export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps>
       recordedByUserId: providerId,
       recordedAt: new Date(),
     }))
-
-    // console.log({ data, prescriptionItems })
 
     if (isLoading) {
       return
@@ -248,7 +248,7 @@ export const PrescriptionEditorFormScreen: FC<PrescriptionEditorFormScreenProps>
         navigation.goBack()
       }
     } catch (error) {
-      console.error(error)
+      Logger.error(error)
       Toast.show("Error creating prescription", {
         position: Toast.positions.BOTTOM,
         duration: Toast.durations.LONG,
@@ -572,7 +572,6 @@ const enhanceInventoryItem = withObservables(
 const InventoryItem = enhanceInventoryItem(
   ({ inventoryItem, drug }: { inventoryItem: ClinicInventory.DB.T; drug: DrugCatalogue.DB.T }) => {
     const { theme } = useAppTheme()
-    // console.log({ drug })
 
     return (
       <View>

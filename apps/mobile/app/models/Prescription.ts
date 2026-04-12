@@ -7,6 +7,7 @@ import VisitModel from "@/db/model/Visit"
 
 import PrescriptionItem from "./PrescriptionItem"
 import User from "./User"
+import { Logger } from "@hh/js-utils"
 
 namespace Prescription {
   export const Priority = {
@@ -559,7 +560,7 @@ namespace Prescription {
             }
           }
         } catch (error) {
-          console.error(error)
+          Logger.error(error)
           Sentry.captureException(error, {
             level: "error",
             extra: {

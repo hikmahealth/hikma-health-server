@@ -5,6 +5,7 @@ import { useDebounceValue } from "usehooks-ts"
 import database from "@/db"
 import PrescriptionModel from "@/db/model/Prescription"
 import Prescription from "@/models/Prescription"
+import { Logger } from "@hh/js-utils"
 
 type ISOStringDate = string
 
@@ -58,7 +59,7 @@ export function useDBPrescriptionsFilter(
   const dateString = filters.date.toISOString()
 
   useEffect(() => {
-    console.log("useDBPrescriptionsFilter useEffect called")
+    Logger.log("useDBPrescriptionsFilter useEffect called")
     const { status, date, clinicId } = filters
     setLoading(true)
 
@@ -127,7 +128,7 @@ export function useDBPrescriptionsFilter(
     // Check if we've received fewer results than requested
     // This indicates we've reached the end of available data
     if (prescriptionResults.length < pagination.limit) {
-      console.log("Reached end of prescription data")
+      Logger.log("Reached end of prescription data")
       return
     }
 

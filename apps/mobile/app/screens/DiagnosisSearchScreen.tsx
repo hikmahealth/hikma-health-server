@@ -23,6 +23,7 @@ import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
 import { spacing } from "@/theme/spacing"
 import { translate } from "@/i18n/translate"
+import { Logger } from "@hh/js-utils"
 
 const miniSearch = new MiniSearch({
   fields: ["desc", "code"],
@@ -102,18 +103,17 @@ function DiagnosisSearchStep({ onSelect }: { onSelect: (diagnosis: SelectedDiagn
         {searchQuery.length > 0 && (
           <Pressable onPress={() => onSelect({ code: "custom", label: searchQuery })}>
             <View my={6} py={10} px={14} style={$resultItem}>
-              <Text size="md" text={translate("diagnosisSearch:createCustom", { query: searchQuery })} />
+              <Text
+                size="md"
+                text={translate("diagnosisSearch:createCustom", { query: searchQuery })}
+              />
             </View>
           </Pressable>
         )}
 
         {debouncedQuery.length > 0 && searchResults.length === 0 && (
           <View pt={20} alignItems="center">
-            <Text
-              tx="diagnosisSearch:noResults"
-              color={colors.textDim}
-              size="sm"
-            />
+            <Text tx="diagnosisSearch:noResults" color={colors.textDim} size="sm" />
           </View>
         )}
       </View>
@@ -190,7 +190,10 @@ function DiagnosisDetailsForm({
     if (severityScore) {
       const score = parseInt(severityScore, 10)
       if (isNaN(score) || score < 1 || score > 10) {
-        Alert.alert(translate("diagnosisEditor:validationError"), translate("diagnosisEditor:severityRange"))
+        Alert.alert(
+          translate("diagnosisEditor:validationError"),
+          translate("diagnosisEditor:severityRange"),
+        )
         return
       }
     }
@@ -219,7 +222,7 @@ function DiagnosisDetailsForm({
 
       onSaved()
     } catch (error) {
-      console.error("Error saving diagnosis:", error)
+      Logger.error({ msg: "Error saving diagnosis:", error })
       Alert.alert(translate("common:error"), translate("diagnosisSearch:saveError"))
     } finally {
       setSaving(false)
@@ -301,7 +304,9 @@ function DiagnosisDetailsForm({
               }}
             >
               <Text
-                text={translate(showEndDate ? "diagnosisSearch:removeEndDate" : "diagnosisSearch:addEndDate")}
+                text={translate(
+                  showEndDate ? "diagnosisSearch:removeEndDate" : "diagnosisSearch:addEndDate",
+                )}
                 color={colors.palette.primary500}
                 textDecorationLine="underline"
               />
@@ -320,7 +325,12 @@ function DiagnosisDetailsForm({
 
           {/* Action buttons */}
           <View style={$buttonContainer}>
-            <Button text={translate("common:back")} preset="default" onPress={onBack} style={$button} />
+            <Button
+              text={translate("common:back")}
+              preset="default"
+              onPress={onBack}
+              style={$button}
+            />
             <Button
               text={translate("common:save")}
               preset="filled"
