@@ -1,0 +1,218 @@
+/* ── Theme Variables ── */
+
+:root {
+  --color-bg: #f9fafb;
+  --color-bg-surface: #ffffff;
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-border: #d1d5db;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-success: #16a34a;
+  --color-error: #dc2626;
+  --color-input-bg: #ffffff;
+  --color-input-ring: #2563eb;
+  --color-placeholder: #9ca3af;
+}
+
+.dark {
+  --color-bg: oklch(14.1% 0.005 285.823);          /* zinc-950 */
+  --color-bg-surface: oklch(21% 0.006 285.885);     /* zinc-900 */
+  --color-text: oklch(98.5% 0 0);                   /* zinc-50 */
+  --color-text-secondary: oklch(55.2% 0.016 285.938); /* zinc-500 */
+  --color-border: oklch(37% 0.013 285.805);          /* zinc-700 */
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-input-bg: oklch(21% 0.006 285.885);       /* zinc-900 */
+  --color-input-ring: #3b82f6;
+  --color-placeholder: oklch(55.2% 0.016 285.938);  /* zinc-500 */
+}
+
+/* ── Global ── */
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* ── Layout ── */
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* ── Login Form ── */
+
+.login-form {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+/* ── Buttons ── */
+
+.button-container {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+button.primary,
+button.secondary,
+button.danger,
+button.disabled {
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+button.primary {
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+button.primary:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+button.secondary {
+  background-color: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+button.secondary:hover:not(:disabled) {
+  background-color: var(--color-border);
+}
+
+button.danger {
+  background-color: var(--color-danger);
+  color: #ffffff;
+}
+
+button.danger:hover:not(:disabled) {
+  background-color: var(--color-danger-hover);
+}
+
+button.disabled {
+  background-color: var(--color-border);
+  color: var(--color-text-secondary);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ── Server Controls ── */
+
+.server-controls {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.status-display {
+  margin-bottom: 1rem;
+}
+
+.online {
+  color: var(--color-success);
+  font-weight: 600;
+}
+
+.offline {
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.status-message {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.error-message {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+/* ── QR Code ── */
+
+.qr-container {
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.qr-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+}
+
+.help-text {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+/* ── Input (shadcn-style) ── */
+
+.input {
+  display: flex;
+  height: 2.25rem;
+  width: 100%;
+  border-radius: 0.375rem;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-input-bg);
+  color: var(--color-text);
+  padding: 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.input::placeholder {
+  color: var(--color-placeholder);
+}
+
+.input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-input-ring);
+  border-color: var(--color-input-ring);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
