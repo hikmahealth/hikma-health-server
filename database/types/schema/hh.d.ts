@@ -5,16 +5,9 @@
 
 import type { ColumnType } from "kysely";
 
-export type Generated<T> =
-  T extends ColumnType<infer S, infer I, infer U>
-    ? ColumnType<S, I | undefined, U>
-    : ColumnType<T, T | undefined, T>;
-
-export type Int8 = ColumnType<
-  string,
-  bigint | number | string,
-  bigint | number | string
->;
+export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
+  ? ColumnType<S, I | undefined, U>
+  : ColumnType<T, T | undefined, T>;
 
 export type Json = JsonValue;
 
@@ -323,6 +316,14 @@ export interface Events {
   visit_id: string | null;
 }
 
+export interface HhUnique {
+  created_at: Generated<Timestamp>;
+  key: string;
+  tag: string | null;
+  updated_at: Generated<Timestamp>;
+  value: string;
+}
+
 export interface InventoryTransactions {
   balance_after: number;
   batch_id: string | null;
@@ -394,22 +395,6 @@ export interface PatientAllergyReactions {
   server_created_at: Generated<Timestamp>;
   severity: string | null;
   updated_at: Generated<Timestamp>;
-}
-
-export interface PatientEvents {
-  clinic_id: string;
-  created_at: Generated<Timestamp>;
-  deleted_at: Timestamp | null;
-  id: string;
-  is_deleted: Generated<boolean>;
-  last_modified: Generated<Timestamp>;
-  log_user_id: string | null;
-  name: string;
-  patient_id: string;
-  reference_patients_event_id: string | null;
-  server_created_at: Generated<Timestamp>;
-  updated_at: Generated<Timestamp>;
-  version: Generated<Int8 | null>;
 }
 
 export interface PatientObservations {
@@ -531,7 +516,6 @@ export interface PatientVitals {
   metadata: Generated<Json>;
   oxygen_saturation: Numeric | null;
   pain_level: number | null;
-  patient_event_id: string | null;
   patient_id: string;
   pulse_rate: number | null;
   recorded_by_user_id: string | null;
@@ -581,7 +565,6 @@ export interface Prescriptions {
   last_modified: Generated<Timestamp>;
   metadata: Generated<Json>;
   notes: Generated<string>;
-  patient_event_id: string | null;
   patient_id: string;
   pickup_clinic_id: string;
   prescribed_at: Generated<Timestamp>;
@@ -749,11 +732,11 @@ export interface DB {
   event_forms: EventForms;
   event_logs: EventLogs;
   events: Events;
+  hh_unique: HhUnique;
   inventory_transactions: InventoryTransactions;
   patient_additional_attributes: PatientAdditionalAttributes;
   patient_allergies: PatientAllergies;
   patient_allergy_reactions: PatientAllergyReactions;
-  patient_events: PatientEvents;
   patient_observations: PatientObservations;
   patient_problems: PatientProblems;
   patient_registration_forms: PatientRegistrationForms;
