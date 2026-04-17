@@ -4,10 +4,12 @@ $schema: "./cache/schemas/workspace.json"
 # extends: './shared/workspace.yml'
 
 projects:
-  - "apps/*"
-  - "packages/*"
-  - "packages/utils/*"
-  - "database"
+  globs:
+    - "apps/*"
+    - "packages/*"
+    - "packages/utils/*"
+  sources:
+    database: "database"
 
 vcs:
   client: "git"

@@ -14,9 +14,6 @@ tasks:
       - database:build
     outputs:
       - .output/**/*
-    env:
-      NODE_OPTIONS: --max-old-space-size=5120
-      NODE_ENV: "production"
   dev:
     command: pnpm run dev
     options:
@@ -25,11 +22,13 @@ tasks:
       - database:dev
     preset: server
   recovery:
-    command: pnpm run recovery:permissions
+    command: pnpm run recovery-permissions
     deps:
+      - database:build
       - database:migrate
     env:
       DB_MIGRATION: "true"
+      DB_SSL: "true"
 
   start:
     inputs:

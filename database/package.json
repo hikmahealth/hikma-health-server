@@ -2,6 +2,7 @@
   "name": "@hikmahealth/database",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "keywords": [],
   "exports": {
@@ -17,13 +18,10 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
-    "migrate_only:dev": "dotenv -e ../.env -- npx kysely migrate latest",
-    "migrate_down_only:dev": "dotenv -e ../.env -- npx kysely migrate down",
-    "migrate:dev:up": "pnpm run migrate_only:dev; pnpm run create_schema",
-    "migrate:dev:down": "pnpm run migrate_down_only:dev; pnpm run create_schema",
-    "migrate:prod": "DB_SSL=true DB_MIGRATION=true npx kysely migrate latest",
-    "create_schema": "dotenv -e ../.env -- npx kysely-codegen --config-file=server.kysely-codegen.json"
+    "build": "npx tsc -p tsconfig.build.json",
+    "dev": "npx kysely-codegen --config-file=server.kysely-codegen.json",
+    "migrate": "DB_SSL=true DB_MIGRATION=true npx kysely migrate latest; pnpm run dev",
+    "migrate-down": "DB_SSL=true DB_MIGRATION=true npx kysely migrate down; pnpm run dev"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.9",
@@ -31,9 +29,9 @@
     "@types/node": "^25.0.3",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.31.8",
-    "kysely": "^0.28.9",
+    "kysely": "^0.28.16",
     "kysely-codegen": "^0.19.0",
-    "kysely-ctl": "^0.19.0",
+    "kysely-ctl": "^0.20.0",
     "pg": "^8.16.3",
     "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",

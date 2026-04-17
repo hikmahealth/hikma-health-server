@@ -8,10 +8,11 @@
     "start": "APP_FOLDER=.server just start-server",
     "server:build": "APP_FOLDER=.server just build-server",
     "server:start": "APP_FOLDER=.server just start-server",
-    "aiproxy:build": "moon aiproxy:build",
-    "aiproxy:start": "moon aiproxy:start"
+    "aiproxy:build": "moon run aiproxy:build",
+    "aiproxy:start": "moon run aiproxy:start"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.61.1",
     "@moonrepo/cli": "^2.2.0",
     "oxlint": "^1.60.0",
     "prettier": "^3.7.4",

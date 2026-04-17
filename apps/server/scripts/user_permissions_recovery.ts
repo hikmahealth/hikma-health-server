@@ -24,7 +24,7 @@ import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
 import { Logger } from "@hikmahealth/js-utils";
 import type { Database } from "../src/db/index";
-import "dotenv/config";
+// import "dotenv/config";
 import UserClinicPermissions from "../src/models/user-clinic-permissions";
 import User from "../src/models/user";
 import db from "../src/db/index";

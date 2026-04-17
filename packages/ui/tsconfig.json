@@ -10,20 +10,36 @@
     "allowJs": true,
     "rootDir": "./src",
     "paths": {
-      "@/*": ["./*"],
-      "@hikmahealth/ui/lib/*": ["./lib/*"],
-      "@hikmahealth/ui/hooks/*": ["./hooks/*"],
-      "@hikmahealth/ui/components/*": ["./components/ui/*"],
-    },
+      "@/*": [
+        "./*"
+      ],
+      "@hikmahealth/ui/lib/*": [
+        "./lib/*"
+      ],
+      "@hikmahealth/ui/hooks/*": [
+        "./hooks/*"
+      ],
+      "@hikmahealth/ui/components/*": [
+        "./components/ui/*"
+      ]
+    }
   },
-  "include": ["./src"],
-  "exclude": ["node_modules", "dist"],
+  "include": [
+    "./src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
   "references": [
     {
-      "path": "../eslint-config",
+      "path": "../eslint-config"
     },
     {
-      "path": "../typescript-config",
+      "path": "../typescript-config"
     },
-  ],
+    {
+      "path": "../utils/js"
+    }
+  ]
 }

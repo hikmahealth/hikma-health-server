@@ -40,7 +40,7 @@ import type EducationContent from "@/models/education-content";
 import type Report from "@/models/report";
 import { Pool } from "pg";
 import type { StringId, StringContent } from "@/models/string-content";
-import "dotenv/config";
+// import "dotenv/config";
 
 export type Database = {
   string_ids: StringId.Table.StringIds;
@@ -89,8 +89,8 @@ enum EnvironmentType {
   Docker = "dev_docker",
 }
 
-import { getDatabaseConfig } from "@hikmahealth/database/config";
 import { type DB } from "@hikmahealth/database/types/schema/hh";
+import { getDatabaseConfig } from "@hikmahealth/database/config";
 
 // Application environment configuration
 const appEnv = (process.env.APP_ENV as EnvironmentType) || EnvironmentType.Prod;

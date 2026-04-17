@@ -1,2 +1,5 @@
 taskOptions:
   envFile: true
+  # default false, tasks have to OPT-IN to use this
+  # this doesn't seem to work reliably?
+  cache: false

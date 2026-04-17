@@ -1,15 +1,6 @@
-tasks:
-  migrate:
-    # should prepare the database state before running
-    # the service
-    command: pnpm migrate:prod
-    options:
-      cache: false
-  build:
-    command: pnpm build
-    outputs:
-      - dist/**/*
-  dev:
-    command: pnpm create_schema
-    outputs:
-      - /apps/web/src/db/types.d.ts
+layer: library
+language: typescript
+
+# by defaults, tasks are inherited from scripts
+# within the package.json
+tasks: {}

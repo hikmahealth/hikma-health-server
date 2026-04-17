@@ -1,1 +1,6 @@
 moon = "2.2.1"
+
+# this load all environment within the env.file
+# when running any `moon run` commands
+[env]
+file = ".env"

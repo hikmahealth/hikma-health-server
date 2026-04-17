@@ -1,4 +1,4 @@
-import "dotenv/config";
+// import "dotenv/config";
 import { Kysely, PostgresDialect } from "kysely";
 import { Pool } from "pg";
 import type { Database } from "@/db";

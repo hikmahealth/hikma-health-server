@@ -1,10 +1,12 @@
 # Enable JavaScript with custom settings
 javascript:
   packageManager: "pnpm"
+  syncProjectWorkspaceDependencies: true
+  inferTasksFromScripts: true
+  installDependencies: false
 
 # Enable TypeScript
-typescript:
-  packageManager: "pnpm"
+typescript: {}
 
 node: {}
 
