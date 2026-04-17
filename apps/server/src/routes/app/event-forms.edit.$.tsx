@@ -46,7 +46,7 @@ const DiagnosisSelect = lazy(() =>
   })),
 );
 import { toast } from "sonner";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const getFormById = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)

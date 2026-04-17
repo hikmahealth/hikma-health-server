@@ -1,8 +1,8 @@
 import * as React from "react";
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { CheckIcon } from "lucide-react";
-import { cn } from "@hh/ui/lib/utils";
-import { Label } from "@hh/ui/components/label";
+import { cn } from "@hikmahealth/ui/lib/utils";
+import { Label } from "@hikmahealth/ui/components/label";
 
 export interface CheckboxProps extends React.ComponentProps<
   typeof CheckboxPrimitive.Root

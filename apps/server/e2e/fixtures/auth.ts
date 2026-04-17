@@ -1,4 +1,4 @@
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 import { test as base, expect, type Page } from "@playwright/test";
 
 // Define the fixtures type

@@ -9,7 +9,7 @@
 import type { RpcResult, RpcError, LoginResponse } from "./types"
 import type { HubSession } from "./handshake"
 import { encryptForWire, decryptFromWire } from "./wire"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /**
  * Transport defines how command/query payloads are sent and received.

@@ -25,7 +25,7 @@ import {
 } from "@/lib/server-functions/users";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
 import { permissionsMiddleware } from "@/middleware/auth";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 // const getCurrentUserId = createServerFn({ method: "GET" }).handler(async () => {
 //   const tokenCookie = getCookieToken();

@@ -12,7 +12,7 @@ import { providerStore } from "@/store/provider"
 import AppConfig from "./AppConfig"
 import User from "./User"
 import { ok, err, type Result, type DataError } from "../../types/data"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace UserClinicPermissions {
   export type T = {

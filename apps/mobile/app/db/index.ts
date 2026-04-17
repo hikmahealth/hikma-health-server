@@ -31,7 +31,7 @@ import User from "./model/User"
 import UserClinicPermissions from "./model/UserClinicPermissions"
 import Visit from "./model/Visit"
 import schema from "./schema"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 // setGenerator(() => uuidv1())
 setGenerator(() => uuidv7())

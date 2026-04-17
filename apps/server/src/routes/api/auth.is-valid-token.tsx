@@ -3,7 +3,7 @@ import { getCookie, deleteCookie } from "@tanstack/react-start/server";
 import Token from "@/models/token";
 import { Option } from "effect";
 import { getCookieToken } from "@/lib/auth/request";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const Route = createFileRoute("/api/auth/is-valid-token")({
   server: {

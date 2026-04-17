@@ -20,7 +20,7 @@ import { PharmacyNavigatorParamList } from "@/navigators/PharmacyNavigator"
 import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface DispensePrescriptionItemScreenProps extends NativeStackScreenProps<

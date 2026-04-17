@@ -37,7 +37,7 @@ import {
   SafeAreaProvider,
   SafeAreaView,
 } from "react-native-safe-area-context"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 const HIKMA_API_TESTING = process.env.EXPO_PUBLIC_HIKMA_API_TESTING
 

@@ -35,7 +35,7 @@ import { getClinicInventory } from "@/lib/server-functions/inventory";
 import { Result } from "@/lib/result";
 import { LucidePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const ITEMS_PER_PAGE = 100;
 

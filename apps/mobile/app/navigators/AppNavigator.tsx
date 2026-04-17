@@ -31,7 +31,7 @@ import { AppointmentNavigator } from "./AppointmentNavigator"
 import { PharmacyNavigator } from "./PharmacyNavigator"
 import { navigationRef, useBackButtonHandler } from "./navigationUtilities"
 import { PatientNavigator } from "./PatientNavigator"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /**
  * This type allows TypeScript to know what routes are defined in this navigator

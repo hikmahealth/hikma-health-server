@@ -6,7 +6,7 @@ import Appointment from "@/models/Appointment"
 
 import database from "../db"
 import AppointmentModel from "../db/model/Appointment"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 type AppointmentsByDate = {
   date: Date

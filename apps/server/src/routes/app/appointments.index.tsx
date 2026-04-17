@@ -22,7 +22,7 @@ import { SelectInput } from "@/components/select-input";
 import { toggleAppointmentStatus } from "@/lib/server-functions/appointments";
 import { toast } from "sonner";
 import { useRouter } from "@tanstack/react-router";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const Route = createFileRoute("/app/appointments/")({
   component: RouteComponent,

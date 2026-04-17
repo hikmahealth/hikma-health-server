@@ -8,7 +8,7 @@ import PatientModel from "@/db/model/Patient"
 import VisitModel from "@/db/model/Visit"
 
 import User from "./User"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace Appointment {
   export const Status = {

@@ -42,7 +42,7 @@ import {
   type PrescriptionFormValues,
   type PrescriptionItemValues,
 } from "@/components/prescription-form";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 // Create a save prescription server function
 const savePrescription = createServerFn({ method: "POST" })

@@ -4,7 +4,7 @@ import { ReportComponentCard } from "./report-component-card";
 import { updateComponentSql } from "@/lib/server-functions/reports";
 import { useCallback } from "react";
 import type { reportComponent } from "@/lib/ai-service/report.gen";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 type ReportGridProps = ReportWithData & {
   isSuperAdmin?: boolean;

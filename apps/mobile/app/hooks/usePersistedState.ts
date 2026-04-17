@@ -1,5 +1,5 @@
 import { storage } from "@/utils/storage"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 import { useState, useEffect, useCallback } from "react"
 
 /**

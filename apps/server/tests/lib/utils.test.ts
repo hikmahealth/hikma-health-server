@@ -13,7 +13,7 @@ import {
   toSafeDateString,
   tryParseDate,
 } from "../../src/lib/utils";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 describe("isValidUUID", () => {
   it("should return true for valid UUID v4", () => {

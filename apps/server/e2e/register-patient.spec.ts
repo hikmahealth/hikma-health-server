@@ -1,4 +1,4 @@
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 import { test, expect } from "./fixtures/auth";
 
 test.describe("Patient Registration", () => {

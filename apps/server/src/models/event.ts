@@ -20,7 +20,7 @@ import { jsonObjectFrom } from "kysely/helpers/postgres";
 import { v1 as uuidV1 } from "uuid";
 import Visit from "./visit";
 import Patient from "./patient";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 namespace Event {
   export type T = {

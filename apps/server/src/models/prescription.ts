@@ -23,7 +23,7 @@ import type { RequestCaller } from "@/types";
 import { match, P } from "ts-pattern";
 import { Option as HHOption } from "@/lib/option";
 import Device from "./device";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 namespace Prescription {
   export const PrioritySchema = Schema.Union(

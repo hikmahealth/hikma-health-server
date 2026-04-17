@@ -4,7 +4,7 @@
  */
 // import * as Sentry from "@sentry/react-native"
 
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /**
  * If you're using Crashlytics: https://rnfirebase.io/crashlytics/usage

@@ -13,7 +13,7 @@ import { useState, useCallback, useEffect } from "react"
 import Peer from "@/models/Peer"
 import type { HubSession } from "@/rpc/handshake"
 import { parseQRCode, isHubQR } from "@/rpc/qrParser"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 export type PeerConnectionType = "sync_hub" | "cloud"
 

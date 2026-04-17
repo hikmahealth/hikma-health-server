@@ -40,7 +40,7 @@ import { PatientVitalsCard } from "@/components/patient/PatientVitalsCard";
 import { RecentVisitsList } from "@/components/patient/RecentVisitsList";
 import { PrescriptionsList } from "@/components/patient/PrescriptionsList";
 import { PatientProblemsList } from "@/components/patient/PatientProblemsList";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const Route = createFileRoute("/app/patients/$id")({
   component: RouteComponent,

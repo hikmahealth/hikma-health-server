@@ -1,2 +1,2 @@
-import { getDatabaseConfig } from "@repo/database/config";
+import { getDatabaseConfig } from "@hikmahealth/database/config";
 export { getDatabaseConfig };

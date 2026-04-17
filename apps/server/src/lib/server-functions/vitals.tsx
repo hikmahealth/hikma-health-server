@@ -3,7 +3,7 @@ import PatientVital from "@/models/patient-vital";
 import { userRoleTokenHasCapability } from "../auth/request";
 import User from "@/models/user";
 import * as Sentry from "@sentry/tanstackstart-react";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const getPatientVitals = createServerFn({
   method: "GET",

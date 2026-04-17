@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/table";
 import { currencyCodesOptions } from "@/data/currencies";
 import Creatable from "react-select/creatable";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 type NewBatchFormValues = {
   batch_number: string;

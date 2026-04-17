@@ -12,7 +12,7 @@ import UserClinicPermissions from "@/models/UserClinicPermissions"
 import { extendedSanitizeLikeString } from "@/utils/parsers"
 
 import { useDebounce } from "./useDebounce"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 export type SearchFilter = {
   query: string

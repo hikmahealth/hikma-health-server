@@ -23,7 +23,7 @@ import {
 import { isValidUUID, safeJSONParse, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import { v1 as uuidV1 } from "uuid";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const validateDrugId = (id: string): Effect.Effect<string, ValidationError> => {
   if (!id || id.length === 0) {

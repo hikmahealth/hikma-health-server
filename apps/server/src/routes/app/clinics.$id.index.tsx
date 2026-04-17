@@ -33,7 +33,7 @@ import type Clinic from "@/models/clinic";
 import type ClinicDepartment from "@/models/clinic-department";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const Route = createFileRoute("/app/clinics/$id/")({
   loader: async ({ params }) => {

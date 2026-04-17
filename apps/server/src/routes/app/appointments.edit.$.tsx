@@ -41,7 +41,7 @@ import { getPatientById } from "@/lib/server-functions/patients";
 import type Patient from "@/models/patient";
 import If from "@/components/if";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const saveAppointment = createServerFn({ method: "POST" })
   .inputValidator(

@@ -30,7 +30,7 @@ import { safeStringify } from "@/utils/parsers"
 import { applyRemoteChanges, fetchLocalChanges, markLocalChangesAsSynced } from "./localSync"
 
 import database from "."
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 global.Buffer = require("buffer").Buffer
 

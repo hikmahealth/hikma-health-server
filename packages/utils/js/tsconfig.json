@@ -1,5 +1,5 @@
 {
-  "extends": "@hh/typescript-config/base.json",
+  "extends": "@hikmahealth/typescript-config/base.json",
   "compilerOptions": {
     "incremental": true,
     "composite": true,

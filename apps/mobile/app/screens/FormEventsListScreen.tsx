@@ -19,7 +19,7 @@ import Event from "@/models/Event"
 import { PatientNavigatorParamList } from "@/navigators/PatientNavigator"
 import { languageStore } from "@/store/language"
 import { Screen } from "@/components/Screen"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface FormEventsListScreenProps extends NativeStackScreenProps<
   PatientNavigatorParamList,

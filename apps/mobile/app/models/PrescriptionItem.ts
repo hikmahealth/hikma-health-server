@@ -6,7 +6,7 @@ import ClinicInventoryModel from "@/db/model/ClinicInventory"
 import DrugCatalogueModel from "@/db/model/DrugCatalogue"
 import PrescriptionItemModel from "@/db/model/PrescriptionItem"
 import DispensingRecordModel from "@/db/model/DispensingRecord"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace PrescriptionItem {
   export type T = {

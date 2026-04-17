@@ -17,7 +17,7 @@ import Event from "./Event"
 import PatientRegistrationForm from "./PatientRegistrationForm"
 import UserClinicPermissions from "./UserClinicPermissions"
 import Visit from "./Visit"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace Patient {
   export type T = {

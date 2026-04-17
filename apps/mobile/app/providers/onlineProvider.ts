@@ -39,7 +39,7 @@ import type { UpdatePatientInput } from "../../types/patient"
 import type { CreateProblemInput, UpdateProblemInput } from "../../types/problem"
 import type { CreateVisitInput } from "../../types/visit"
 import type { CreateVitalsInput } from "../../types/vitals"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /** Map HTTP error to DataError */
 function toDataError(error: { message: string; statusCode: number }): DataError {

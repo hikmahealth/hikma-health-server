@@ -26,7 +26,7 @@ import Device from "./device";
 import DevicePinCode from "./device-pin-code";
 import UserClinicPermissions from "./user-clinic-permissions";
 import type { RequestCaller } from "@/types";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 /** Returns true if the value looks like a raw epoch timestamp (10-13 digit numeric string or number, possibly negative for pre-1970 dates). */
 export const isEpochTimestamp = (value: unknown): boolean =>

@@ -299,7 +299,7 @@ const INCLUDED_TABLES = [
 import ServerVariable from "@/models/server_variable";
 import { Result } from "../result";
 import { match } from "ts-pattern";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 type ManagerReportRequest = {
   user_prompt: string;

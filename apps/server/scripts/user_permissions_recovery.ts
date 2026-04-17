@@ -22,7 +22,7 @@
 
 import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 import type { Database } from "../src/db/index";
 import "dotenv/config";
 import UserClinicPermissions from "../src/models/user-clinic-permissions";

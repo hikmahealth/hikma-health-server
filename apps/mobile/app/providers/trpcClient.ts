@@ -5,7 +5,7 @@
  * the existing HttpClient. No @trpc/client dependency.
  */
 
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 import type { HttpClient, HttpResponse } from "./httpClient"
 
 /**

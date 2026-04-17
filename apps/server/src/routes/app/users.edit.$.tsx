@@ -4,7 +4,7 @@ import User from "@/models/user";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link } from "@tanstack/react-router";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 import {
   Form,
   FormControl,

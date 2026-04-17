@@ -23,7 +23,7 @@ import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
 import { spacing } from "@/theme/spacing"
 import { translate } from "@/i18n/translate"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 const miniSearch = new MiniSearch({
   fields: ["desc", "code"],

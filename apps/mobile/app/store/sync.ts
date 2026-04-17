@@ -2,7 +2,7 @@ import { createStore } from "@xstate/store"
 import { Option } from "effect"
 
 import Sync from "@/models/Sync"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 export const syncStore = createStore({
   context: {

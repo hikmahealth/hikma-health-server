@@ -1,4 +1,4 @@
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 import { differenceInYears, differenceInMonths, differenceInDays, format, Locale } from "date-fns"
 import * as locales from "date-fns/locale"
 import i18nLib from "i18next"

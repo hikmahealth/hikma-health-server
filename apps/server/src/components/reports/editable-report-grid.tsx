@@ -10,7 +10,7 @@ import { editReportComponent } from "@/lib/ai-service/reports-editor";
 import { ReportComponentCard } from "./report-component-card";
 import { updateComponentSql } from "@/lib/server-functions/reports";
 import type { reportComponent } from "@/lib/ai-service/report.gen";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 type EditableReportGridProps = ReportWithData & {
   isSuperAdmin?: boolean;

@@ -7,7 +7,7 @@ import User from "@/models/user";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
 import * as Sentry from "@sentry/tanstackstart-react";
 import type Clinic from "@/models/clinic";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 /** Middleware that rejects requests from users who are not super_admin. */
 export const superAdminMiddleware = createMiddleware({

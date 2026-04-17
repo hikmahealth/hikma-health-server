@@ -42,7 +42,7 @@ import { parseYYYYMMDD } from "@/utils/date"
 import { toggleStringInArray, isValidUUID } from "@/utils/misc"
 import { getTranslation, splitCheckboxValues, joinCheckboxValues } from "@/utils/parsers"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface PatientRecordEditorScreenProps extends PatientStackScreenProps<"PatientRecordEditor"> {}

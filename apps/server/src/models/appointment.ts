@@ -24,7 +24,7 @@ import Clinic from "./clinic";
 import type { RequestCaller } from "@/types";
 import { match, P } from "ts-pattern";
 import { uuidv7 } from "uuidv7";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 namespace Appointment {
   export const StatusSchema = Schema.Union(

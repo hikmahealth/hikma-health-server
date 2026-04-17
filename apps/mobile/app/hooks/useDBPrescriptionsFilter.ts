@@ -5,7 +5,7 @@ import { useDebounceValue } from "usehooks-ts"
 import database from "@/db"
 import PrescriptionModel from "@/db/model/Prescription"
 import Prescription from "@/models/Prescription"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 type ISOStringDate = string
 

@@ -29,7 +29,7 @@ import {
   getDrugStats,
   searchDrugs,
 } from "@/lib/server-functions/drugs";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const ITEMS_PER_PAGE = 100;
 

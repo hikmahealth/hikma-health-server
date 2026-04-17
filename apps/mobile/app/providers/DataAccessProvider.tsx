@@ -15,7 +15,7 @@ import type { DataProvider } from "../../types/data"
 import { createOfflineProvider } from "./offlineProvider"
 import { createRpcProvider } from "./rpcProvider"
 import { deriveProviderKind, type ProviderKind } from "./deriveProvider"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 type DataAccessContextValue = {
   mode: OperationMode

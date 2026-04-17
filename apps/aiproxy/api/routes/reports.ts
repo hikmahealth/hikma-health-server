@@ -21,7 +21,7 @@ import { compile_prql } from "../../src/compiler.js";
 import { resolve_ai_api_key, type client } from "../../src/clients.js";
 import { swap_uuids } from "../../src/uuid_swap.js";
 import { create_validator, type pg_validator } from "../../src/pg-validator.js";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 type app_env = { Variables: { client: client } };
 

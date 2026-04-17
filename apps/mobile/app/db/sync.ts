@@ -20,7 +20,7 @@ import Peer from "@/models/Peer"
 import database from "."
 import { Platform } from "react-native"
 import { toDateSafe } from "@/utils/date"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 global.Buffer = require("buffer").Buffer
 

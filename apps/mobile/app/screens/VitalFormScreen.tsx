@@ -17,7 +17,7 @@ import PatientVitals from "@/models/PatientVitals"
 import { PatientStackScreenProps } from "@/navigators/PatientNavigator"
 import { providerStore } from "@/store/provider"
 import { spacing } from "@/theme/spacing"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface VitalFormScreenProps extends PatientStackScreenProps<"VitalForm"> {}
 

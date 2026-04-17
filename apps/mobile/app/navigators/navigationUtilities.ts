@@ -12,7 +12,7 @@ import * as storage from "@/utils/storage"
 import { useIsMounted } from "@/utils/useIsMounted"
 
 import type { AppStackParamList, NavigationProps } from "./AppNavigator"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 type Storage = typeof storage
 

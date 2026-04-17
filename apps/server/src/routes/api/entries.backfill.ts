@@ -5,7 +5,7 @@ import { parse } from "csv-parse";
 import { z } from "zod";
 import { readEntriesFromRequest, type SpecialEntry } from "@/imports/a/utils";
 import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
-import type { DB } from "@repo/database/types/schema/hh";
+import type { DB } from "@hikmahealth/database/types/schema/hh";
 import type {
   InsertExpression,
   InsertObject,

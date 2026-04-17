@@ -70,7 +70,7 @@ import {
 import { forEach } from "ramda";
 import { useEffect } from "react";
 import { useImmerReducer } from "use-immer";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 // Function to get all patients for export (no pagination)
 const getAllPatientsForExport = createServerFn({ method: "GET" }).handler(

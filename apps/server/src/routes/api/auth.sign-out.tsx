@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { deleteCookie, getCookie } from "@tanstack/react-start/server";
 import Token from "@/models/token";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const Route = createFileRoute("/api/auth/sign-out")({
   server: {

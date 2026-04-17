@@ -35,7 +35,7 @@ import { MODE_PREFERENCE_KEY } from "@/hooks/useOperationModeInit"
 import Peer from "@/models/Peer"
 import { operationModeStore } from "@/store/operationMode"
 import { saveString } from "@/utils/storage"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 export type SwitchResult =
   | { ok: true }

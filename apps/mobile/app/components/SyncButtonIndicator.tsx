@@ -11,7 +11,7 @@ import Animated, {
 
 import { useSync } from "@/hooks/useSync"
 import { colors } from "@/theme/colors"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 export interface SyncButtonIndicatorProps {
   /**

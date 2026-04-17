@@ -3,7 +3,7 @@ import { superAdminMiddleware } from "@/middleware/auth";
 import db, { pool } from "@/db";
 import { sql } from "kysely";
 import { validateSQL } from "@/db/utils";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 /**
  * Validate and update the compiled SQL of a single report component.

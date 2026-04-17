@@ -36,7 +36,7 @@ import type Patient from "@/models/patient";
 import DrugCatalogue from "@/models/drug-catalogue";
 import { useClinicInventory } from "@/hooks/useClinicInventory";
 import type User from "@/models/user";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 // Define the prescription item schema based on the migration
 const prescriptionItemSchema = z.object({

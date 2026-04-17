@@ -35,7 +35,7 @@ import UserClinicPermissions from "@/models/user-clinic-permissions";
 import { toast } from "sonner";
 import { permissionsMiddleware } from "@/middleware/auth";
 import User from "@/models/user";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const addClinicPermissions = createServerFn({ method: "POST" })
   .inputValidator(

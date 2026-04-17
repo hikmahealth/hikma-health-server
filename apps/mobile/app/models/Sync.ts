@@ -10,7 +10,7 @@ import { result } from "es-toolkit/compat"
 
 import { storage } from "@/utils/storage"
 import Peer from "@/models/Peer"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace Sync {
   export type StateT = "idle" | "fetching" | "resolving" | "pushing" | "error"

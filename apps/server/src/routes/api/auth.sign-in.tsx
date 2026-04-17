@@ -8,7 +8,7 @@ import {
   tooManyRequestsResponse,
 } from "@/lib/rate-limiter";
 import { minutesToMilliseconds } from "date-fns";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const authLimiter = createRateLimiter({
   windowMs: minutesToMilliseconds(15),

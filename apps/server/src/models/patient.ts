@@ -33,7 +33,7 @@ import PatientVital from "./patient-vital";
 import PatientProblem from "./patient-problem";
 import PatientObservation from "./patient-observation";
 import { cascadeSoftDelete } from "@/lib/soft-delete-registry";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 namespace Patient {
   // export type T = {

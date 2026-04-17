@@ -27,7 +27,7 @@ import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
 import { generateDummyPatients, insertBenchmarkingData } from "@/utils/benchmarking"
 import Peer from "@/models/Peer"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface SettingsScreenProps extends AppStackScreenProps<"Settings"> {}
 

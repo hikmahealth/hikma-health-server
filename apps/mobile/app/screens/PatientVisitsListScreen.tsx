@@ -12,7 +12,7 @@ import { useDataAccess } from "@/providers/DataAccessProvider"
 import { useProviderPatientVisits } from "@/hooks/useProviderPatientVisits"
 import type { AppStackScreenProps } from "@/navigators/AppNavigator"
 import { PatientNavigatorParamList } from "@/navigators/PatientNavigator"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface PatientVisitsListScreenProps extends NativeStackScreenProps<
   PatientNavigatorParamList,

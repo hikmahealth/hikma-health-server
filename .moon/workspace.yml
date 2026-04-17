@@ -8,6 +8,7 @@ projects:
   - "packages/*"
   - "packages/utils/*"
   - "database"
+
 vcs:
   client: "git"
   defaultBranch: "main"

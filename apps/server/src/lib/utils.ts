@@ -1,4 +1,4 @@
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 import { clsx, type ClassValue } from "clsx";
 import {
   differenceInDays,

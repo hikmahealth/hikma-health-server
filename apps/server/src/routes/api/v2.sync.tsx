@@ -14,7 +14,7 @@ import Clinic from "@/models/clinic";
 import { Option } from "@/lib/option";
 import { Result } from "@/lib/result";
 import { minutesToMilliseconds } from "date-fns";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const syncLimiter = createRateLimiter({
   windowMs: minutesToMilliseconds(1),

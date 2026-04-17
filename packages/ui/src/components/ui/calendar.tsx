@@ -8,8 +8,8 @@ import {
 } from "lucide-react";
 import { DayButton, DayPicker, getDefaultClassNames } from "react-day-picker";
 
-import { cn } from "@hh/ui/lib/utils";
-import { Button, buttonVariants } from "@hh/ui/components/button";
+import { cn } from "@hikmahealth/ui/lib/utils";
+import { Button, buttonVariants } from "@hikmahealth/ui/components/button";
 
 function Calendar({
   className,

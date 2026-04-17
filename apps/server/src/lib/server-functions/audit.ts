@@ -9,7 +9,7 @@ import * as Sentry from "@sentry/tanstackstart-react";
 import db from "@/db";
 import EventLog from "@/models/event-logs";
 import { getRequestHeader } from "@tanstack/react-start/server";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 /**
  * Build an EventLog.RequestContext from the current server function request.

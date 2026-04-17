@@ -8,7 +8,7 @@ import VisitModel from "@/db/model/Visit"
 
 import ICDEntry from "./ICDEntry"
 import { isValid } from "date-fns"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace Event {
   export type FormDataItem =

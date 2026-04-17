@@ -9,7 +9,7 @@ import type {
   UpdatePatientInput,
   PatientAdditionalAttributeInput,
 } from "../../../types/patient"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /** Server-side patient shape (snake_case) */
 export type ServerPatient = {

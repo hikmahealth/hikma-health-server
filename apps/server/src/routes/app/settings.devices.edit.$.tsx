@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import { AlertTriangle, Copy, Check } from "lucide-react";
 import upperFirst from "lodash/upperFirst";
 import Creatable from "react-select/creatable";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 // ── Server functions ──────────────────────────────────────────────
 

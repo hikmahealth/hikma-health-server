@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { getEventForms } from "@/lib/server-functions/event-forms";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { Result } from "@/lib/result";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const deleteForm = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string }) => d)

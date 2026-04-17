@@ -30,7 +30,7 @@ import { useSelector } from "@xstate/react"
 import { providerStore } from "@/store/provider"
 import { useFocusEffect } from "@react-navigation/native"
 import { usePermissionGuard } from "@/hooks/usePermissionGuard"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface AppointmentViewScreenProps extends NativeStackScreenProps<

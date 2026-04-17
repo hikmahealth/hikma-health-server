@@ -21,7 +21,7 @@ import React from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { getPatientRegistrationForm } from "@/lib/server-functions/patient-registration-forms";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const saveForm = createServerFn({ method: "POST" })
   .inputValidator((data: PatientRegistrationForm.EncodedT) => data)

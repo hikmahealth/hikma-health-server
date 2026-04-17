@@ -48,7 +48,7 @@ import { appStateStore } from "@/store/appState"
 import { languageStore } from "@/store/language"
 import { colors } from "@/theme/colors"
 import { localeDate } from "@/utils/date"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 const { height } = Dimensions.get("window")
 

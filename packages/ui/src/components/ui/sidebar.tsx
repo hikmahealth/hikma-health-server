@@ -5,25 +5,25 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 
-import { useIsMobile } from "@hh/ui/hooks/use-mobile";
-import { cn } from "@hh/ui/lib/utils";
-import { Button } from "@hh/ui/components/button";
-import { Input } from "@hh/ui/components/input";
-import { Separator } from "@hh/ui/components/separator";
+import { useIsMobile } from "@hikmahealth/ui/hooks/use-mobile";
+import { cn } from "@hikmahealth/ui/lib/utils";
+import { Button } from "@hikmahealth/ui/components/button";
+import { Input } from "@hikmahealth/ui/components/input";
+import { Separator } from "@hikmahealth/ui/components/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "@hh/ui/components/sheet";
-import { Skeleton } from "@hh/ui/components/skeleton";
+} from "@hikmahealth/ui/components/sheet";
+import { Skeleton } from "@hikmahealth/ui/components/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@hh/ui/components/tooltip";
+} from "@hikmahealth/ui/components/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;

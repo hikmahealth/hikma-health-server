@@ -30,7 +30,7 @@ import { NetworkStatusIndicator } from "./NetworkStatusIndicator"
 import { SyncButtonIndicator } from "./SyncButtonIndicator"
 import { resetRoot, useNavigationPersistence } from "@/navigators/navigationUtilities"
 import { CommonActions, DrawerActions, StackActions, useNavigation } from "@react-navigation/native"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 const { height } = Dimensions.get("window")
 

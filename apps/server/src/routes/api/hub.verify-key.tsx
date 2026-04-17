@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import Device from "@/models/device";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export const Route = createFileRoute("/api/hub/verify-key")({
   server: {

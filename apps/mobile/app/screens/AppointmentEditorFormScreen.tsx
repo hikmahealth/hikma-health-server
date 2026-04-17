@@ -31,7 +31,7 @@ import { colors } from "@/theme/colors"
 import { spacing } from "@/theme/spacing"
 import { If } from "@/components/If"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface AppointmentEditorFormScreenProps extends NativeStackScreenProps<

@@ -18,7 +18,7 @@ import { SyncDatabaseChangeSet, SyncTableChangeSet } from "@nozbe/watermelondb/s
 import { chunk } from "es-toolkit/compat"
 
 import database from "."
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 // ── Constants ─────────────────────────────────────────────────────────
 

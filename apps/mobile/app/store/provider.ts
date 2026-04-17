@@ -4,7 +4,7 @@ import { Option } from "effect"
 
 import User from "@/models/User"
 import UserClinicPermissions from "@/models/UserClinicPermissions"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 export const providerStore = createStore({
   context: {

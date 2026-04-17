@@ -3,7 +3,7 @@ import { Option } from "effect"
 import AppConfigModel from "@/db/model/AppConfig"
 import database from "@/db"
 import { Q } from "@nozbe/watermelondb"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace AppConfig {
   export type T = {

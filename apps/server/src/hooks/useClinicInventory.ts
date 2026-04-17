@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getClinicInventory } from "@/lib/server-functions/inventory";
 import type ClinicInventory from "@/models/clinic-inventory";
 import { useDebounceValue } from "usehooks-ts";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 export interface InventoryItem extends ClinicInventory.DrugWithBatchInfo {
   // Additional properties if needed can be added here

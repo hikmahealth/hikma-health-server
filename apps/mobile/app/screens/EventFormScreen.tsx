@@ -56,7 +56,7 @@ import {
 } from "@/utils/eventFormTranslations"
 import { sanitizeFieldName, unsanitizeFormData } from "@/utils/fieldNameSanitizer"
 import { useSafeAreaInsetsStyle } from "@/utils/useSafeAreaInsetsStyle"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 type ModalState =
   | { activeModal: null }

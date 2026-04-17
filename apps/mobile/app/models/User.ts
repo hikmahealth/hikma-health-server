@@ -8,7 +8,7 @@ import database from "@/db"
 import UserModel from "@/db/model/User"
 import { Q } from "@nozbe/watermelondb"
 import { LoginResponse } from "@/rpc/types"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 namespace User {
   export const Roles = {

@@ -12,10 +12,10 @@
   },
   "aliases": {
     "components": "@/components/ui",
-    "utils": "@hh/ui/lib/utils",
-    "ui": "@hh/ui/components",
-    "lib": "@hh/ui/lib",
-    "hooks": "@hh/ui/hooks"
+    "utils": "@hikmahealth/ui/lib/utils",
+    "ui": "@hikmahealth/ui/components",
+    "lib": "@hikmahealth/ui/lib",
+    "hooks": "@hikmahealth/ui/hooks"
   },
   "iconLibrary": "lucide"
 }

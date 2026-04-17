@@ -15,7 +15,7 @@ import type Patient from "./patient";
 import type User from "./user";
 import type PrescriptionItem from "./prescription-items";
 import DrugCatalogue from "./drug-catalogue";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 namespace DispensingRecord {
   export interface DispensingRecordData {

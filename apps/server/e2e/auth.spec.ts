@@ -1,5 +1,5 @@
 import { test, expect } from "./fixtures/auth";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 test.describe("Authentication Flow", () => {
   test("should sign in, access dashboard, and sign out", async ({ page }) => {

@@ -4,7 +4,7 @@ import database from "@/db"
 import Appointment from "@/models/Appointment"
 import Clinic from "@/models/Clinic"
 import Patient from "@/models/Patient"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /**
  * Fetches an appointment from the database given its ID.

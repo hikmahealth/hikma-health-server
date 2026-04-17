@@ -1,5 +1,5 @@
 {
-  "name": "@hh/js-utils",
+  "name": "@hikmahealth/js-utils",
   "namespace": false,
   "sources": {
     "dir": "src",

@@ -25,7 +25,7 @@ import { joinCheckboxValues, splitCheckboxValues } from "@/lib/utils";
 import { Result } from "@/lib/result";
 import { getCookie } from "@tanstack/react-start/server";
 import { createServerCaller } from "@/integrations/trpc/router";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 type RegisterPatientInput = {
   patient: {

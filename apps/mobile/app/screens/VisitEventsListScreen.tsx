@@ -34,7 +34,7 @@ import { useDataAccess } from "@/providers/DataAccessProvider"
 import { languageStore } from "@/store/language"
 import { providerStore } from "@/store/provider"
 import { colors } from "@/theme/colors"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface VisitEventsListScreenProps extends PatientStackScreenProps<"VisitEventsList"> {}
 

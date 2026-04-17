@@ -27,7 +27,7 @@ import { useAppTheme } from "@/theme/context"
 import { calculateAge } from "@/utils/date"
 import { getPrescriptionItemStatusColor } from "@/utils/misc"
 import { enhancePrescribedDrugsItem } from "@/db/enhancers/enhancePrescribedDrugsItem"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 // import { useNavigation } from "@react-navigation/native"
 
 interface PrescriptionViewScreenProps extends NativeStackScreenProps<

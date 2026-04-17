@@ -1,4 +1,4 @@
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 import * as Sentry from "@sentry/react-native"
 /**
  * A sanitizer function for the metadata JSON field.

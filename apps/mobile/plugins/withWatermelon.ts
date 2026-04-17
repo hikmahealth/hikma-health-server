@@ -6,7 +6,7 @@ import {
   withXcodeProject,
 } from "@expo/config-plugins"
 import { ExpoConfig } from "@expo/config-types"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 import filesys from "fs"
 import path from "path"
 import resolveFrom from "resolve-from"

@@ -6,7 +6,7 @@ import Toast from "react-native-root-toast"
 import { colors } from "@/theme/colors"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 export interface UpdateAvailableIndicatorProps {
   /**

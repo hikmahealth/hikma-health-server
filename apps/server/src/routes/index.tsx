@@ -9,7 +9,7 @@ import { getCookie, deleteCookie } from "@tanstack/react-start/server";
 import Token from "@/models/token";
 
 import { Option } from "effect";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const checkToken = createServerFn({ method: "GET" }).handler(async () => {
   const token = Option.fromNullable(getCookie("token"));

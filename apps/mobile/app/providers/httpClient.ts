@@ -5,7 +5,7 @@
  * Wraps apisauce for testability — tests can mock the HttpClient type directly.
  */
 
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 import { create, ApisauceInstance } from "apisauce"
 
 export type HttpResponse<T> =

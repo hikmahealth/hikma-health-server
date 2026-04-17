@@ -5,7 +5,7 @@ import RegistrationFormModel from "@/db/model/PatientRegistrationForm"
 import Language from "@/models/Language"
 import Patient from "@/models/Patient"
 import PatientRegistrationForm from "@/models/PatientRegistrationForm"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /**
  * As per the spec of mandatory fields, we need to have a set of fields that are required for all registration forms

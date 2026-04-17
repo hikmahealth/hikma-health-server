@@ -44,7 +44,7 @@ import { useAppTheme } from "@/theme/context"
 import { ThemedStyle } from "@/theme/types"
 import { calculateAge } from "@/utils/date"
 import { friendlyString } from "@/utils/misc"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface PrescriptionEditorFormScreenProps extends NativeStackScreenProps<
   PharmacyNavigatorParamList,

@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { getAllClinics } from "@/lib/server-functions/clinics";
 import { Result } from "@/lib/result";
 import { Link } from "@tanstack/react-router";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const deleteClinic = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)

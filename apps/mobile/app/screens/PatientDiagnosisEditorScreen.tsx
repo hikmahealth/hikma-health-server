@@ -21,7 +21,7 @@ import PatientProblems from "@/models/PatientProblems"
 import { PatientStackScreenProps } from "@/navigators/PatientNavigator"
 import { colors } from "@/theme/colors"
 import { spacing } from "@/theme/spacing"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 const CLINICAL_STATUSES: PatientProblems.ClinicalStatus[] = [
   "active",

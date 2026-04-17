@@ -5,7 +5,7 @@ import ClinicDepartment from "@/models/clinic-department";
 import { permissionsMiddleware } from "@/middleware/auth";
 import UserClinicPermissions from "@/models/user-clinic-permissions";
 import { Result } from "@/lib/result";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 /**
  * Get all clinics

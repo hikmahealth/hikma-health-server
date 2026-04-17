@@ -24,7 +24,7 @@ import { SelectInput } from "@/components/select-input";
 import { upperFirst } from "es-toolkit/compat";
 import { getDrugById, saveDrug } from "@/lib/server-functions/drugs";
 import { currencyCodesOptions } from "@/data/currencies";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 const DEFAULT_FORM_VALUES: Partial<DrugCatalogue.ApiDrug> = {
   barcode: null,

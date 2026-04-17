@@ -1,5 +1,5 @@
 {
-  "extends": "@hh/typescript-config/react-library.json",
+  "extends": "@hikmahealth/typescript-config/react-library.json",
   "compilerOptions": {
     "outDir": "dist",
     "module": "ES2015",
@@ -10,33 +10,20 @@
     "allowJs": true,
     "rootDir": "./src",
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@hh/ui/lib/*": [
-        "./lib/*"
-      ],
-      "@hh/ui/hooks/*": [
-        "./hooks/*"
-      ],
-      "@hh/ui/components/*": [
-        "./components/ui/*"
-      ]
-    }
+      "@/*": ["./*"],
+      "@hikmahealth/ui/lib/*": ["./lib/*"],
+      "@hikmahealth/ui/hooks/*": ["./hooks/*"],
+      "@hikmahealth/ui/components/*": ["./components/ui/*"],
+    },
   },
-  "include": [
-    "./src"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ],
+  "include": ["./src"],
+  "exclude": ["node_modules", "dist"],
   "references": [
     {
-      "path": "../eslint-config"
+      "path": "../eslint-config",
     },
     {
-      "path": "../typescript-config"
-    }
-  ]
+      "path": "../typescript-config",
+    },
+  ],
 }

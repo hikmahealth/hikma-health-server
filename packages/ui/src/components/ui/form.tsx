@@ -11,8 +11,8 @@ import {
   type FieldValues,
 } from "react-hook-form";
 
-import { cn } from "@hh/ui/lib/utils";
-import { Label } from "@hh/ui/components/label";
+import { cn } from "@hikmahealth/ui/lib/utils";
+import { Label } from "@hikmahealth/ui/components/label";
 
 type FormFieldContextValue<
   TFieldValues extends FieldValues = FieldValues,

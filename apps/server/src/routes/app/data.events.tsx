@@ -28,7 +28,7 @@ import { format } from "date-fns";
 import { createServerFn } from "@tanstack/react-start";
 import User from "@/models/user";
 import { getCurrentUser } from "@/lib/server-functions/auth";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 // Function endpoint to get all the event data for exports (no pagination)
 // const getEventDataForExport = createServerFn({ method: "GET" }).handler(

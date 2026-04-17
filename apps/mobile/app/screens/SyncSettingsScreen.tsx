@@ -43,7 +43,7 @@ import {
   type ServerDisplay,
 } from "./syncSettingsHelpers"
 import { If } from "@/components/If"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface SyncSettingsScreenProps extends AppStackScreenProps<"SyncSettings"> {}
 const { height, width } = Dimensions.get("screen")

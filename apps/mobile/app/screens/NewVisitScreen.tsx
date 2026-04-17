@@ -37,7 +37,7 @@ import { colors } from "@/theme/colors"
 import { toDateSafe } from "@/utils/date"
 import { resolveFormTranslations } from "@/utils/eventFormTranslations"
 import { formatDate } from "@/utils/formatDate"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 interface NewVisitScreenProps extends NativeStackScreenProps<
   PatientNavigatorParamList,

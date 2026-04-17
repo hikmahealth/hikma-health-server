@@ -18,7 +18,7 @@ import { cascadeSoftDelete } from "@/lib/soft-delete-registry";
 import { safeJSONParse, toSafeDateString } from "@/lib/utils";
 import UserClinicPermissions from "./user-clinic-permissions";
 import Patient from "./patient";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 
 namespace Visit {
   export type T = {

@@ -1,5 +1,5 @@
 {
-  "name": "@hh/js-utils",
+  "name": "@hikmahealth/js-utils",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
@@ -33,7 +33,7 @@
     "rescript": "12.2.0"
   },
   "devDependencies": {
-    "@hh/typescript-config": "workspace:*",
+    "@hikmahealth/typescript-config": "workspace:*",
     "typescript": "^6.0.2"
   }
 }

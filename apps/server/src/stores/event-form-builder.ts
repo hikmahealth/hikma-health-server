@@ -1,6 +1,6 @@
 import EventForm from "@/models/event-form";
 import { arrayMove } from "@dnd-kit/sortable";
-import { Logger } from "@hh/js-utils";
+import { Logger } from "@hikmahealth/js-utils";
 import { createStore } from "@xstate/store";
 import { Either, Option } from "effect";
 import type { Mutable } from "effect/Types";

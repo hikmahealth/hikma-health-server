@@ -26,7 +26,7 @@ import Sync from "@/models/Sync"
 import { appStateStore } from "@/store/appState"
 import { operationModeStore } from "@/store/operationMode"
 import { syncStore } from "@/store/sync"
-import { Logger } from "@hh/js-utils"
+import { Logger } from "@hikmahealth/js-utils"
 
 /**
  * Find the active peer to sync with.

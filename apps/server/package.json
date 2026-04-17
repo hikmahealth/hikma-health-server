@@ -38,7 +38,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@faker-js/faker": "^9.6.0",
-    "@hh/js-utils": "workspace:*",
+    "@hikmahealth/js-utils": "workspace:*",
     "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.2",
@@ -55,7 +55,7 @@
     "@radix-ui/react-switch": "^1.2.5",
     "@radix-ui/react-tabs": "^1.1.13",
     "@radix-ui/react-tooltip": "^1.2.7",
-    "@repo/database": "workspace:*",
+    "@hikmahealth/database": "workspace:*",
     "@sentry/tanstackstart-react": "^10.34.0",
     "@t3-oss/env-core": "^0.12.0",
     "@tailwindcss/vite": "^4.0.6",
@@ -131,7 +131,7 @@
     "uuidv7": "^1.1.0",
     "xstate": "^5.30.0",
     "zod": "^4.3.6",
-    "@hh/ui": "workspace:*"
+    "@hikmahealth/ui": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",

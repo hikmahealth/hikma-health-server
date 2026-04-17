@@ -89,8 +89,8 @@ enum EnvironmentType {
   Docker = "dev_docker",
 }
 
-import { getDatabaseConfig } from "@repo/database/config";
-import { type DB } from "@repo/database/types/schema/hh";
+import { getDatabaseConfig } from "@hikmahealth/database/config";
+import { type DB } from "@hikmahealth/database/types/schema/hh";
 
 // Application environment configuration
 const appEnv = (process.env.APP_ENV as EnvironmentType) || EnvironmentType.Prod;
