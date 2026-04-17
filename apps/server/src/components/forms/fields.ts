@@ -21,6 +21,7 @@ type FieldOption = {
 export const fieldFile = function (
   opts: Partial<
     {
+      id: string;
       name: string;
       description: string;
       fileType: "image" | "documents" | "all";
@@ -30,7 +31,7 @@ export const fieldFile = function (
         }
       | { allowMultiple: true; max: number; min: number }
     )
-  > = {}
+  > = {},
 ) {
   let [minItems, maxItems] = [1, 1];
 
@@ -38,7 +39,7 @@ export const fieldFile = function (
     [minItems, maxItems] = [opts.min ?? 1, opts.max ?? 1];
     if (!(minItems <= maxItems)) {
       throw new Error(
-        "invalid component types. `min` can not be greater than `max`."
+        "invalid component types. `min` can not be greater than `max`.",
       );
     }
   }
@@ -65,7 +66,7 @@ export const fieldFile = function (
   //
   // Optionally, You can use information from `InputType` and `FieldType`
   return {
-    id: nanoid(),
+    id: opts?.id ?? nanoid(),
     name: opts.name ?? "",
     description: opts.description ?? "",
     required: true,
@@ -82,10 +83,11 @@ export type FileField = ReturnType<typeof fieldFile>;
 
 export function createTextField(
   opts?: Partial<{
+    id: string;
     name: string;
     description: string;
     inputType: InputType;
-  }>
+  }>,
 ) {
   const _type = opts?.inputType ?? "text";
   let length: "long" | "short";
@@ -101,7 +103,7 @@ export function createTextField(
   }
 
   return {
-    id: nanoid(),
+    id: opts?.id ?? nanoid(),
     fieldType: "free-text" as const,
     inputType: _type,
     name: opts?.name ?? "",
@@ -113,13 +115,16 @@ export function createTextField(
 
 export type TextField = ReturnType<typeof createTextField>;
 
-export function createMedicineField(opts?: {
-  name: string;
-  description: string;
-  options: string[] | FieldOption[];
-}) {
+export function createMedicineField(
+  opts?: Partial<{
+    id: string;
+    name: string;
+    description: string;
+    options: string[] | FieldOption[];
+  }>,
+) {
   return {
-    id: nanoid(),
+    id: opts?.id ?? nanoid(),
     name: opts?.name ?? "Medicine",
     description: opts?.description ?? "",
     inputType: "input-group" as const,
@@ -221,6 +226,7 @@ export function createMedicineField(opts?: {
 export const createOptionsField = <TOptions extends string | FieldOption>(
   opts?: Partial<
     {
+      id: string;
       name: string;
       description: string;
       options: TOptions[];
@@ -231,12 +237,12 @@ export const createOptionsField = <TOptions extends string | FieldOption>(
         }
       | { inputType: "radio" | "dropdown" }
     )
-  >
+  >,
 ) => {
   const _type = opts?.inputType ?? "radio";
 
   return {
-    id: nanoid(),
+    id: opts?.id ?? nanoid(),
     name: opts?.name ?? "",
     description: opts?.description ?? "",
     inputType: _type,
@@ -253,13 +259,14 @@ export type OptionField = ReturnType<typeof createOptionsField>;
 
 export const createDiagnosisField = (
   opts?: Partial<{
+    id: string;
     name: string;
     description: string;
     options: FieldOption;
-  }>
+  }>,
 ) => {
   return {
-    id: nanoid(),
+    id: opts?.id ?? nanoid(),
     name: opts?.name ?? "Diagnosis",
     description: opts?.description ?? "",
     inputType: "dropdown" as const,
@@ -272,10 +279,14 @@ export const createDiagnosisField = (
 export type DiagnosisField = ReturnType<typeof createDiagnosisField>;
 
 export const createDateField = (
-  opts?: Partial<{ name: string; description: string }>
+  opts?: Partial<{
+    id: string;
+    name: string;
+    description: string;
+  }>,
 ) => {
   return {
-    id: nanoid(),
+    id: opts?.id ?? nanoid(),
     name: opts?.name ?? "Date",
     description: opts?.description ?? "",
     inputType: "date" as const,

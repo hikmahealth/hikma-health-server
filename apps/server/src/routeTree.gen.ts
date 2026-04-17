@@ -16,6 +16,7 @@ import { Route as EducationIndexRouteImport } from './routes/education/index'
 import { Route as AppIndexRouteImport } from './routes/app/index'
 import { Route as RpcHeartbeatRouteImport } from './routes/rpc/heartbeat'
 import { Route as EducationIdRouteImport } from './routes/education/$id'
+import { Route as AppEntriesRouteImport } from './routes/app/entries'
 import { Route as ApiLoginRouteImport } from './routes/api/login'
 import { Route as AppUsersIndexRouteImport } from './routes/app/users.index'
 import { Route as AppReportsIndexRouteImport } from './routes/app/reports/index'
@@ -36,6 +37,7 @@ import { Route as AppDataEventsRouteImport } from './routes/app/data.events'
 import { Route as ApiV2SyncRouteImport } from './routes/api/v2.sync'
 import { Route as ApiResourcesIdRouteImport } from './routes/api/resources.$id'
 import { Route as ApiHubVerifyKeyRouteImport } from './routes/api/hub.verify-key'
+import { Route as ApiEntriesBackfillRouteImport } from './routes/api/entries.backfill'
 import { Route as ApiAuthSignOutRouteImport } from './routes/api/auth.sign-out'
 import { Route as ApiAuthSignInRouteImport } from './routes/api/auth.sign-in'
 import { Route as ApiAuthIsValidTokenRouteImport } from './routes/api/auth.is-valid-token'
@@ -90,6 +92,11 @@ const EducationIdRoute = EducationIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => EducationRoute,
+} as any)
+const AppEntriesRoute = AppEntriesRouteImport.update({
+  id: '/entries',
+  path: '/entries',
+  getParentRoute: () => AppRoute,
 } as any)
 const ApiLoginRoute = ApiLoginRouteImport.update({
   id: '/api/login',
@@ -192,6 +199,11 @@ const ApiResourcesIdRoute = ApiResourcesIdRouteImport.update({
 const ApiHubVerifyKeyRoute = ApiHubVerifyKeyRouteImport.update({
   id: '/api/hub/verify-key',
   path: '/api/hub/verify-key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEntriesBackfillRoute = ApiEntriesBackfillRouteImport.update({
+  id: '/api/entries/backfill',
+  path: '/api/entries/backfill',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSignOutRoute = ApiAuthSignOutRouteImport.update({
@@ -303,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/education': typeof EducationRouteWithChildren
   '/api/login': typeof ApiLoginRoute
+  '/app/entries': typeof AppEntriesRoute
   '/education/$id': typeof EducationIdRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
@@ -310,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
   '/api/auth/sign-in': typeof ApiAuthSignInRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/entries/backfill': typeof ApiEntriesBackfillRoute
   '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
   '/api/resources/$id': typeof ApiResourcesIdRoute
   '/api/v2/sync': typeof ApiV2SyncRoute
@@ -349,6 +363,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/login': typeof ApiLoginRoute
+  '/app/entries': typeof AppEntriesRoute
   '/education/$id': typeof EducationIdRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app': typeof AppIndexRoute
@@ -356,6 +371,7 @@ export interface FileRoutesByTo {
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
   '/api/auth/sign-in': typeof ApiAuthSignInRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/entries/backfill': typeof ApiEntriesBackfillRoute
   '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
   '/api/resources/$id': typeof ApiResourcesIdRoute
   '/api/v2/sync': typeof ApiV2SyncRoute
@@ -398,6 +414,7 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/education': typeof EducationRouteWithChildren
   '/api/login': typeof ApiLoginRoute
+  '/app/entries': typeof AppEntriesRoute
   '/education/$id': typeof EducationIdRoute
   '/rpc/heartbeat': typeof RpcHeartbeatRoute
   '/app/': typeof AppIndexRoute
@@ -405,6 +422,7 @@ export interface FileRoutesById {
   '/api/auth/is-valid-token': typeof ApiAuthIsValidTokenRoute
   '/api/auth/sign-in': typeof ApiAuthSignInRoute
   '/api/auth/sign-out': typeof ApiAuthSignOutRoute
+  '/api/entries/backfill': typeof ApiEntriesBackfillRoute
   '/api/hub/verify-key': typeof ApiHubVerifyKeyRoute
   '/api/resources/$id': typeof ApiResourcesIdRoute
   '/api/v2/sync': typeof ApiV2SyncRoute
@@ -448,6 +466,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/education'
     | '/api/login'
+    | '/app/entries'
     | '/education/$id'
     | '/rpc/heartbeat'
     | '/app/'
@@ -455,6 +474,7 @@ export interface FileRouteTypes {
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
+    | '/api/entries/backfill'
     | '/api/hub/verify-key'
     | '/api/resources/$id'
     | '/api/v2/sync'
@@ -494,6 +514,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/login'
+    | '/app/entries'
     | '/education/$id'
     | '/rpc/heartbeat'
     | '/app'
@@ -501,6 +522,7 @@ export interface FileRouteTypes {
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
+    | '/api/entries/backfill'
     | '/api/hub/verify-key'
     | '/api/resources/$id'
     | '/api/v2/sync'
@@ -542,6 +564,7 @@ export interface FileRouteTypes {
     | '/app'
     | '/education'
     | '/api/login'
+    | '/app/entries'
     | '/education/$id'
     | '/rpc/heartbeat'
     | '/app/'
@@ -549,6 +572,7 @@ export interface FileRouteTypes {
     | '/api/auth/is-valid-token'
     | '/api/auth/sign-in'
     | '/api/auth/sign-out'
+    | '/api/entries/backfill'
     | '/api/hub/verify-key'
     | '/api/resources/$id'
     | '/api/v2/sync'
@@ -595,6 +619,7 @@ export interface RootRouteChildren {
   ApiAuthIsValidTokenRoute: typeof ApiAuthIsValidTokenRoute
   ApiAuthSignInRoute: typeof ApiAuthSignInRoute
   ApiAuthSignOutRoute: typeof ApiAuthSignOutRoute
+  ApiEntriesBackfillRoute: typeof ApiEntriesBackfillRoute
   ApiHubVerifyKeyRoute: typeof ApiHubVerifyKeyRoute
   ApiResourcesIdRoute: typeof ApiResourcesIdRoute
   ApiV2SyncRoute: typeof ApiV2SyncRoute
@@ -652,6 +677,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/education/$id'
       preLoaderRoute: typeof EducationIdRouteImport
       parentRoute: typeof EducationRoute
+    }
+    '/app/entries': {
+      id: '/app/entries'
+      path: '/entries'
+      fullPath: '/app/entries'
+      preLoaderRoute: typeof AppEntriesRouteImport
+      parentRoute: typeof AppRoute
     }
     '/api/login': {
       id: '/api/login'
@@ -793,6 +825,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiHubVerifyKeyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/entries/backfill': {
+      id: '/api/entries/backfill'
+      path: '/api/entries/backfill'
+      fullPath: '/api/entries/backfill'
+      preLoaderRoute: typeof ApiEntriesBackfillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/sign-out': {
       id: '/api/auth/sign-out'
       path: '/api/auth/sign-out'
@@ -930,6 +969,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppEntriesRoute: typeof AppEntriesRoute
   AppIndexRoute: typeof AppIndexRoute
   AppDataEventsRoute: typeof AppDataEventsRoute
   AppPatientsIdRoute: typeof AppPatientsIdRoute
@@ -964,6 +1004,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppEntriesRoute: AppEntriesRoute,
   AppIndexRoute: AppIndexRoute,
   AppDataEventsRoute: AppDataEventsRoute,
   AppPatientsIdRoute: AppPatientsIdRoute,
@@ -1025,6 +1066,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthIsValidTokenRoute: ApiAuthIsValidTokenRoute,
   ApiAuthSignInRoute: ApiAuthSignInRoute,
   ApiAuthSignOutRoute: ApiAuthSignOutRoute,
+  ApiEntriesBackfillRoute: ApiEntriesBackfillRoute,
   ApiHubVerifyKeyRoute: ApiHubVerifyKeyRoute,
   ApiResourcesIdRoute: ApiResourcesIdRoute,
   ApiV2SyncRoute: ApiV2SyncRoute,

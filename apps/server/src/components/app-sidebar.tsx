@@ -238,6 +238,11 @@ export const navData = {
         // },
       ],
     },
+    {
+      title: "Patient Entries",
+      url: "/app/entries",
+      icon: ClipboardEditIcon,
+    },
   ],
   projects: [
     // {

@@ -559,6 +559,9 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      csv-parse:
+        specifier: ^6.2.1
+        version: 6.2.1
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -661,9 +664,6 @@ importers:
       usehooks-ts:
         specifier: ^3.1.1
         version: 3.1.1(react@19.2.4)
-      uuid:
-        specifier: ^13.0.0
-        version: 13.0.0
       uuidv7:
         specifier: ^1.1.0
         version: 1.1.0
@@ -6749,6 +6749,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  csv-parse@6.2.1:
+    resolution: {integrity: sha512-LRLMV+UCyfMokp8Wb411duBf1gaBKJfOfBWU9eHMJ+b+cJYZsNu3AFmjJf3+yPGd59Exz1TsMjaSFyxnYB9+IQ==}
 
   data-urls@3.0.2:
     resolution: {integrity: sha512-Jy/tj3ldjZJo63sVAvg6LHt2mHvl4V6AgRAmNDtLdm7faqtsx+aJG42rsyCo9JCoRVKwPFzKlIPx3DIibwSIaQ==}
@@ -18731,6 +18734,8 @@ snapshots:
       rrweb-cssom: 0.8.0
 
   csstype@3.2.3: {}
+
+  csv-parse@6.2.1: {}
 
   data-urls@3.0.2:
     dependencies:
