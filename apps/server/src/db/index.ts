@@ -40,7 +40,6 @@ import type EducationContent from "@/models/education-content";
 import type Report from "@/models/report";
 import { Pool } from "pg";
 import type { StringId, StringContent } from "@/models/string-content";
-// import "dotenv/config";
 
 export type Database = {
   string_ids: StringId.Table.StringIds;
