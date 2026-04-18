@@ -1,0 +1,3 @@
+$schema: "../cache/schemas/tasks.json"
+taskOptions:
+  interactive: true

@@ -11,12 +11,5 @@ dependsOn:
   - common
   - js-utils
 
-tasks:
-  check-types:
-    command: pnpm run compile
-  lint:
-    command: pnpm run lint:check
-  test:
-    command: pnpm run test
-    options:
-      cache: false
+# inferring tasks from scripts in the package.json
+tasks: {}
