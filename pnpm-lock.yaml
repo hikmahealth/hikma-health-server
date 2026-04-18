@@ -776,6 +776,9 @@ importers:
       usehooks-ts:
         specifier: ^3.1.1
         version: 3.1.1(react@19.2.0)
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
       uuidv7:
         specifier: ^1.1.0
         version: 1.2.1
