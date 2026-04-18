@@ -1,26 +1,18 @@
 import db from "@/db";
 import { createFileRoute } from "@tanstack/react-router";
-import { v7 as uuidv7 } from "uuid";
-import { parse } from "csv-parse";
-import { z } from "zod";
+import { uuidv7 } from "uuidv7";
 import { readEntriesFromRequest, type SpecialEntry } from "@/imports/a/utils";
-import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
 import type { DB } from "@hikmahealth/database/types/schema/hh";
-import type {
-  InsertExpression,
-  InsertObject,
-} from "node_modules/kysely/dist/esm/parser/insert-values-parser";
+import type { InsertObject } from "kysely";
 import {
   createTextField,
   createOptionsField,
-  createDiagnosisField,
   createMedicineField,
   type OptionField,
   type TextField,
   type DiagnosisField,
   type DateField,
 } from "@/components/forms/fields";
-import { nanoid } from "nanoid";
 
 export const Route = createFileRoute("/api/entries/backfill")({
   server: {

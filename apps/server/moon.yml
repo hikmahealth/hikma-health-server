@@ -14,6 +14,8 @@ tasks:
       - database:build
     outputs:
       - .output/**/*
+    env:
+      NODE_OPTIONS: "--max-old-space-size=5120"
   dev:
     command: pnpm run dev
     options:
