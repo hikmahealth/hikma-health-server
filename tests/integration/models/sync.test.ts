@@ -56,7 +56,9 @@ describe("Sync model (integration)", () => {
   });
 
   it("delta query finds new records after a timestamp", async () => {
-    const beforeInsert = new Date();
+    // Use the DB clock so beforeInsert is in the same clock domain as
+    // server_created_at set by PostgreSQL NOW().
+    const { rows: [{ beforeInsert }] } = await sql<{ beforeInsert: Date }>`SELECT now() AS "beforeInsert"`.execute(testDb);
 
     // Small delay to ensure server_created_at > beforeInsert
     await new Promise((r) => setTimeout(r, 50));
@@ -77,9 +79,10 @@ describe("Sync model (integration)", () => {
   it("delta query finds updated records", async () => {
     const id = await insertTestPatient();
 
-    // Record the time after creation
+    // Record the time after creation using the DB clock so the boundary
+    // timestamp is in the same clock domain as server_created_at / last_modified.
     await new Promise((r) => setTimeout(r, 50));
-    const afterCreate = new Date();
+    const { rows: [{ afterCreate }] } = await sql<{ afterCreate: Date }>`SELECT now() AS "afterCreate"`.execute(testDb);
     await new Promise((r) => setTimeout(r, 50));
 
     // Update the record
@@ -109,7 +112,7 @@ describe("Sync model (integration)", () => {
   it("delta query finds soft-deleted records", async () => {
     const id = await insertTestPatient();
     await new Promise((r) => setTimeout(r, 50));
-    const afterCreate = new Date();
+    const { rows: [{ afterCreate }] } = await sql<{ afterCreate: Date }>`SELECT now() AS "afterCreate"`.execute(testDb);
     await new Promise((r) => setTimeout(r, 50));
 
     // Soft delete
