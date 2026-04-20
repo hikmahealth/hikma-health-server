@@ -21,7 +21,13 @@
     "build": "npx tsc -p tsconfig.build.json",
     "dev": "npx kysely-codegen --config-file=server.kysely-codegen.json",
     "migrate": "DB_SSL=true DB_MIGRATION=true npx kysely migrate latest; pnpm run dev",
+    "migrate:latest": "DB_MIGRATION=true npx kysely migrate latest",
     "migrate-down": "DB_SSL=true DB_MIGRATION=true npx kysely migrate down; pnpm run dev"
+  },
+  "dependencies": {
+    "kysely": "^0.28.16",
+    "kysely-ctl": "^0.20.0",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
     "@swc/cli": "^0.7.9",
@@ -29,10 +35,7 @@
     "@types/node": "^25.0.3",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.31.8",
-    "kysely": "^0.28.16",
     "kysely-codegen": "^0.19.0",
-    "kysely-ctl": "^0.20.0",
-    "pg": "^8.16.3",
     "tsc-alias": "^1.8.16",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^6.0.2"

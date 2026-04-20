@@ -8,8 +8,6 @@
     "start-only": "DB_SSL=true node .output/server/index.mjs",
     "start-dist": "DB_SSL=true node dist/server/server.js",
     "start:local-prod": "pnpm run build && DB_SSL=true node --env-file=.env .output/server/index.mjs",
-    "start": "DB_SSL=true pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
-    "start:with-recovery": "DB_SSL=true pnpm run db:migrate && pnpm run recovery:permissions && pnpm run start-only",
     "build": "rescript && vite build",
     "serve": "vite preview",
     "test": "vitest run --workspace vitest.workspace.ts",

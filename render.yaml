@@ -27,6 +27,12 @@ services:
         fromDatabase:
           name: hikma-health-db
           property: connectionString
+      - key: NODE_VERSION
+        value: "24.14.0"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=5120"
+      - key: NITRO_PRESET
+        value: "render-com"
       - key: NODE_ENV
         value: "production"
 

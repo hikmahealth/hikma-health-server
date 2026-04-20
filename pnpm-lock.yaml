@@ -865,6 +865,16 @@ importers:
         version: 4.2.4
 
   database:
+    dependencies:
+      kysely:
+        specifier: ^0.28.16
+        version: 0.28.16
+      kysely-ctl:
+        specifier: ^0.20.0
+        version: 0.20.0(kysely@0.28.16)(magicast@0.3.5)(typescript@6.0.3)
+      pg:
+        specifier: ^8.16.3
+        version: 8.20.0
     devDependencies:
       '@swc/cli':
         specifier: ^0.7.9
@@ -881,18 +891,9 @@ importers:
       drizzle-kit:
         specifier: ^0.31.8
         version: 0.31.10
-      kysely:
-        specifier: ^0.28.16
-        version: 0.28.16
       kysely-codegen:
         specifier: ^0.19.0
         version: 0.19.0(kysely@0.28.16)(pg@8.20.0)(typescript@6.0.3)
-      kysely-ctl:
-        specifier: ^0.20.0
-        version: 0.20.0(kysely@0.28.16)(magicast@0.3.5)(typescript@6.0.3)
-      pg:
-        specifier: ^8.16.3
-        version: 8.20.0
       tsc-alias:
         specifier: ^1.8.16
         version: 1.8.16
