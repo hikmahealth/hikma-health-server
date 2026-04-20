@@ -8,8 +8,7 @@ projects:
     - "apps/*"
     - "packages/*"
     - "packages/utils/*"
-  sources:
-    database: "database"
+    - "database"
 
 vcs:
   client: "git"

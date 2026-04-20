@@ -4,13 +4,13 @@
   "scripts": {
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "build": "APP_FOLDER=.server just build-server",
+    "build": "APP_FOLDER=.server CI=true just build-server; echo 'only for back compat'",
     "start": "APP_FOLDER=.server just start-server",
-    "server:build": "APP_FOLDER=.server just build-server",
+    "server:install-build": "APP_FOLDER=.server just build-server",
     "server:migrate": "APP_FOLDER=.server just migrate-server",
     "server:start": "APP_FOLDER=.server just start-server",
-    "aiproxy:build": "moon run aiproxy:build",
-    "aiproxy:start": "moon run aiproxy:start"
+    "aiproxy:build": "just build-aiproxy",
+    "aiproxy:start": "just start-aiproxy"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.61.1",

@@ -3,7 +3,7 @@ spec:
   services:
     - name: web
       environment_slug: node-js
-      build_command: "pnpm install; pnpm server:build"
+      build_command: "CI=true pnpm server:install-build"
       run_command: "pnpm server:start"
       instance_count: 1
       instance_size_slug: apps-s-1vcpu-0.5gb

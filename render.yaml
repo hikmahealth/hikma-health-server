@@ -14,7 +14,7 @@ services:
     # Uncomment if you want to deploy to the free tier first.
     # NOTE: free tier has degraded performance making it unusable in real world settings
     # plan: free
-    buildCommand: pnpm install; pnpm server:build
+    buildCommand: CI=true pnpm server:install-build
     startCommand: pnpm run server:start
     buildFilter:
       ignoredPaths:

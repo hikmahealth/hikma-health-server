@@ -7,7 +7,7 @@ services:
       branch: main
       deploy_on_push: true
     source_dir: /
-    build_command: "pnpm install; pnpm server:build"
+    build_command: "CI=true pnpm server:install-build"
     run_command: "pnpm server:start"
     envs:
       - key: DATABASE_URL

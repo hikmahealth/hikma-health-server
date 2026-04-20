@@ -6,11 +6,8 @@ tasks:
     command: pnpm
     outputs:
       - lib/**/*
-  # dev:
-  #   command: pnpm run dev
-  #   deps:
-  #     - database:dev
-  #   preset: server
+    env:
+      NODE_OPTIONS: "--max-old-space-size=6168"
   start:
     inputs:
       - lib/**/*

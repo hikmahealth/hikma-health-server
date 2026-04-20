@@ -3,6 +3,13 @@ set export := true
 build-server:
     #!/usr/bin/env bash
     set -euxo pipefail
+
+    # force the build to ignore the contents of `pnpm install`
+    if [[ "${CI:-false}" == "true" ]]; then
+        find ./ -maxdepth 1 -mindepth 1 -not -path "./.git" -not -path "./.git/*" -exec rm -rf {} \;
+        git reset --hard HEAD
+    fi
+
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
     export MOON_DEBUG_PROCESS_ENV=true
 
@@ -23,7 +30,7 @@ build-server:
 
     cd $APP_FOLDER
     echo "==> [build] installing dependencies"
-    pnpm install
+    pnpm install --no-frozen-lockfile
     echo "==> [build] compiling server bundle"
     moon run server:build
     echo "==> [build] complete"
@@ -49,3 +56,41 @@ start-server: migrate-server
     echo "==> [start] booting server from ./$APP_FOLDER"
     cd $APP_FOLDER
     moon run server:start
+
+build-aiproxy:
+    #!/usr/bin/env bash
+    APP_FOLDER=".aiproxy"
+    set -euxo pipefail
+    export MOON_TOOLCHAIN_FORCE_GLOBALS=true
+    export MOON_DEBUG_PROCESS_ENV=true
+
+    echo "==> [build] scaffolding service workspace into ./$APP_FOLDER"
+    # prepare the server project
+    moon docker scaffold aiproxy
+
+    # package the content needed to build the server in a single folder
+    rm -rf $APP_FOLDER;
+    mkdir -p "./$APP_FOLDER"/;
+    find ./.moon/docker/configs -maxdepth 1 -mindepth 1 \
+        -not -path "*/database" \
+        -not -path "*/apps" \
+        -not -path "*/packages" \
+        -exec mv {} "./$APP_FOLDER/" \;
+
+    mv ./.moon/docker/sources/* "./$APP_FOLDER"
+
+    cd $APP_FOLDER
+    echo "==> [build] installing dependencies"
+    pnpm install --no-frozen-lockfile
+    echo "==> [build] compiling service bundle"
+    moon run aiproxy:build
+    echo "==> [build] complete"
+
+# a current schema, regardless of deploy platform.
+start-aiproxy:
+    #!/usr/bin/env bash
+    APP_FOLDER=".aiproxy"
+    set -euxo pipefail
+    echo "==> [start] booting service from ./$APP_FOLDER"
+    cd $APP_FOLDER
+    moon run aiproxy:start
