@@ -20,8 +20,8 @@
   "scripts": {
     "build": "npx tsc -p tsconfig.build.json",
     "dev": "npx kysely-codegen --config-file=server.kysely-codegen.json",
-    "migrate": "DB_SSL=true DB_MIGRATION=true npx kysely migrate latest; pnpm run dev",
-    "migrate:latest": "DB_MIGRATION=true npx kysely migrate latest",
+    "migrate-latest": "DB_SSL=true DB_MIGRATION=true npx kysely migrate latest",
+    "migrate": "pnpm run migrate:latest; pnpm run dev",
     "migrate-down": "DB_SSL=true DB_MIGRATION=true npx kysely migrate down; pnpm run dev"
   },
   "dependencies": {

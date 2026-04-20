@@ -35,7 +35,7 @@ migrate-server:
     # so we must run from inside the database package.
     echo "==> [migrate] running kysely migrate latest in ./$APP_FOLDER/database"
     cd $APP_FOLDER/database
-    pnpm run migrate:latest
+    pnpm run migrate-latest
     echo "==> [migrate] complete"
 
 # Migrations run unconditionally before start. They are idempotent — if the
