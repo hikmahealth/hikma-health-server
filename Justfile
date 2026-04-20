@@ -41,6 +41,7 @@ migrate-server:
 # Migrations run unconditionally before start. They are idempotent — if the
 # schema is already current, `kysely migrate latest` is a single no-op round
 # trip. This keeps "starting the server" the single entrypoint that guarantees
+
 # a current schema, regardless of deploy platform.
 start-server: migrate-server
     #!/usr/bin/env bash
