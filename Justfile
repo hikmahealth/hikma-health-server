@@ -41,7 +41,7 @@ prepare-project project:
 install-build-server: (prepare-project 'server')
     #!/usr/bin/env bash
     set -euxo pipefail
-    cd .build/ARG
+    cd .build/server
     pnpm install --no-frozen-lockfile
     moon run server:build
 
