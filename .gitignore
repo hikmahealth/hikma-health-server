@@ -135,3 +135,5 @@ packages/utils/js/dist/
 # moon
 .moon/cache
 .moon/docker
+
+.aiproxy

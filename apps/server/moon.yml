@@ -12,6 +12,7 @@ tasks:
     deps:
       - ui:build
       - database:build
+      - server:recovery
     outputs:
       - .output/**/*
     env:
@@ -36,8 +37,8 @@ tasks:
     inputs:
       - .output/**/*
     command: pnpm run start-only
-    env:
-      NODE_ENV: "production"
+    deps:
+      - database:migrate-latest
     # should ensure the migration runs successfully before starting the service
     # FIXME: Recovery is failing due to kysely/pg config issue with DB_SSL
     # deps:

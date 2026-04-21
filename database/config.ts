@@ -94,6 +94,10 @@ export const getDatabaseConfig = (): Record<string, any> => {
     opts.ssl = false;
   }
 
+  if (process.env.DATABASE_SSL_OPTIONS) {
+    opts.ssl = JSON.parse(process.env.DATABASE_SSL_OPTIONS);
+  }
+
   const out = {
     ...opts,
     host: pgHost,
