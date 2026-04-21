@@ -14,7 +14,7 @@ install-build-server:
 
     # installing dev dependencies from root
     # so that we can get the `moon` and `just` commands
-    ll -al
+    ls -al
     rm -f ./pnpm-lock.yaml
     pnpm install -w
 
@@ -72,7 +72,7 @@ install-build-aiproxy:
 
     # installing dev dependencies from root
     # so that we can get the `moon` and `just` commands
-    ll -al
+    ls -al
     rm -f pnpm-lock.yaml
     pnpm install -w
 
