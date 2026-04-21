@@ -6,7 +6,7 @@ install-build-server:
 
     # force the build to ignore the contents of `pnpm install`
     # that is written to build step in platforms (old versions)
-    if [[ "${PURGE_FOR_CI:-false}" == "true" ]]; then
+    if [[ "${CI:-false}" == "true" ]]; then
         echo 'need to purge this'
         find ./ -maxdepth 1 -mindepth 1 -not -path "./.git" -not -path "./.git/*" -exec rm -rf {} \;
         git reset --hard HEAD

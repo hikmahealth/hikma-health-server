@@ -4,7 +4,7 @@
   "scripts": {
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "build": "APP_FOLDER=.server PURGE_FOR_CI=true just install-build-server;",
+    "build": "APP_FOLDER=.server CI=true just install-build-server;",
     "start": "APP_FOLDER=.server just start-server",
     "server:install-build": "APP_FOLDER=.server just build-server",
     "server:migrate": "APP_FOLDER=.server just migrate-server",
