@@ -1,4 +1,6 @@
 language: typescript
+dependsOn:
+  - js-utils
 
 tasks:
   build:
@@ -7,7 +9,9 @@ tasks:
     outputs:
       - lib/**/*
     env:
-      NODE_OPTIONS: "--max-old-space-size=6168"
+      NODE_OPTIONS: "--max-old-space-size=5120"
+    deps:
+      - js-utils:build
   start:
     inputs:
       - lib/**/*

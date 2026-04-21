@@ -3,14 +3,7 @@
   "private": true,
   "scripts": {
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
-    "build": "APP_FOLDER=.server CI=true just install-build-server;",
-    "start": "APP_FOLDER=.server just start-server",
-    "server:install-build": "APP_FOLDER=.server just install-build-server",
-    "server:migrate": "APP_FOLDER=.server just migrate-server",
-    "server:start": "APP_FOLDER=.server just start-server",
-    "aiproxy:install-build": "just install-build-aiproxy",
-    "aiproxy:start": "just start-aiproxy"
+    "lint:fix": "oxlint --fix"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.61.1",
