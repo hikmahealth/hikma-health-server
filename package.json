@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "lint": "oxlint",
-    "lint:fix": "oxlint --fix"
+    "lint:fix": "oxlint --fix",
+    "init-install": "pnpm install -w"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.61.1",
