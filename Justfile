@@ -10,6 +10,7 @@ install-build-server:
         echo 'need to purge this'
         find ./ -maxdepth 1 -mindepth 1 -not -path "./.git" -not -path "./.git/*" -exec rm -rf {} \;
         git reset --hard HEAD
+        pnpm store prune
     fi
 
     # installing dev dependencies from root
