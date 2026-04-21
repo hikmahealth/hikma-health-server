@@ -14,8 +14,9 @@ install-build-server:
 
     # installing dev dependencies from root
     # so that we can get the `moon` and `just` commands
-    rm -f pnpm-lock.yaml
-    pnpm install --no-lockfile -w -D
+    ll -al
+    rm -f ./pnpm-lock.yaml
+    pnpm install -w
 
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
     export MOON_DEBUG_PROCESS_ENV=true
@@ -71,8 +72,9 @@ install-build-aiproxy:
 
     # installing dev dependencies from root
     # so that we can get the `moon` and `just` commands
+    ll -al
     rm -f pnpm-lock.yaml
-    pnpm install --no-lockfile -w -D
+    pnpm install -w
 
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
     export MOON_DEBUG_PROCESS_ENV=true
