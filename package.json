@@ -4,12 +4,12 @@
   "scripts": {
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "build": "APP_FOLDER=.server CI=true just build-server; echo 'only for back compat'",
+    "build": "APP_FOLDER=.server PURGE_FOR_CI=true just install-build-server;",
     "start": "APP_FOLDER=.server just start-server",
     "server:install-build": "APP_FOLDER=.server just build-server",
     "server:migrate": "APP_FOLDER=.server just migrate-server",
     "server:start": "APP_FOLDER=.server just start-server",
-    "aiproxy:build": "just build-aiproxy",
+    "aiproxy:install-build": "just install-build-aiproxy",
     "aiproxy:start": "just start-aiproxy"
   },
   "devDependencies": {

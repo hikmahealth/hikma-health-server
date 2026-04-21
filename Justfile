@@ -1,14 +1,20 @@
 set export := true
 
-build-server:
+install-build-server:
     #!/usr/bin/env bash
     set -euxo pipefail
 
     # force the build to ignore the contents of `pnpm install`
-    if [[ "${CI:-false}" == "true" ]]; then
+    # that is written to build step in platforms (old versions)
+    if [[ "${PURGE_FOR_CI:-false}" == "true" ]]; then
+        echo 'need to purge this'
         find ./ -maxdepth 1 -mindepth 1 -not -path "./.git" -not -path "./.git/*" -exec rm -rf {} \;
         git reset --hard HEAD
     fi
+
+    # installing dev dependencies from root
+    # so that we can get the `moon` and `just` commands
+    pnpm install -w -D
 
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
     export MOON_DEBUG_PROCESS_ENV=true
@@ -57,10 +63,15 @@ start-server: migrate-server
     cd $APP_FOLDER
     moon run server:start
 
-build-aiproxy:
+install-build-aiproxy:
     #!/usr/bin/env bash
     APP_FOLDER=".aiproxy"
     set -euxo pipefail
+
+    # installing dev dependencies from root
+    # so that we can get the `moon` and `just` commands
+    pnpm install -w -D
+
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
     export MOON_DEBUG_PROCESS_ENV=true
 
