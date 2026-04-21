@@ -31,7 +31,6 @@ tasks:
       - database:migrate-latest
     env:
       DB_MIGRATION: "true"
-      DB_SSL: "true"
 
   start:
     inputs:
