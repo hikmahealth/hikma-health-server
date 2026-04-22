@@ -8,28 +8,29 @@ services:
   #     - key: HIKMA_API
   #       value: "VALUE_HERE"
   #
-  - type: web
-    name: "hikma-health-aiproxy"
-    runtime: node
-    # Uncomment if you want to deploy to the free tier first.
-    # NOTE: free tier has degraded performance making it unusable in real world settings
-    # plan: free
-    buildCommand: pnpm install -w; just install-build-aiproxy
-    startCommand: just start-aiproxy
-    buildFilter:
-      ignoredPaths:
-        - apps/mobile/**
-        - apps/server/**
-        - apps/local-hub/**
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: hikma-health-db
-          property: connectionString
-      - key: DATABASE_SSL_OPTIONS
-        value: '{"rejectUnauthorized":false}'
-      - key: NODE_ENV
-        value: "production"
+  #### AI PROXY DEPLOY HOOK FOR RENDER. (OPTIONAL) - TODO: Lets move it to a /infra or similar where blueprint can be set up from the render.com interface
+  # - type: web
+  #   name: "hikma-health-aiproxy"
+  #   runtime: node
+  #   # Uncomment if you want to deploy to the free tier first.
+  #   # NOTE: free tier has degraded performance making it unusable in real world settings
+  #   # plan: free
+  #   buildCommand: pnpm install -w; just install-build-aiproxy
+  #   startCommand: just start-aiproxy
+  #   buildFilter:
+  #     ignoredPaths:
+  #       - apps/mobile/**
+  #       - apps/server/**
+  #       - apps/local-hub/**
+  #   envVars:
+  #     - key: DATABASE_URL
+  #       fromDatabase:
+  #         name: hikma-health-db
+  #         property: connectionString
+  #     - key: DATABASE_SSL_OPTIONS
+  #       value: '{"rejectUnauthorized":false}'
+  #     - key: NODE_ENV
+  #       value: "production"
 
   - type: web
     name: "hikma-health-server"
@@ -37,8 +38,8 @@ services:
     # Uncomment if you want to deploy to the free tier first.
     # NOTE: free tier has degraded performance making it unusable in real world settings
     # plan: free
-    buildCommand: pnpm install -w; just install-build-server
-    startCommand: just start-server
+    buildCommand: pnpm install -w; pnpm run server:install-build
+    startCommand: pnpm run server:start
     buildFilter:
       ignoredPaths:
         - apps/mobile/**

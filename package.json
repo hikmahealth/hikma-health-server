@@ -4,7 +4,9 @@
   "scripts": {
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
-    "init-install": "pnpm install -w"
+    "init-install": "pnpm install -w",
+    "server:install-build": "just install-build-server",
+    "server:start": "just start-server"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.61.1",
