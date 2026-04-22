@@ -263,7 +263,7 @@ export async function runRecovery(): Promise<void> {
       Logger.log("Run without DRY_RUN=true to apply changes");
     }
   } catch (error) {
-    Logger.error("Error during recovery:", error);
+    console.error("Error during recovery:", error);
     Logger.error("Please contact Hikma Health tech team with this screenshot.");
     throw error;
   } finally {
