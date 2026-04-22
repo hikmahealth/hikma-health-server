@@ -7,6 +7,29 @@ services:
   #   envVars:
   #     - key: HIKMA_API
   #       value: "VALUE_HERE"
+  #
+  - type: web
+    name: "hikma-health-aiproxy"
+    runtime: node
+    # Uncomment if you want to deploy to the free tier first.
+    # NOTE: free tier has degraded performance making it unusable in real world settings
+    # plan: free
+    buildCommand: pnpm install -w; just install-build-aiproxy
+    startCommand: just start-aiproxy
+    buildFilter:
+      ignoredPaths:
+        - apps/mobile/**
+        - apps/server/**
+        - apps/local-hub/**
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hikma-health-db
+          property: connectionString
+      - key: DATABASE_SSL_OPTIONS
+        value: '{"rejectUnauthorized":false}'
+      - key: NODE_ENV
+        value: "production"
 
   - type: web
     name: "hikma-health-server"
@@ -14,27 +37,20 @@ services:
     # Uncomment if you want to deploy to the free tier first.
     # NOTE: free tier has degraded performance making it unusable in real world settings
     # plan: free
-    buildCommand: CI=true pnpm server:install-build
-    startCommand: pnpm run server:start
+    buildCommand: pnpm install -w; just install-build-server
+    startCommand: just start-server
     buildFilter:
       ignoredPaths:
         - apps/mobile/**
         - apps/aiproxy/**
         - apps/local-hub/**
     envVars:
-      # DATABASE_URL trumps all other env variables.
       - key: DATABASE_URL
         fromDatabase:
           name: hikma-health-db
           property: connectionString
-      - key: NODE_VERSION
-        value: "24.14.0"
-      - key: NODE_OPTIONS
-        value: "--max-old-space-size=5120"
-      - key: NITRO_PRESET
-        value: "render-com"
-      - key: NODE_ENV
-        value: "production"
+      - key: DATABASE_SSL_OPTIONS
+        value: '{"rejectUnauthorized":false}'
 
 databases:
   - name: "hikma-health-db"
