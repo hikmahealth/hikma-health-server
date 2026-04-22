@@ -21,13 +21,22 @@ export default defineConfig({
   // ],
   plugins: [
     devtools(),
-    // nitro({
-    //   rollupConfig: {
-    //     external: [/^@sentry\//, "exceljs", /^echarts/, "zrender"],
-    //   },
-    //   preset: "render_com",
-    // }),
-    nitro(),
+    nitro({
+      builder: "rolldown",
+      rolldownConfig: {
+        // rollupConfig: {
+        external: [
+          /^@sentry\//,
+          "exceljs",
+          /^echarts/,
+          "zrender",
+          "jsdom",
+          "isomorphic-dompurify",
+        ],
+      },
+      // preset: "render_com",
+    }),
+    // nitro(),
     tsconfigPaths({ projects: ["./tsconfig.json"] }),
     tailwindcss(),
     tanstackStart(),
