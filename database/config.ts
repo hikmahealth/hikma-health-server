@@ -91,7 +91,8 @@ export const getDatabaseConfig = (): Record<string, any> => {
   }
 
   if (migration_mode) {
-    opts.ssl = false;
+    // FIXME: @kev this breaks my builds with a TLS/SSL error
+    // opts.ssl = false;
   }
 
   if (process.env.DATABASE_SSL_OPTIONS) {

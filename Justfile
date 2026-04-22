@@ -54,7 +54,7 @@ install-build-aiproxy: (prepare-project 'aiproxy')
 
 start-server:
     cd .build/server/database && pnpm run migrate-latest
-    cd .build/server/apps/server && pnpm run start
+    cd .build/server/apps/server && pnpm run start-only
 
 start-aiproxy:
     cd .build/aiproxy/apps/aiproxy && pnpm run start
