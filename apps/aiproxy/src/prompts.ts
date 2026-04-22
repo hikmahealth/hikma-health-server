@@ -13,7 +13,7 @@ import { readFile } from "node:fs/promises";
 // Load PRQL docs once at startup — included in system prompts so the LLM
 // has the full language reference when generating and fixing queries.
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const docs = resolve(__dirname, "../../docs");
+const docs = resolve(process.cwd(), "./docs");
 const PRQL_DOCS = readFileSync(resolve(docs, "prqlc.txt"), "utf-8");
 const HH_FORMS_DOCS = readFileSync(
   resolve(docs, "hikma-forms-llm.txt"),
