@@ -4,7 +4,7 @@ dependsOn:
 
 tasks:
   build:
-    args: "run res:build"
+    args: "run build"
     command: pnpm
     outputs:
       - lib/**/*
@@ -12,7 +12,3 @@ tasks:
       NODE_OPTIONS: "--max-old-space-size=5120"
     deps:
       - js-utils:build
-  start:
-    inputs:
-      - lib/**/*
-    command: npx tsx api/index.ts

@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "dev": "tsx watch --env-file=.env api/index.ts",
-    "start": "tsx --env-file=.env api/index.ts",
+    "build": "pnpm run res:build; npx tsc",
+    "start": "node dist/api/index.js",
     "res:build": "rescript",
     "res:clean": "rescript clean",
     "res:dev": "rescript watch"
