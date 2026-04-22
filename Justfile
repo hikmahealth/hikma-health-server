@@ -53,13 +53,8 @@ install-build-aiproxy: (prepare-project 'aiproxy')
     moon run aiproxy:build
 
 start-server:
-    #!/usr/bin/env bash
-    set -euxo pipefail
-    cd .build/server
-    moon run server:start
+    cd .build/server/database && pnpm run migrate-latest
+    cd .build/server/apps/server && pnpm run start
 
 start-aiproxy:
-    #!/usr/bin/env bash
-    set -euxo pipefail
-    cd .build/aiproxy
-    moon run aiproxy:start
+    cd .build/aiproxy/apps/aiproxy && pnpm run start
