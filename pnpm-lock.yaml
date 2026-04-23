@@ -726,7 +726,7 @@ importers:
         version: 0.4.6(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
       nitro:
         specifier: npm:nitro-nightly@latest
-        version: nitro-nightly@3.0.1-20260422-130055-135f762d(@electric-sql/pglite@0.4.4)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.6.1)(lru-cache@11.3.5)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+        version: nitro-nightly@3.0.1-20260423-183501-f92fb7b7(@electric-sql/pglite@0.4.4)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.6.1)(lru-cache@11.3.5)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
       pg:
         specifier: ^8.16.3
         version: 8.20.0
@@ -743,7 +743,7 @@ importers:
         specifier: ^9.7.0
         version: 9.14.0(react@19.2.0)
       react-dom:
-        specifier: ^19.0.0
+        specifier: 19.2.0
         version: 19.2.0(react@19.2.0)
       react-grid-layout:
         specifier: ^2.2.3
@@ -10022,8 +10022,8 @@ packages:
   nf3@0.3.16:
     resolution: {integrity: sha512-Gs0xRPpUm2nDkqbi40NJ9g7qDIcjcJzgExiydnq6LAyqhI2jfno8wG3NKTL+IiJsx799UHOb1CnSd4Wg4SG4Pw==}
 
-  nitro-nightly@3.0.1-20260422-130055-135f762d:
-    resolution: {integrity: sha512-0/gbvVkZk34sbNP9iD+/r2p+98QZfSlPJdsowk0QrIzfQfMhGSgGe1bbtywS0wE21VRB6HAIlaB8JQXNVOcvKg==}
+  nitro-nightly@3.0.1-20260423-183501-f92fb7b7:
+    resolution: {integrity: sha512-KAR36bmbCyR7EMBbAaJJLtOSTGzpBB0sW3custX1tH8VtTz4q8xiRop+lMkmL2c+KDSAfkUdEECUwotVLQlKMw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -23172,7 +23172,7 @@ snapshots:
 
   nf3@0.3.16: {}
 
-  nitro-nightly@3.0.1-20260422-130055-135f762d(@electric-sql/pglite@0.4.4)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.6.1)(lru-cache@11.3.5)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
+  nitro-nightly@3.0.1-20260423-183501-f92fb7b7(@electric-sql/pglite@0.4.4)(chokidar@5.0.0)(dotenv@17.4.2)(giget@3.2.0)(jiti@2.6.1)(lru-cache@11.3.5)(vite@7.3.2(@types/node@24.12.2)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
     dependencies:
       consola: 3.4.2
       crossws: 0.4.5(srvx@0.11.15)
