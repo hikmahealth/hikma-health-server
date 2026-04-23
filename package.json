@@ -1,5 +1,5 @@
 {
-  "name": "hhmammoth",
+  "name": "hikmahealth",
   "private": true,
   "scripts": {
     "lint": "oxlint",
