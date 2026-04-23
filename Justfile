@@ -20,6 +20,9 @@ prepare-project project:
     APP_FOLDER=".build/{{ project }}"
     mkdir -p APP_FOLDER 2>/dev/null
 
+    # install workspace dependencies that make `moon` and `just` available
+    pnpm install -w
+
     export MOON_TOOLCHAIN_FORCE_GLOBALS=true
     export MOON_DEBUG_PROCESS_ENV=true
 
