@@ -5,7 +5,7 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "init-install": "pnpm install -w",
-    "server:install-build": "just install-build-server",
+    "server:install-build": "pnpm install -w; just install-build-server",
     "server:start": "just start-server"
   },
   "devDependencies": {
