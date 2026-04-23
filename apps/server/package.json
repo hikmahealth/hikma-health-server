@@ -10,7 +10,7 @@
     "start:local-prod": "pnpm run build && DB_SSL=true node --env-file=.env .output/server/index.mjs",
     "build": "rescript && NODE_OPTIONS='--max-old-space-size=5120' vite build",
     "serve": "vite preview",
-    "test": "vitest run --workspace vitest.workspace.ts",
+    "test": "pnpm res:build; vitest run --workspace vitest.workspace.ts",
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "test:watch": "vitest --project unit",
