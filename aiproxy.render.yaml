@@ -1,0 +1,24 @@
+# AI PROXY DEPLOY BLUEPRINT FOR RENDER (OPTIONAL).
+#
+# This blueprint deploys hikma-health-aiproxy as a separate web service.
+#
+# Path: pnpm aiproxy:build  -> just build-aiproxy
+#       pnpm aiproxy:start  -> just start-aiproxy
+
+services:
+  - type: web
+    name: "hikma-health-aiproxy"
+    runtime: node
+    # Uncomment if you want to deploy to the free tier first.
+    # NOTE: free tier has degraded performance making it unusable in real world settings.
+    # plan: free
+    buildCommand: pnpm install --filter "hh-ai-proxy..."; pnpm run aiproxy:build
+    startCommand: pnpm run aiproxy:start
+    buildFilter:
+      ignoredPaths:
+        - apps/mobile/**
+        - apps/server/**
+        - apps/local-hub/**
+    envVars:
+      - key: NODE_ENV
+        value: "production"

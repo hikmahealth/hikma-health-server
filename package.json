@@ -5,8 +5,11 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "init-install": "pnpm install -w",
-    "server:install-build": "pnpm install -w; just install-build-server",
-    "server:start": "just start-server"
+    "server:install-build": "just build-server",
+    "server:build": "just build-server",
+    "server:start": "just start-server",
+    "aiproxy:build": "just build-aiproxy",
+    "aiproxy:start": "just start-aiproxy"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.61.1",

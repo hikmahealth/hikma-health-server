@@ -23,15 +23,18 @@
 import { Kysely, PostgresDialect, sql } from "kysely";
 import { Pool } from "pg";
 import { Logger } from "@hikmahealth/js-utils";
+import { getDatabaseConfig } from "@hikmahealth/database/config";
 import type { Database } from "../src/db/index";
 import UserClinicPermissions from "../src/models/user-clinic-permissions";
 import User from "../src/models/user";
-import db from "../src/db/index";
 
 const VALID_ROLES = User.roles;
 type ValidRole = User.RoleT;
+type PermissionKey = UserClinicPermissions.UserPermissionsT;
 
-// Default role when none exists or invalid
+// Why: "provider" is the most common role and access is still scoped to the user's
+// assigned clinic via user_clinic_permissions — this is a permissions floor, not a
+// blanket clinical-data grant.
 const DEFAULT_ROLE: ValidRole = "provider";
 
 // Check if running in dry-run mode
@@ -39,18 +42,28 @@ const isDryRun = process.env.DRY_RUN === "true" || process.env.DRY_RUN === "1";
 
 const ROLE_PERMISSIONS = UserClinicPermissions.rolePermissions;
 
+const ALL_PERMISSION_KEYS = Object.keys(
+  ROLE_PERMISSIONS[DEFAULT_ROLE],
+) as PermissionKey[];
+
+const ALL_FALSE_PERMISSIONS: Record<PermissionKey, boolean> =
+  Object.fromEntries(ALL_PERMISSION_KEYS.map((k) => [k, false])) as Record<
+    PermissionKey,
+    boolean
+  >;
+
 /**
- * Initialize database connection
- * Importing from db instead. If needed we can init our own db below.
+ * Initialize a script-local database connection.
+ * Why: this script may run on every server boot. The shared singleton pool
+ * must not be destroyed by this script, so we own our own pool here.
  */
-// function initializeDatabase(): Kysely<Database> {
-//   const config = getDatabaseConfig();
-//   return new Kysely<Database>({
-//     dialect: new PostgresDialect({
-//       pool: new Pool(config),
-//     }),
-//   });
-// }
+function initializeDatabase(): Kysely<Database> {
+  return new Kysely<Database>({
+    dialect: new PostgresDialect({
+      pool: new Pool(getDatabaseConfig()),
+    }),
+  });
+}
 
 /**
  * Check if a role is valid
@@ -69,10 +82,11 @@ function isValidRole(role: string | null | undefined): role is ValidRole {
 async function fixUserRoles(db: Kysely<Database>): Promise<void> {
   Logger.log(`Starting role recovery${isDryRun ? " (DRY RUN)" : ""}...`);
 
-  // Get all users (including deleted ones as they might need cleanup too)
+  // Skip soft-deleted users — restoring an account is a separate, deliberate flow.
   const users = await db
     .selectFrom("users")
-    .select(["id", "name", "role", "email", "is_deleted"])
+    .select(["id", "name", "role", "email"])
+    .where("is_deleted", "=", false)
     .execute();
 
   let rolesFixed = 0;
@@ -116,10 +130,11 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
     `Starting clinic permissions recovery${isDryRun ? " (DRY RUN)" : ""}...`,
   );
 
-  // Get all users (including deleted ones)
+  // Skip soft-deleted users — see fixUserRoles.
   const users = await db
     .selectFrom("users")
     .select(["id", "name", "role", "email", "clinic_id"])
+    .where("is_deleted", "=", false)
     .execute();
 
   // Get all clinics (including deleted ones)
@@ -159,73 +174,48 @@ async function fixClinicPermissions(db: Kysely<Database>): Promise<void> {
     for (const clinic of clinics) {
       const isPrimaryClinic = user.clinic_id === clinic.id;
 
-      if (!existingClinicIds.has(clinic.id)) {
-        // Missing permission entry
-        if (isPrimaryClinic) {
-          // For primary clinic: create with role defaults
-          Logger.log(
-            `${isDryRun ? "Would create" : "Creating"} permissions for user ${user.email} (${userRole}) in their primary clinic ${clinic.name || clinic.id}`,
-          );
-
-          if (isDryRun) {
-            Logger.log(
-              `Permissions: register=${rolePermissions.can_register_patients}, view=${rolePermissions.can_view_history}, edit=${rolePermissions.can_edit_records}, delete=${rolePermissions.can_delete_records}, admin=${rolePermissions.is_clinic_admin}`,
-            );
-          }
-        } else {
-          // For non-primary clinic: create with all false permissions
-          Logger.log(
-            `${isDryRun ? "Would create" : "Creating"} no-access permissions for user ${user.email} in non-primary clinic ${clinic.name || clinic.id}`,
-          );
-
-          if (isDryRun) {
-            Logger.log(
-              `Permissions: register=false, view=false, edit=false, delete=false, admin=false`,
-            );
-          }
-        }
-
-        if (!isDryRun) {
-          try {
-            await db
-              .insertInto("user_clinic_permissions")
-              .values({
-                user_id: user.id,
-                clinic_id: clinic.id,
-                can_register_patients: isPrimaryClinic
-                  ? rolePermissions.can_register_patients
-                  : false,
-                can_view_history: isPrimaryClinic
-                  ? rolePermissions.can_view_history
-                  : false,
-                can_edit_records: isPrimaryClinic
-                  ? rolePermissions.can_edit_records
-                  : false,
-                can_delete_records: isPrimaryClinic
-                  ? rolePermissions.can_delete_records
-                  : false,
-                is_clinic_admin: isPrimaryClinic
-                  ? rolePermissions.is_clinic_admin
-                  : false,
-                created_by: null, // System generated
-                last_modified_by: null, // System generated
-                created_at: sql`now()`,
-                updated_at: sql`now()`,
-              })
-              .execute();
-          } catch (error) {
-            // Handle potential race conditions or constraint violations
-            Logger.error(
-              `Failed to create permissions for user ${user.email} in clinic ${clinic.name}: ${error}`,
-            );
-          }
-        }
-
-        permissionsCreated++;
-      } else {
+      if (existingClinicIds.has(clinic.id)) {
         // Permission exists - keep it as is (even if mismatched with role)
         permissionsKept++;
+        continue;
       }
+
+      // Primary clinic gets full role defaults; other clinics get no-access.
+      const permissionsToWrite = isPrimaryClinic
+        ? rolePermissions
+        : ALL_FALSE_PERMISSIONS;
+
+      if (isPrimaryClinic) {
+        Logger.log(
+          `${isDryRun ? "Would create" : "Creating"} permissions for user ${user.email} (${userRole}) in their primary clinic ${clinic.name || clinic.id}`,
+        );
+      } else {
+        Logger.log(
+          `${isDryRun ? "Would create" : "Creating"} no-access permissions for user ${user.email} in non-primary clinic ${clinic.name || clinic.id}`,
+        );
+      }
+
+      if (isDryRun) {
+        Logger.log(`Permissions: ${JSON.stringify(permissionsToWrite)}`);
+      } else {
+        // ON CONFLICT DO NOTHING: idempotent across concurrent boots and
+        // preserves operator-tuned rows that already exist.
+        await db
+          .insertInto("user_clinic_permissions")
+          .values({
+            user_id: user.id,
+            clinic_id: clinic.id,
+            ...permissionsToWrite,
+            created_by: null, // System generated
+            last_modified_by: null, // System generated
+            created_at: sql`now()`,
+            updated_at: sql`now()`,
+          })
+          .onConflict((oc) => oc.columns(["user_id", "clinic_id"]).doNothing())
+          .execute();
+      }
+
+      permissionsCreated++;
     }
   }
 
@@ -243,6 +233,8 @@ export async function runRecovery(): Promise<void> {
     Logger.log("Running in DRY RUN mode - no changes will be made");
   }
   Logger.log("=".repeat(50));
+
+  const db = initializeDatabase();
 
   try {
     // These are going to be run sequentially
@@ -263,7 +255,7 @@ export async function runRecovery(): Promise<void> {
       Logger.log("Run without DRY_RUN=true to apply changes");
     }
   } catch (error) {
-    console.error("Error during recovery:", error);
+    Logger.error({ msg: "Error during recovery:", error });
     Logger.error("Please contact Hikma Health tech team with this screenshot.");
     throw error;
   } finally {

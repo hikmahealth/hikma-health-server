@@ -137,3 +137,6 @@ packages/utils/js/dist/
 .moon/docker
 
 .aiproxy
+
+
+*.tsbuildinfo

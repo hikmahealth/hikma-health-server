@@ -8,29 +8,9 @@ services:
   #     - key: HIKMA_API
   #       value: "VALUE_HERE"
   #
-  #### AI PROXY DEPLOY HOOK FOR RENDER. (OPTIONAL) - TODO: Lets move it to a /infra or similar where blueprint can be set up from the render.com interface
-  # - type: web
-  #   name: "hikma-health-aiproxy"
-  #   runtime: node
-  #   # Uncomment if you want to deploy to the free tier first.
-  #   # NOTE: free tier has degraded performance making it unusable in real world settings
-  #   # plan: free
-  #   buildCommand: pnpm install -w; just install-build-aiproxy
-  #   startCommand: just start-aiproxy
-  #   buildFilter:
-  #     ignoredPaths:
-  #       - apps/mobile/**
-  #       - apps/server/**
-  #       - apps/local-hub/**
-  #   envVars:
-  #     - key: DATABASE_URL
-  #       fromDatabase:
-  #         name: hikma-health-db
-  #         property: connectionString
-  #     - key: DATABASE_SSL_OPTIONS
-  #       value: '{"rejectUnauthorized":false}'
-  #     - key: NODE_ENV
-  #       value: "production"
+  # NOTE: hikma-health-aiproxy lives in aiproxy.render.yaml as a separate
+  # blueprint. Apply this file first (creates the database), then apply
+  # aiproxy.render.yaml if you want the AI proxy deployed.
 
   - type: web
     name: "hikma-health-server"
@@ -38,7 +18,7 @@ services:
     # Uncomment if you want to deploy to the free tier first.
     # NOTE: free tier has degraded performance making it unusable in real world settings
     # plan: free
-    buildCommand: pnpm install -w; pnpm run server:install-build
+    buildCommand: pnpm install --filter "hikma-health-server..."; pnpm run server:build
     startCommand: pnpm run server:start
     buildFilter:
       ignoredPaths:

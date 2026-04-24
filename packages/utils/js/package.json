@@ -23,7 +23,7 @@
   "scripts": {
     "build": "rescript build && tsc",
     "dev": "rescript build -w",
-    "clean": "rescript clean && rm -f src/*.gen.d.ts src/*.res.d.mts",
+    "clean": "rescript clean && rm -f src/*.gen.d.ts src/*.res.d.mts tsconfig.tsbuildinfo",
     "check-types": "tsc --noEmit"
   },
   "keywords": [

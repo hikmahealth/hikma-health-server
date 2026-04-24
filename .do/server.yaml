@@ -7,7 +7,7 @@ services:
       branch: main
       deploy_on_push: true
     source_dir: /
-    build_command: "CI=true pnpm server:install-build"
+    build_command: "CI=true pnpm install --filter 'hikma-health-server...'; pnpm server:build"
     run_command: "pnpm server:start"
     envs:
       - key: DATABASE_URL
