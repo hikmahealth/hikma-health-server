@@ -12,7 +12,7 @@ services:
     # Uncomment if you want to deploy to the free tier first.
     # NOTE: free tier has degraded performance making it unusable in real world settings.
     # plan: free
-    buildCommand: pnpm install --filter "hh-ai-proxy..."; pnpm run aiproxy:build
+    buildCommand: pnpm install --filter "hh-ai-proxy..." && pnpm run aiproxy:build
     startCommand: pnpm run aiproxy:start
     buildFilter:
       ignoredPaths:
