@@ -4,7 +4,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { useImmerReducer } from "use-immer";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ReportGrid } from "@/components/reports/report-grid";
+import { EditableReportGrid } from "@/components/reports/editable-report-grid";
 import {
   ReportPromptEditor,
   promptEditorReducer,
@@ -229,11 +229,12 @@ function RouteComponent() {
               }}
             />
           </div>
-          <ReportGrid
+          <EditableReportGrid
             report={result.report}
             data={result.data}
             updateReport={setResult}
             isSuperAdmin={isSuperAdmin}
+            isEditable={isSuperAdmin}
           />
         </>
       )}
