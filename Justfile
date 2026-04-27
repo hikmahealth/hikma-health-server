@@ -151,7 +151,16 @@ start-aiproxy:
     [ -f apps/aiproxy/.env ] && ENV_ARGS="$ENV_ARGS -f apps/aiproxy/.env"
     pnpm exec dotenvx run $ENV_ARGS -- pnpm --filter hh-ai-proxy run start
 
+# Mobile dev runs — Expo's run:android / run:ios builds the native app, installs
+# on connected device/emulator, and starts Metro. Depends on build-utils-js so
+# .gen.ts files exist before Metro resolves @hikmahealth/js-utils.
+# Assumes pnpm install has been run for the workspace.
 
+start-mobile-android: build-utils-js
+    pnpm --filter hikma-health-mobile run android
+
+start-mobile-ios: build-utils-js
+    pnpm --filter hikma-health-mobile run ios
 
 
 

@@ -9,7 +9,9 @@
     "server:build": "just build-server",
     "server:start": "just start-server",
     "aiproxy:build": "just build-aiproxy",
-    "aiproxy:start": "just start-aiproxy"
+    "aiproxy:start": "just start-aiproxy",
+    "mobile:start-android": "just start-mobile-android",
+    "mobile:start-ios": "just start-mobile-ios"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.61.1",

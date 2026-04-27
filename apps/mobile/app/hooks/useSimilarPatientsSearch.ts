@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Logger } from "@hikmahealth/js-utils"
 import { Q } from "@nozbe/watermelondb"
 import { sortBy } from "es-toolkit/compat"
 
