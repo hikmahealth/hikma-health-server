@@ -582,8 +582,16 @@ function RouteComponent() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline">View Patients</Button>
-            <Button variant="outline">View Staff</Button>
+            <Button asChild variant="outline">
+              <Link to="/app/patients" search={{ clinicId: clinic.id }}>
+                View Patients
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to="/app/users" search={{ clinicId: clinic.id }}>
+                View Staff
+              </Link>
+            </Button>
             {!clinic.is_archived && (
               <Button
                 variant="outline"

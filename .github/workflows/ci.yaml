@@ -1,67 +1,83 @@
 name: CI
 
+# Flow: push to `next` runs tests; on green, fast-forward `v3` to the same
+# commit. The original commit (and its message) lands on `v3` unchanged.
+# PRs into `next` or `v3` only run tests.
+
 on:
   push:
     branches:
-      - dev
+      - next
 
   pull_request:
     branches:
-      - dev
-      - main
+      - next
+      - v3
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: "lts/*" # Use the latest LTS version of Node.js
+      - uses: actions/checkout@v4
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.33.0
           run_install: false
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
+      - uses: actions/setup-node@v4
         with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+          node-version: 24.14.0
+          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
-      - name: Run unit tests
-        run: pnpm test
+      - name: Run tests
+        run: pnpm exec just test-all
 
-      # TODO: Add test for build
       # TODO: Add lint tests
-      # TODO: Add audits with pnpm audit (maybe using synk?)
+      # TODO: Add audits with pnpm audit (maybe using snyk?)
       # TODO: Add a check for code coverage to ensure coverage meets a minimum threshold
-
       # TODO: Add end-to-end tests with playwright
 
-      - name: Merge to main on success
-        if: success()
-        uses: actions/github-script@v6
+  ff-v3:
+    # Only on push (not PR). Fork PRs would have a read-only token anyway, but
+    # this is the explicit, defense-in-depth gate.
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/next'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Fast-forward v3 to next
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.repos.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: 'main',
-              head: 'dev'
-            })
+            const sha = context.payload.head_commit?.id || context.sha;
+            if (!sha) {
+              core.setFailed('No head commit SHA on payload; refusing to update v3.');
+              return;
+            }
+            try {
+              // force: false → GitHub rejects non-FF updates server-side (422).
+              await github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: 'heads/v3',
+                sha,
+                force: false,
+              });
+              core.info(`Fast-forwarded v3 to ${sha}.`);
+            } catch (err) {
+              if (err.status === 422) {
+                core.setFailed(
+                  `Cannot fast-forward v3 to ${sha} — v3 has diverged from next. Resolve manually.`
+                );
+                return;
+              }
+              throw err;
+            }

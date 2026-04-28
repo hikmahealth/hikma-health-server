@@ -115,6 +115,25 @@ typecheck-mobile: build-utils-js
     pnpm --filter hikma-health-mobile run check-types
 
 
+# ---- Tests : same dep shape as the matching build recipes ----
+# Each app's `test` script handles its own framework setup (vitest/jest, rescript
+# prebuild, vitest workspaces). We only need to ensure cross-package workspace
+# builds (js-utils, database) exist so imports resolve.
+# Run after `pnpm install` — recipes assume node_modules is already populated.
+# Placeholder `test` scripts in packages/{data,common,client-native,hh-forms}
+# are intentionally not invoked here.
+
+test-server: build-utils-js build-database
+    pnpm --filter hikma-health-server run test
+
+test-aiproxy: build-utils-js
+    pnpm --filter hh-ai-proxy run test
+
+test-local-hub:
+    pnpm --filter hh-local-hub run test
+
+test-mobile: build-utils-js
+    pnpm --filter hikma-health-mobile run test
 
 
 # ---- Aggregator Scripts : Buy one get N free !! ----
@@ -124,6 +143,8 @@ build-packages: build-utils-js build-database build-ui
 build-apps: build-server build-aiproxy typecheck-mobile
 
 build-all: build-packages build-apps
+
+test-all: test-server test-aiproxy test-local-hub test-mobile
 
 
 
@@ -155,12 +176,38 @@ start-aiproxy:
 # on connected device/emulator, and starts Metro. Depends on build-utils-js so
 # .gen.ts files exist before Metro resolves @hikmahealth/js-utils.
 # Assumes pnpm install has been run for the workspace.
+#
+# start-mobile-android accepts an optional mode argument:
+#   `just start-mobile-android`        → debug variant (default, dev client + Metro)
+#   `just start-mobile-android prod`   → release variant (bundled JS, minified,
+#                                         no fast refresh) — for on-device perf
+#                                         testing in real-world conditions.
 
-start-mobile-android: build-utils-js
-    pnpm --filter hikma-health-mobile run android
+start-mobile-android mode='dev': build-utils-js
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{ mode }}" in
+      prod|production|release)
+        pnpm --filter hikma-health-mobile run android -- --variant release ;;
+      dev|debug)
+        pnpm --filter hikma-health-mobile run android ;;
+      *)
+        echo "start-mobile-android: unknown mode '{{ mode }}' (use 'dev' or 'prod')" >&2
+        exit 2 ;;
+    esac
 
-start-mobile-ios: build-utils-js
-    pnpm --filter hikma-health-mobile run ios
+start-mobile-ios mode='dev': build-utils-js
+    #!/usr/bin/env bash
+    set -euo pipefail
+    case "{{ mode }}" in
+      prod|production|release)
+        pnpm --filter hikma-health-mobile run ios -- --configuration Release ;;
+      dev|debug)
+        pnpm --filter hikma-health-mobile run ios ;;
+      *)
+        echo "start-mobile-ios: unknown mode '{{ mode }}' (use 'dev' or 'prod')" >&2
+        exit 2 ;;
+    esac
 
 
 

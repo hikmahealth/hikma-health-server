@@ -34,12 +34,23 @@ export const isEpochTimestamp = (value: unknown): boolean =>
   (typeof value === "number" &&
     ((value > 1e9 && value < 1e14) || (value < -1e9 && value > -1e14)));
 
-/** Returns true if a column name looks like a date/timestamp column. */
+/**
+ * Returns true if a column name looks like a date/timestamp column.
+ *
+ * The match must stay tight: epoch coercion in `persistClientChanges` is
+ * gated on this — false positives silently rewrite text columns (phone,
+ * government_id, external_patient_id) into ISO timestamps, false negatives
+ * leave actual epoch-ms payloads untouched and Postgres rejects the insert.
+ */
 export const isDateColumn = (name: string): boolean =>
   name.endsWith("_at") ||
   name.endsWith("_date") ||
+  name.endsWith("_timestamp") ||
+  name.endsWith("_datetime") ||
   name === "timestamp" ||
-  name === "last_modified";
+  name === "last_modified" ||
+  name === "date_value" ||
+  name === "date_of_birth";
 
 namespace Sync {
   /**
@@ -544,7 +555,11 @@ namespace Sync {
               return false;
             })
             .map(([key, value]) => {
-              if (isEpochTimestamp(value)) {
+              // Only coerce numeric values into ISO strings on actual date
+              // columns. Without the column gate, 10-13 digit phone numbers
+              // / government IDs / external patient IDs trip the epoch regex
+              // and overwrite their text columns with ISO timestamps.
+              if (isDateColumn(key) && isEpochTimestamp(value)) {
                 Logger.warn(
                   `[sync] Converting epoch timestamp in "${tableName}.${key}": ${value}`,
                 );

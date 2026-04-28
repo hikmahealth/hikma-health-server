@@ -5,16 +5,34 @@ import UserClinicPermissions from "@/models/user-clinic-permissions";
 import { getCookie } from "@tanstack/react-start/server";
 import Token from "@/models/token";
 import { Option } from "effect";
+import { userRoleTokenHasCapability } from "@/lib/auth/request";
 // import Patient from "@/models/patient";
 
 /**
- * Retrieves all users from the database
- * @returns Promise containing array of encoded user objects
+ * Authorization gate for `getAllUsers`. Exported so unit tests can verify
+ * the capability check without spinning up the createServerFn middleware
+ * chain. Treat as private — production callers should use `getAllUsers`.
+ *
+ * Returns an empty list when the caller lacks READ_USER (unauthenticated
+ * sessions, registrars). Failing closed with `[]` keeps existing loaders
+ * (prescriptions/appointments edit forms) from crashing while still
+ * preventing the staff list from leaking to unauthorized callers. This
+ * parallels the gate in `searchPatients`.
+ */
+export const getAllUsersImpl = async (): Promise<User.EncodedT[]> => {
+  const authorized = await userRoleTokenHasCapability([
+    User.CAPABILITIES.READ_USER,
+  ]);
+  if (!authorized) return [];
+  return await User.API.getAll();
+};
+
+/**
+ * Retrieves all users from the database, gated on READ_USER.
+ * @returns Promise containing array of encoded user objects, or [] if unauthorized.
  */
 export const getAllUsers = createServerFn({ method: "GET" }).handler(
-  async (): Promise<User.EncodedT[]> => {
-    return await User.API.getAll();
-  },
+  getAllUsersImpl,
 );
 
 /**

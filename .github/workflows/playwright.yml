@@ -1,9 +1,9 @@
 name: Playwright Tests
 on:
   push:
-    branches: [main, master]
+    branches: [v3, next]
   pull_request:
-    branches: [main, master]
+    branches: [v3, next]
 jobs:
   test:
     if: false # Temporarily disabled

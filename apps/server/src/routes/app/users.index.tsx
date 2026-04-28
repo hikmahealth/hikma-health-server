@@ -58,11 +58,22 @@ const deleteUser = createServerFn({ method: "POST" })
 
 export const Route = createFileRoute("/app/users/")({
   component: RouteComponent,
-
-  loader: async () => {
+  validateSearch: (search: Record<string, unknown>) => ({
+    clinicId:
+      typeof search.clinicId === "string" ? search.clinicId : undefined,
+  }),
+  loaderDeps: ({ search: { clinicId } }) => ({ clinicId }),
+  loader: async ({ deps }) => {
     const currentUserId = await getCurrentUserId();
+    const allUsers = await getAllUsers();
+    // Client-side scope: server fn returns the full list (no pagination yet),
+    // so filtering here keeps the change minimal.
+    const users = deps.clinicId
+      ? allUsers.filter((u) => u.clinic_id === deps.clinicId)
+      : allUsers;
     return {
-      users: await getAllUsers(),
+      users,
+      filteredClinicId: deps.clinicId,
       currentUserId,
       currentUserAdminClinics: await getClinicIdsWithUserPermission({
         data: {
@@ -76,8 +87,13 @@ export const Route = createFileRoute("/app/users/")({
 });
 
 function RouteComponent() {
-  const { users, currentUserId, isSuperAdmin, currentUserAdminClinics } =
-    Route.useLoaderData();
+  const {
+    users,
+    filteredClinicId,
+    currentUserId,
+    isSuperAdmin,
+    currentUserAdminClinics,
+  } = Route.useLoaderData();
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
@@ -120,6 +136,17 @@ function RouteComponent() {
           </Link>
         </Button>
       </div>
+
+      <If show={!!filteredClinicId}>
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Filtered to staff in clinic {filteredClinicId}</span>
+          <Link to="/app/users" search={{ clinicId: undefined }}>
+            <Button variant="link" size="sm" className="p-0 h-auto">
+              Clear filter
+            </Button>
+          </Link>
+        </div>
+      </If>
 
       <div className="rounded-md border">
         <Table>

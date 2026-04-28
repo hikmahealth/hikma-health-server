@@ -109,11 +109,37 @@ describe("isDateColumn", () => {
     expect(isDateColumn("last_modified")).toBe(true);
   });
 
+  it("matches columns ending with _timestamp", () => {
+    expect(isDateColumn("image_timestamp")).toBe(true);
+    expect(isDateColumn("check_in_timestamp")).toBe(true);
+  });
+
+  it("matches columns ending with _datetime", () => {
+    expect(isDateColumn("value_datetime")).toBe(true);
+  });
+
+  it("matches the EAV date_value column exactly", () => {
+    expect(isDateColumn("date_value")).toBe(true);
+  });
+
+  it("matches date_of_birth exactly", () => {
+    expect(isDateColumn("date_of_birth")).toBe(true);
+  });
+
   it("rejects non-date columns", () => {
     expect(isDateColumn("name")).toBe(false);
     expect(isDateColumn("id")).toBe(false);
     expect(isDateColumn("status")).toBe(false);
     expect(isDateColumn("metadata")).toBe(false);
+  });
+
+  // The column-gate exists specifically to stop the sync cleaner from
+  // rewriting these text columns with ISO timestamps when their values
+  // happen to match the 10-13 digit epoch regex.
+  it("rejects PHI text columns that often hold long digit strings", () => {
+    expect(isDateColumn("phone")).toBe(false);
+    expect(isDateColumn("government_id")).toBe(false);
+    expect(isDateColumn("external_patient_id")).toBe(false);
   });
 
   it("rejects partial matches", () => {

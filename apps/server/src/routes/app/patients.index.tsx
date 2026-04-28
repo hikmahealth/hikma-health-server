@@ -136,8 +136,18 @@ const getFilteredPatientsForExport = createServerFn({ method: "GET" })
 
 export const Route = createFileRoute("/app/patients/")({
   component: RouteComponent,
-  loader: async () => {
-    const { patients, pagination, error } = await getAllPatients();
+  validateSearch: (search: Record<string, unknown>) => ({
+    clinicId:
+      typeof search.clinicId === "string" ? search.clinicId : undefined,
+  }),
+  loaderDeps: ({ search: { clinicId } }) => ({ clinicId }),
+  loader: async ({ deps }) => {
+    // When navigated with ?clinicId=..., scope the initial list to that clinic.
+    const { patients, pagination, error } = deps.clinicId
+      ? await searchPatients({
+          data: { searchQuery: "", clinicIds: [deps.clinicId] },
+        })
+      : await getAllPatients();
     const clinicsResult = await getAllClinics();
     const clinics = Result.isOk(clinicsResult) ? clinicsResult.data : [];
 
@@ -207,6 +217,7 @@ function RouteComponent() {
     patientRegistrationForm,
     clinics,
   } = Route.useLoaderData();
+  const { clinicId: clinicIdFromUrl } = Route.useSearch();
 
   const [patientsList, setPatientsList] =
     React.useState<(typeof Patient.PatientWithAttributesSchema.Encoded)[]>(
@@ -227,7 +238,10 @@ function RouteComponent() {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [searchState, dispatchSearchAction] = useImmerReducer(
     searchReducer,
-    initialSearchState,
+    {
+      ...initialSearchState,
+      clinicIds: clinicIdFromUrl ? [clinicIdFromUrl] : [],
+    },
   );
   const [loading, setLoading] = React.useState(false);
 
