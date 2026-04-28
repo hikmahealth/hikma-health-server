@@ -6,6 +6,12 @@
 
 ![Coverage](./badges/coverage.svg)
 
+> ## ⚠️ This branch is deprecated
+>
+> Development of Hikma Health has moved to a **monorepo** for greater system stability and code coherence across the platform. Active development now happens on the **[`v3` branch](../../tree/v3)** of this repository.
+>
+> **Please migrate to `v3` as soon as possible.** Updates to this branch will be a much, much lower priority and limited to **security patches only**. New features, bug fixes, and improvements will land in `v3`.
+
 A full-stack health management system designed for offline-first operation in low-resource settings. Built with modern web technologies and optimized for reliability and performance.
 
 ## Quick Deploy
