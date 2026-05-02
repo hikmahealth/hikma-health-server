@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeAll } from "vitest";
 import { sql } from "kysely";
 import { v1 as uuidV1 } from "uuid";
 import { testDb } from "../setup";
 
 vi.mock("@/db", () => ({ default: testDb }));
 
-import Sync from "@/models/sync";
+import Sync, { isDateColumn, loadDateColumnsByTable } from "@/models/sync";
 import type { RequestCaller } from "@/types";
 
 // Track IDs for cleanup in dependency order
@@ -612,5 +612,50 @@ describe("Sync round-trip (integration)", () => {
       .executeTakeFirst();
 
     expect(Number(count!.count)).toBe(1);
+  });
+});
+
+describe("schema-driven date column detection", () => {
+  beforeAll(async () => {
+    await loadDateColumnsByTable();
+  });
+
+  it("recognises sync timestamps on patients", () => {
+    expect(isDateColumn("patients", "created_at")).toBe(true);
+    expect(isDateColumn("patients", "updated_at")).toBe(true);
+    expect(isDateColumn("patients", "last_modified")).toBe(true);
+    expect(isDateColumn("patients", "server_created_at")).toBe(true);
+    expect(isDateColumn("patients", "deleted_at")).toBe(true);
+    expect(isDateColumn("patients", "date_of_birth")).toBe(true);
+    expect(isDateColumn("patients", "image_timestamp")).toBe(true);
+  });
+
+  // The whole point of the column gate: PHI text fields whose values often
+  // look like long digit strings must NEVER be coerced to ISO timestamps.
+  it("rejects PHI text columns on patients", () => {
+    expect(isDateColumn("patients", "phone")).toBe(false);
+    expect(isDateColumn("patients", "government_id")).toBe(false);
+    expect(isDateColumn("patients", "external_patient_id")).toBe(false);
+    expect(isDateColumn("patients", "given_name")).toBe(false);
+  });
+
+  it("recognises model-specific date columns across the sync surface", () => {
+    expect(isDateColumn("appointments", "timestamp")).toBe(true);
+    expect(isDateColumn("patient_vitals", "timestamp")).toBe(true);
+    expect(isDateColumn("dispensing_records", "dispensed_at")).toBe(true);
+    expect(isDateColumn("prescriptions", "expiration_date")).toBe(true);
+    expect(isDateColumn("prescriptions", "prescribed_at")).toBe(true);
+    expect(isDateColumn("patient_problems", "onset_date")).toBe(true);
+    expect(isDateColumn("patient_problems", "end_date")).toBe(true);
+    expect(isDateColumn("device_pin_codes", "expires_at")).toBe(true);
+    expect(isDateColumn("device_pin_codes", "last_used_at")).toBe(true);
+    expect(isDateColumn("patient_additional_attributes", "date_value")).toBe(
+      true,
+    );
+  });
+
+  it("returns false for unknown tables and unknown columns", () => {
+    expect(isDateColumn("not_a_real_table", "created_at")).toBe(false);
+    expect(isDateColumn("patients", "not_a_real_column")).toBe(false);
   });
 });

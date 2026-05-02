@@ -35,22 +35,78 @@ export const isEpochTimestamp = (value: unknown): boolean =>
     ((value > 1e9 && value < 1e14) || (value < -1e9 && value > -1e14)));
 
 /**
- * Returns true if a column name looks like a date/timestamp column.
- *
- * The match must stay tight: epoch coercion in `persistClientChanges` is
- * gated on this — false positives silently rewrite text columns (phone,
- * government_id, external_patient_id) into ISO timestamps, false negatives
- * leave actual epoch-ms payloads untouched and Postgres rejects the insert.
+ * `pg_catalog.pg_type.typname` values for date/time columns. Kysely's
+ * PostgreSQL introspector returns these short names rather than the long
+ * `information_schema` spellings (`"timestamp with time zone"`, etc.).
  */
-export const isDateColumn = (name: string): boolean =>
-  name.endsWith("_at") ||
-  name.endsWith("_date") ||
-  name.endsWith("_timestamp") ||
-  name.endsWith("_datetime") ||
-  name === "timestamp" ||
-  name === "last_modified" ||
-  name === "date_value" ||
-  name === "date_of_birth";
+const PG_DATE_TYPE_NAMES: ReadonlySet<string> = new Set([
+  "date",
+  "timestamp",
+  "timestamptz",
+  "time",
+  "timetz",
+]);
+
+let dateColumnsByTable: ReadonlyMap<string, ReadonlySet<string>> | null = null;
+let dateColumnsLoadPromise: Promise<void> | null = null;
+
+/**
+ * Loads the table → date-column map directly from `pg_catalog`. The schema is
+ * migration-controlled and stable for the process lifetime, so the result is
+ * cached indefinitely. Concurrent first callers share the in-flight promise;
+ * a failed load is not cached, so the next call retries.
+ *
+ * Restricted to the `public` schema to avoid name collisions if a future
+ * migration creates tables in another schema.
+ */
+export const loadDateColumnsByTable = async (): Promise<void> => {
+  if (dateColumnsByTable) return;
+  if (dateColumnsLoadPromise) return dateColumnsLoadPromise;
+  dateColumnsLoadPromise = (async () => {
+    const tables = await db.introspection.getTables();
+    const next = new Map<string, ReadonlySet<string>>();
+    for (const t of tables) {
+      if (t.schema && t.schema !== "public") continue;
+      const dateCols = new Set<string>();
+      for (const col of t.columns) {
+        if (PG_DATE_TYPE_NAMES.has(col.dataType)) dateCols.add(col.name);
+      }
+      next.set(t.name, dateCols);
+    }
+    dateColumnsByTable = next;
+  })();
+  try {
+    await dateColumnsLoadPromise;
+  } finally {
+    dateColumnsLoadPromise = null;
+  }
+};
+
+/**
+ * Returns true iff `(tableName, columnName)` is a date/timestamp column.
+ *
+ * Schema-driven via `pg_catalog` — the database is the source of truth, not
+ * a name suffix heuristic. Gates epoch-ms → ISO and "0" → null coercion in
+ * `persistClientChanges`. A wrong answer is dangerous either way:
+ *   - false positive on a text column (phone, government_id) silently
+ *     overwrites the value with an ISO timestamp,
+ *   - false negative on a real date column leaves an epoch-ms payload
+ *     untouched and Postgres rejects the insert.
+ *
+ * Throws if called before `loadDateColumnsByTable()` has resolved — fail
+ * loud is safer than silently misclassifying every column as non-date.
+ */
+export const isDateColumn = (
+  tableName: string,
+  columnName: string,
+): boolean => {
+  if (!dateColumnsByTable) {
+    throw new Error(
+      "[sync] isDateColumn called before loadDateColumnsByTable() resolved",
+    );
+  }
+  return dateColumnsByTable.get(tableName)?.has(columnName) ?? false;
+};
 
 namespace Sync {
   /**
@@ -521,6 +577,10 @@ namespace Sync {
         ? new Set((caller.device.clinic_ids as unknown as string[]) ?? [])
         : null;
 
+    // Warm the schema-driven date-column map before iterating records — the
+    // coercion below depends on it. Cached after the first call.
+    await loadDateColumnsByTable();
+
     // Process the delta data from the client.
     // Iterate over the entity list (not Object.entries) to guarantee
     // dependency order: patients → patient_additional_attributes → visits → events → …
@@ -559,14 +619,17 @@ namespace Sync {
               // columns. Without the column gate, 10-13 digit phone numbers
               // / government IDs / external patient IDs trip the epoch regex
               // and overwrite their text columns with ISO timestamps.
-              if (isDateColumn(key) && isEpochTimestamp(value)) {
+              if (isDateColumn(tableName, key) && isEpochTimestamp(value)) {
                 Logger.warn(
                   `[sync] Converting epoch timestamp in "${tableName}.${key}": ${value}`,
                 );
                 return [key, toSafeDateString(value)];
               }
               // Mobile clients may send 0/"0" for empty date fields — coerce to null
-              if ((value === 0 || value === "0") && isDateColumn(key)) {
+              if (
+                (value === 0 || value === "0") &&
+                isDateColumn(tableName, key)
+              ) {
                 Logger.warn(
                   `[sync] Converting zero date to null in "${tableName}.${key}"`,
                 );
