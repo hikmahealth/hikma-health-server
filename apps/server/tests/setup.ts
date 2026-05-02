@@ -1,6 +1,9 @@
 // This file is used to set up global test configurations
 // It is automatically imported by Vitest before running tests
 
+process.env.TEST_DATABASE_URL ??=
+  "postgresql://test:test@localhost:5432/test";
+
 // Add any global test setup here
 // For example, you might want to add custom matchers, global mocks, etc.
 

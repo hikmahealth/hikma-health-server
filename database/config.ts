@@ -1,6 +1,15 @@
-// Extract database configuration from environment variables
+// Extract database configuration from environment variables.
+//
+// Precedence (URL form is preferred over individual DB_* vars):
+//   1. TEST_DATABASE_URL — honored only when NODE_ENV === "test" so a stray
+//      test URL in a dev/prod shell can't accidentally redirect the app.
+//   2. DATABASE_URL
+//   3. AZURE_POSTGRESQL_CONNECTIONSTRING
+//   4. DB_HOST / DB_NAME / DB_USER / DB_PASSWORD (last-resort fallback)
 export const getDatabaseConfig = (): Record<string, any> => {
-  const databaseUrl = process.env.DATABASE_URL;
+  const isTestEnv = process.env.NODE_ENV === "test";
+  const databaseUrl =
+    (isTestEnv && process.env.TEST_DATABASE_URL) || process.env.DATABASE_URL;
   const databaseUrlAzure = process.env.AZURE_POSTGRESQL_CONNECTIONSTRING;
   let pgHost: string;
   let pgPort: string = process.env.DB_PORT || "5432";
