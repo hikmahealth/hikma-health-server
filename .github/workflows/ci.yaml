@@ -37,6 +37,8 @@ jobs:
 
       - name: Run tests
         run: pnpm exec just test-all
+        env:
+          TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
 
       # TODO: Add lint tests
       # TODO: Add audits with pnpm audit (maybe using snyk?)
