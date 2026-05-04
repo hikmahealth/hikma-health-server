@@ -41,26 +41,38 @@ describe("crashReporting", () => {
       const error = new Error("test error")
       reportCrash(error)
       expect(errorSpy).toHaveBeenCalledWith(error)
-      expect(consoleSpy).toHaveBeenCalledWith("test error", ErrorType.FATAL)
+      expect(consoleSpy).toHaveBeenCalledWith({
+        message: "test error",
+        type: ErrorType.FATAL,
+      })
     })
 
     it("defaults to FATAL error type", () => {
       const error = new Error("fatal test")
       reportCrash(error)
-      expect(consoleSpy).toHaveBeenCalledWith("fatal test", ErrorType.FATAL)
+      expect(consoleSpy).toHaveBeenCalledWith({
+        message: "fatal test",
+        type: ErrorType.FATAL,
+      })
     })
 
     it("respects custom error type", () => {
       const error = new Error("handled test")
       reportCrash(error, ErrorType.HANDLED)
-      expect(consoleSpy).toHaveBeenCalledWith("handled test", ErrorType.HANDLED)
+      expect(consoleSpy).toHaveBeenCalledWith({
+        message: "handled test",
+        type: ErrorType.HANDLED,
+      })
     })
 
     it("handles error with no message", () => {
       const error = new Error()
       reportCrash(error)
       // error.message is "" which is falsy, so should use "Unknown"
-      expect(consoleSpy).toHaveBeenCalledWith("Unknown", ErrorType.FATAL)
+      expect(consoleSpy).toHaveBeenCalledWith({
+        message: "Unknown",
+        type: ErrorType.FATAL,
+      })
     })
 
     it("does not throw even with unusual Error subclasses", () => {

@@ -77,9 +77,14 @@ describe("Sync model (integration)", () => {
   it("delta query finds updated records", async () => {
     const id = await insertTestPatient();
 
-    // Record the time after creation
+    // Capture the marker via PG `now()` rather than JS `new Date()`. PG and
+    // host clocks can drift by tens of ms; a JS-side marker breaks the
+    // `server_created_at < afterCreate` comparison whenever PG is ahead.
     await new Promise((r) => setTimeout(r, 50));
-    const afterCreate = new Date();
+    const { rows: markerRows } = await sql<{
+      now: Date;
+    }>`SELECT now() AS now`.execute(testDb);
+    const afterCreate = markerRows[0]!.now;
     await new Promise((r) => setTimeout(r, 50));
 
     // Update the record

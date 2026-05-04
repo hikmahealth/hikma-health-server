@@ -177,8 +177,14 @@ describe("Sync.getDeltaRecords (integration)", () => {
 
     const patientId = await insertPatient();
 
+    // Capture the marker via PG `now()` rather than JS `Date.now()`. PG and
+    // host clocks can drift by tens of ms; a JS-side marker breaks the
+    // `server_created_at < lastSyncDate` comparison whenever PG is ahead.
     await new Promise((r) => setTimeout(r, 50));
-    const afterCreate = Date.now();
+    const { rows: markerRows } = await sql<{
+      now: Date;
+    }>`SELECT now() AS now`.execute(testDb);
+    const afterCreate = markerRows[0]!.now.getTime();
     await new Promise((r) => setTimeout(r, 50));
 
     // Update the patient

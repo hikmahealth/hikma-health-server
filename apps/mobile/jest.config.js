@@ -6,10 +6,21 @@ module.exports = {
   transformIgnorePatterns: [
     "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|@noble/curves|@noble/hashes|@noble/ciphers|@scure/base|immer|use-immer|uuid)",
   ],
+  // jest-expo's default transform regex only matches .ts/.tsx/.js/.jsx, so
+  // ReScript-emitted `.res.mjs` files (e.g. @hikmahealth/js-utils) fall
+  // through and Jest tries to load them raw — failing on the ESM `import`.
+  // babel-jest + babel-preset-expo handles the ESM → CJS conversion.
+  transform: {
+    "^.+\\.mjs$": "babel-jest",
+  },
+  // App code imports `@noble/<pkg>/<name>` without the `.js` suffix that v2's
+  // `exports` field requires. Rewriting to the `.js` form lets Jest's default
+  // Node resolution find the package wherever pnpm hoisted it (mobile-local
+  // node_modules or repo root) instead of pinning to <rootDir>.
   moduleNameMapper: {
-    "^@noble/curves/([^.]+)$": "<rootDir>/node_modules/@noble/curves/$1.js",
-    "^@noble/hashes/([^.]+)$": "<rootDir>/node_modules/@noble/hashes/$1.js",
-    "^@noble/ciphers/([^.]+)$": "<rootDir>/node_modules/@noble/ciphers/$1.js",
+    "^@noble/curves/([^.]+)$": "@noble/curves/$1.js",
+    "^@noble/hashes/([^.]+)$": "@noble/hashes/$1.js",
+    "^@noble/ciphers/([^.]+)$": "@noble/ciphers/$1.js",
   },
   coveragePathIgnorePatterns: ["/node_modules/", "app/db/sync.ts"],
   collectCoverage: false,
