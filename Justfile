@@ -129,8 +129,17 @@ test-server: build-utils-js build-database
 test-aiproxy: build-utils-js
     pnpm --filter hh-ai-proxy run test
 
-test-local-hub:
-    pnpm --filter hh-local-hub run test
+# Frontend-only is fast and runs in `test-all`. Backend (Tauri/Rust) is
+# opt-in: it requires GTK/webkit system libs + cargo-nextest + a long
+# Rust compile, so CI gates it on `apps/local-hub/src-tauri/**` changes.
+# Run `just test-local-hub` locally to do both.
+test-local-hub-frontend:
+    pnpm --filter hh-local-hub run test:frontend
+
+test-local-hub-backend:
+    pnpm --filter hh-local-hub run test:backend
+
+test-local-hub: test-local-hub-frontend test-local-hub-backend
 
 test-mobile: build-utils-js
     pnpm --filter hikma-health-mobile run test
@@ -144,7 +153,8 @@ build-apps: build-server build-aiproxy typecheck-mobile
 
 build-all: build-packages build-apps
 
-test-all: test-server test-aiproxy test-local-hub test-mobile
+# Excludes `test-local-hub-backend` — see note above.
+test-all: test-server test-aiproxy test-local-hub-frontend test-mobile
 
 
 

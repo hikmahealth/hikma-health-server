@@ -15,6 +15,25 @@ on:
       - v3
 
 jobs:
+  # Detects which areas of the repo changed so heavyweight jobs can opt out.
+  # Tauri/Rust compilation pulls in GTK system libs and minutes of build time;
+  # we only pay that cost when `apps/local-hub/src-tauri/**` actually moves.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      tauri: ${{ steps.filter.outputs.tauri }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            tauri:
+              - 'apps/local-hub/src-tauri/**'
+
   test:
     runs-on: ubuntu-latest
     permissions:
@@ -35,11 +54,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Required by `apps/local-hub` backend tests (`cargo nextest run`).
-      # Rust itself is preinstalled on ubuntu-latest; only nextest is missing.
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
-
       - name: Run tests
         run: pnpm exec just test-all
         env:
@@ -50,11 +64,68 @@ jobs:
       # TODO: Add a check for code coverage to ensure coverage meets a minimum threshold
       # TODO: Add end-to-end tests with playwright
 
+  test-tauri:
+    needs: changes
+    if: needs.changes.outputs.tauri == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Tauri 2 Linux system deps. Compiling glib-sys / webkit2gtk crates fails
+      # without these (pkg-config can't find `glib-2.0.pc`). List mirrors the
+      # Tauri prerequisites guide.
+      - name: Install Tauri system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libglib2.0-dev \
+            libgtk-3-dev
+
+      # Rust itself is preinstalled on ubuntu-latest; only nextest is missing.
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/local-hub/src-tauri
+
+      - name: Run local-hub backend tests
+        run: pnpm exec just test-local-hub-backend
+
   ff-v3:
     # Only on push (not PR). Fork PRs would have a read-only token anyway, but
     # this is the explicit, defense-in-depth gate.
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/next'
+    needs: [test, test-tauri]
+    # `test-tauri` skips when no src-tauri/** changes — treat skip as green.
+    # `always()` is required so this job runs even when `test-tauri` is skipped
+    # (otherwise GitHub propagates the skip to dependents).
+    if: |
+      always() &&
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/next' &&
+      needs.test.result == 'success' &&
+      (needs.test-tauri.result == 'success' || needs.test-tauri.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write

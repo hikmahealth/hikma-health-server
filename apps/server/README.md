@@ -8,15 +8,6 @@
 
 A full-stack health management system designed for offline-first operation in low-resource settings. Built with modern web technologies and optimized for reliability and performance.
 
-## Quick Deploy
-
-Deploy the project quickly by clicking on one of these services:
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-
-[![Deploy to DigitalOcean](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new)
-
-
 
 ### 💥 Default credentials 💥
 To get the default credentials, please email the maintainer at ally[at]hikmahealth.org.
