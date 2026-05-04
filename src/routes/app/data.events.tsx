@@ -238,7 +238,11 @@ function RouteComponent() {
                       );
                     }
                     return (
-                      <TableCell key={column.id}>{field?.value}</TableCell>
+                      <TableCell key={column.id}>
+                        {Array.isArray(field?.value)
+                          ? field.value.join(", ")
+                          : field?.value}
+                      </TableCell>
                     );
                   })}
                 </TableRow>

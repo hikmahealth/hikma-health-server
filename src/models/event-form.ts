@@ -338,21 +338,12 @@ namespace EventForm {
     options: FieldOption[];
   };
 
-  export type OptionsField = HHFieldBase &
-    (
-      | {
-          fieldType: "options";
-          inputType: "radio";
-          multi: false;
-          options: FieldOption[];
-        }
-      | {
-          fieldType: "options";
-          inputType: "checkbox" | "select";
-          multi: boolean;
-          options: FieldOption[];
-        }
-    );
+  export type OptionsField = HHFieldBase & {
+    fieldType: "options";
+    inputType: "radio" | "checkbox" | "select";
+    multi: boolean;
+    options: FieldOption[];
+  };
 
   export type DiagnosisField = HHFieldBase & {
     fieldType: "diagnosis";

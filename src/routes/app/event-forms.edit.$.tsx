@@ -31,6 +31,7 @@ import {
 } from "@/lib/utils";
 import { Result } from "@/lib/result";
 import { DatePickerInput } from "@/components/date-picker-input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { InputsConfiguration } from "@/components/form-builder/InputsConfiguration";
 import { TranslationBadges } from "@/components/form-builder/TranslationBadges";
@@ -494,6 +495,32 @@ function RouteComponent() {
                   </div>
                 );
               case "options":
+                if (field.inputType === "radio" && field.multi) {
+                  return (
+                    <div key={field.id}>
+                      <Label>
+                        {field.name}
+                        {field.required && (
+                          <span className="text-destructive"> *</span>
+                        )}
+                      </Label>
+                      {field.description && (
+                        <p className="text-sm text-muted-foreground">
+                          {field.description}
+                        </p>
+                      )}
+                      <div className="mt-2 space-y-2">
+                        {field.options.map((option) => (
+                          <Checkbox
+                            key={option.value}
+                            id={`${field.id}-${option.value}`}
+                            label={option.label}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
                 if (field.inputType === "radio") {
                   return (
                     <div key={field.id}>
@@ -502,6 +529,18 @@ function RouteComponent() {
                         description={field.description}
                         withAsterisk={field.required}
                         data={field.options as (string | RadioOption)[]}
+                      />
+                    </div>
+                  );
+                }
+                if (field.multi) {
+                  return (
+                    <div key={field.id}>
+                      <MultiSelect
+                        options={field.options}
+                        onValueChange={() => {}}
+                        placeholder={field.name}
+                        defaultValue={[]}
                       />
                     </div>
                   );

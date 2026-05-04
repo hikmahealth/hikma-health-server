@@ -244,7 +244,7 @@ export const createOptionsField = <TOptions extends string | FieldOption>(
     fieldType: "options" as const,
 
     // @ts-expect-error
-    multi: _type == "radio" ? false : Boolean(opts?.multi),
+    multi: Boolean(opts?.multi),
     options: opts?.options ?? [],
   };
 };
