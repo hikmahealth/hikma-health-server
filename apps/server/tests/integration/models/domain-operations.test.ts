@@ -240,7 +240,16 @@ afterEach(async () => {
 
 describe("Patient upsert (sync path)", () => {
   it("inserts then updates a patient via upsert", async () => {
-    const patientId = await insertPatient({ given_name: "Original" });
+    // upsert_core only applies when `excluded.updated_at > patients.updated_at`.
+    // PG `now()` is microsecond-precision; JS `new Date()` is millisecond. Without
+    // an explicit gap the two can collide and the update is silently skipped.
+    const olderTimestamp = new Date(Date.now() - 60_000);
+    const patientId = await insertPatient({
+      given_name: "Original",
+      created_at: olderTimestamp,
+      updated_at: olderTimestamp,
+      last_modified: olderTimestamp,
+    });
 
     // Upsert with updated name — should update, not duplicate
     await Patient.API.DANGEROUS_SYNC_ONLY_upsert({

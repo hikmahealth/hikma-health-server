@@ -35,6 +35,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Required by `apps/local-hub` backend tests (`cargo nextest run`).
+      # Rust itself is preinstalled on ubuntu-latest; only nextest is missing.
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Run tests
         run: pnpm exec just test-all
         env:
