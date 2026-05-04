@@ -103,10 +103,72 @@ Before you begin, ensure you have the following installed on your system:
    Create a `.env` file in the root directory:
 
    ```bash
-   DATABASE_URL=postgresql://username:password@host:port/database
+   # Required
+   DATABASE_URL=postgresql://username:password@host:port/database?sslmode=verify-full
+
+   # Optional — database TLS (see "Database TLS" below)
+   # DB_SSLMODE=verify-full
+   # DATABASE_CA_CERT="-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+
+   # Optional — database connection pool tuning (see below)
+   # DB_POOL_MAX=20
+   # DB_STATEMENT_TIMEOUT_MS=60000
    ```
 
    Replace the connection string with your PostgreSQL credentials.
+
+   #### Database TLS
+
+   Connections to the database are encrypted and verified by default in
+   production — required to satisfy HIPAA §164.312(e)(1). Configure the TLS
+   mode by appending `?sslmode=…` to `DATABASE_URL` (preferred) or by setting
+   `DB_SSLMODE` as a fallback. `verify-full` is the recommended mode for any
+   non-loopback host.
+
+   | Variable | Values | Purpose |
+   |---|---|---|
+   | `DB_SSLMODE` (or URL `?sslmode=…`) | `disable`, `require`, `verify-ca`, `verify-full` | TLS mode for the DB connection. `disable` skips TLS entirely (only safe on loopback). `require` encrypts but does not verify the server certificate. `verify-ca` and `verify-full` validate against the system trust store, or against `DATABASE_CA_CERT` when set. |
+   | `DATABASE_CA_CERT` | PEM body | Custom CA bundle for `verify-ca` / `verify-full`. Required when the provider's chain isn't in the system trust store (e.g. Render's internal Postgres, self-hosted PG with a private CA). Literal `\n` escapes are normalized so multi-line PEM works whether you paste it into a dashboard or `export` it from a shell. |
+
+   **Defaults when `sslmode` is not set explicitly:**
+
+   - `localhost` / `127.0.0.1` / `::1` → `disable`, so local dev "just works".
+   - Non-production → `require`.
+   - **Production (any non-loopback host)** → `require` **with a deprecation
+     warning** logged at boot (encrypt only, no certificate verification).
+     This fallback is removed in the next major release — after that,
+     production deployments with no explicit `sslmode` will fail-closed at
+     boot with an error pointing back here. Set `sslmode` explicitly now to
+     avoid being caught by that change.
+
+   **Render specifics:**
+
+   - **External Postgres** (e.g. `*.oregon-postgres.render.com`) — append
+     `?sslmode=verify-full` to `DATABASE_URL`. The system trust store covers
+     Render's chain, so `DATABASE_CA_CERT` is not needed.
+   - **Internal Postgres** (bare hostname, e.g. `dpg-xxxxxx-a`) — append
+     `?sslmode=verify-full` and paste Render's internal Postgres CA into
+     `DATABASE_CA_CERT`. If you accept no certificate verification across
+     Render's private network, `?sslmode=require` is acceptable.
+
+   #### Database connection pool tuning
+
+   The server uses [`pg`](https://node-postgres.com/) connection pooling. Two
+   optional variables let you tune it per-deployment without code changes:
+
+   | Variable | Default | Purpose |
+   |---|---|---|
+   | `DB_POOL_MAX` | `20` | Max concurrent PostgreSQL connections this process holds open. `replica_count × DB_POOL_MAX` should stay well under the server's `max_connections − superuser_reserved_connections`. Values above the hard ceiling of **200** are clamped with a warning so a misconfigured env can't monopolise the DB and DoS sibling services (mobile sync, migrations, exports). |
+   | `DB_STATEMENT_TIMEOUT_MS` | `60000` (60s) | Maximum time any query or idle-in-transaction session is allowed to hold a backend slot. Stuck transactions and runaway queries are released automatically after this. Raise it for deployments with long-running bulk reports or exports; lower it if you want tighter SLAs. |
+
+   To confirm the running process's connections in the database (useful when
+   investigating connection-exhaustion incidents):
+
+   ```sql
+   SELECT application_name, state, count(*) FROM pg_stat_activity
+   WHERE application_name = 'hikma-health-server'
+   GROUP BY 1, 2;
+   ```
 
 4. **Run database migrations**
 
@@ -208,7 +270,10 @@ hikma-health-server/
 
 - Use strong passwords for database accounts
 - Restrict database access to specific IP addresses when possible
-- Use SSL/TLS connections for remote databases
+- Use TLS with certificate verification for remote databases — set
+  `?sslmode=verify-full` in `DATABASE_URL` (or `DB_SSLMODE`) and supply
+  `DATABASE_CA_CERT` if the provider's chain isn't publicly trusted. See
+  the **Database TLS** section above
 - Regularly rotate credentials
 
 ### General Security

@@ -66,8 +66,6 @@ export const authMiddleware = createMiddleware({ type: "function" })
       },
       onSome: (caller) => {
         const roleCapabilities = User.ROLE_CAPABILITIES[caller.role] || [];
-        Logger.log("!!!!!!!!!!!!!!");
-        Logger.log({ roleCapabilities, capabilities, caller });
         if (
           capabilities &&
           !capabilities.every((capability) =>

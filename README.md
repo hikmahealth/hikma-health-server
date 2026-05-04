@@ -155,6 +155,30 @@ pnpm install
 Each app reads its own `.env`. At minimum:
 
 - `apps/server/.env` — `DATABASE_URL=postgresql://user:pass@host:port/db`
+  - **Database TLS** is required in production. Pick a mode by appending
+    `?sslmode=…` to `DATABASE_URL` (preferred) or by setting `DB_SSLMODE` as a
+    fallback. Valid modes: `disable`, `require`, `verify-ca`, `verify-full`.
+    `verify-full` is the recommended default for any non-loopback host and is
+    needed to satisfy HIPAA §164.312(e)(1).
+    - For providers whose chain isn't in the system trust store (e.g. Render's
+      internal Postgres, self-hosted PG with a private CA), paste the PEM body
+      into `DATABASE_CA_CERT`. Literal `\n` escapes from shell `export` are
+      normalized automatically.
+    - Localhost connections (`localhost` / `127.0.0.1` / `::1`) default to
+      `disable` so local dev "just works".
+    - Production deployments without an explicit `sslmode` log a deprecation
+      warning at boot and fall back to `require` (encrypt only, no
+      certificate verification). This fallback is removed in the next major
+      release; after that, production with no `sslmode` will fail-closed.
+    - Render: external Postgres works with `?sslmode=verify-full` and no
+      extra cert (system trust store covers it). Internal Postgres should
+      use `?sslmode=verify-full` with Render's internal CA pasted into
+      `DATABASE_CA_CERT`, or `?sslmode=require` if you accept no
+      verification across Render's private network.
+  - Optional pool tuning: `DB_POOL_MAX` (default `20`, hard ceiling `200`),
+    `DB_STATEMENT_TIMEOUT_MS` (default `60000`). See
+    [`apps/server/README.md`](apps/server/README.md#database-connection-pool-tuning)
+    for when and how to adjust.
 - `apps/mobile/.env` — `EXPO_PUBLIC_HIKMA_API_TESTING=<your-server-url>`
 - `apps/aiproxy/.env` — see [`apps/aiproxy/README.md`](apps/aiproxy/README.md)
 
@@ -218,7 +242,10 @@ pnpm --filter hikma-health-mobile run test:maestro
 This codebase handles protected health information. Treat it accordingly:
 
 - Never commit secrets, credentials, or PHI
-- Use SSL/TLS for all remote database connections
+- TLS with certificate verification is required for remote database
+  connections in production — use `sslmode=verify-full` in `DATABASE_URL`
+  (or `DB_SSLMODE`), and supply `DATABASE_CA_CERT` if your provider's chain
+  isn't publicly trusted. See the env-vars list above for the full set
 - Keep dependencies current (`pnpm update`, `pnpm audit`)
 - Follow HIPAA and any local healthcare data regulations applicable to your
   deployment
