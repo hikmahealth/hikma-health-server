@@ -30,6 +30,11 @@ export default function Server() {
     events: number;
   } | null>(null);
 
+  // Approved clinics (per the cloud's devices.clinic_ids)
+  const [authorizedClinics, setAuthorizedClinics] = useState<
+    { id: string; name: string | null }[]
+  >([]);
+
   // Cloud sync state
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
@@ -51,6 +56,7 @@ export default function Server() {
   useEffect(() => {
     checkServerStatus();
     fetchDatabaseStats();
+    fetchAuthorizedClinics();
   }, []);
 
   const checkServerStatus = async () => {
@@ -87,6 +93,18 @@ export default function Server() {
       setDbStats({ patients, visits, events });
     } catch {
       setDbStats(null);
+    }
+  };
+
+  const fetchAuthorizedClinics = async () => {
+    try {
+      const clinics =
+        await invoke<{ id: string; name: string | null }[]>(
+          "get_authorized_clinics",
+        );
+      setAuthorizedClinics(clinics);
+    } catch {
+      setAuthorizedClinics([]);
     }
   };
 
@@ -197,6 +215,7 @@ export default function Server() {
       }>("sync_with_cloud_command");
       setSyncResult(formatSyncResult(result));
       await fetchDatabaseStats();
+      await fetchAuthorizedClinics();
     } catch (err) {
       dispatch({ type: "START_FAILURE", error: `Cloud sync failed: ${err}` });
     } finally {
@@ -274,20 +293,23 @@ export default function Server() {
         </div>
 
         <div className="button-container">
-          <button
-            onClick={startServer}
-            disabled={isRunning || isTransitional}
-            className={isRunning || isTransitional ? "disabled" : "primary"}
-          >
-            {server.phase === "starting" ? "Starting..." : "Start Server"}
-          </button>
-          <button
-            onClick={stopServer}
-            disabled={!isRunning || isTransitional}
-            className={!isRunning || isTransitional ? "disabled" : "danger"}
-          >
-            {server.phase === "stopping" ? "Stopping..." : "Stop Server"}
-          </button>
+          {isRunning ? (
+            <button
+              onClick={stopServer}
+              disabled={isTransitional}
+              className={isTransitional ? "disabled" : "danger"}
+            >
+              {server.phase === "stopping" ? "Stopping..." : "Stop Server"}
+            </button>
+          ) : (
+            <button
+              onClick={startServer}
+              disabled={isTransitional}
+              className={isTransitional ? "disabled" : "primary"}
+            >
+              {server.phase === "starting" ? "Starting..." : "Start Server"}
+            </button>
+          )}
           <button
             onClick={checkServerStatus}
             disabled={isTransitional}
@@ -369,6 +391,30 @@ export default function Server() {
           </div>
         </div>
       )}
+
+      {/* Approved clinics — sourced from the cloud's devices.clinic_ids */}
+      <div className="mt-6 p-4 border border-gray-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-900">
+        <h2 className="text-lg font-medium mb-3">Approved Clinics</h2>
+        {authorizedClinics.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-zinc-400">
+            No clinics configured for this hub. Ask your administrator to assign
+            clinics to this device on the cloud server.
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {authorizedClinics.map((c) => (
+              <span
+                key={c.id}
+                title={c.id}
+                className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+              >
+                {c.name ?? c.id}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
 
       {/* Key Rotation Section */}
       <div className="mt-8 p-4 border border-gray-300 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-900">

@@ -3,12 +3,11 @@ use once_cell::sync::Lazy;
 use poem::{
     error::InternalServerError,
     get, handler,
-    listener::{Listener, RustlsCertificate, RustlsConfig, TcpListener},
+    listener::TcpListener,
     post,
     web::{Json, Path, Query},
     IntoResponse, Result, Route, Server,
 };
-use rcgen::generate_simple_self_signed;
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -692,13 +691,16 @@ fn handle_query(qry: &rpc::RpcQueryPayload) -> serde_json::Value {
     }
 }
 
-// TODO: cycle the certificate generation
+/// Port the local hub binds for mobile-app-facing RPC + sync traffic.
+const HUB_BIND_ADDRESS: &str = "0.0.0.0:4001";
+
+/// Plain HTTP for now — self-signed TLS broke iOS/Android trust stores.
+/// End-to-end encryption is provided by the RPC envelope (ECDH + AES-GCM),
+/// not by transport-layer TLS, so this is acceptable on a trusted LAN.
 async fn start_server(
     ip_address: IpAddr,
     shutdown_token: Arc<tokio::sync::Notify>,
 ) -> Result<(), String> {
-    // init_db().await;
-
     let app = Route::new()
         .at("/", get(index_route))
         .at("/hello/:name", get(hello))
@@ -709,95 +711,21 @@ async fn start_server(
         .at("/rpc/command", post(rpc_command))
         .at("/rpc/query", post(rpc_query));
 
-    // Bind to 0.0.0.0 to accept connections from all interfaces
-    let bind_address = "0.0.0.0:4001";
-    println!("Starting server on all interfaces at port 4001");
-    println!("Server should be accessible at: http://{}:4001", ip_address);
+    println!("Starting HTTP server at http://{ip_address}:4001");
 
-    let exe_path = std::env::current_exe().unwrap();
-    let mut exe_path = exe_path.parent().unwrap().to_path_buf();
-    exe_path.push("certs");
+    let server = Server::new(TcpListener::bind(HUB_BIND_ADDRESS)).run(app);
+    let shutdown = shutdown_token.notified();
 
-    // Create certs directory if it doesn't exist
-    if !exe_path.exists() {
-        std::fs::create_dir_all(&exe_path)
-            .map_err(|e| format!("Failed to create certs directory: {}", e))?;
-    }
-
-    let cert_path = exe_path.join("server.crt");
-    let key_path = exe_path.join("server.key");
-
-    // Generate certificates if they don't exist
-    if !cert_path.exists() || !key_path.exists() {
-        println!("Generating self-signed certificates...");
-        // Generate self-signed certificate with localhost and IP as subject alternative names
-        let subject_alt_names = vec![ip_address.to_string(), "localhost".to_string()];
-
-        let certified_key = generate_simple_self_signed(subject_alt_names)
-            .map_err(|e| format!("Failed to generate certificate: {}", e))?;
-
-        // Write certificate and key to files
-        std::fs::write(&cert_path, certified_key.cert.pem())
-            .map_err(|e| format!("Failed to write certificate file: {}", e))?;
-
-        std::fs::write(&key_path, certified_key.signing_key.serialize_pem())
-            .map_err(|e| format!("Failed to write key file: {}", e))?;
-
-        println!(
-            "Generated certificates at: {:?} and {:?}",
-            cert_path, key_path
-        );
-    }
-
-    // Create a future that completes when the shutdown signal is received
-    let shutdown_future = shutdown_token.notified();
-
-    // Run the server with the appropriate listener based on certificate availability
-    // Self signed certificates are causing trouble with ios and android security rules. Leaving out until a better solution comes up
-    // TODO: Consider an alternative where where we just encrypt and decrypt the data on our own.
-    let _listener = if cert_path.exists() && key_path.exists() {
-        println!("Starting HTTPS server on all interfaces at port 4001");
-        println!("Server should be accessible at: https://{}", ip_address);
-
-        // Load certificates
-        let cert_file = tokio::fs::read(cert_path)
-            .await
-            .map_err(|e| format!("Failed to read certificate file: {}", e))?;
-
-        let key_file = tokio::fs::read(key_path)
-            .await
-            .map_err(|e| format!("Failed to read key file: {}", e))?;
-
-        // Create TLS listener
-        TcpListener::bind(bind_address).rustls(
-            RustlsConfig::new().fallback(RustlsCertificate::new().key(key_file).cert(cert_file)),
-        )
-    } else {
-        println!("Starting HTTP server on all interfaces at port 4001");
-        println!("Server should be accessible at: http://{}", ip_address);
-        // println!("HTTPS not available: certificates not found at {:?} and {:?}", cert_path, key_path);
-
-        // Create plain TCP listener
-        TcpListener::bind(bind_address).rustls(RustlsConfig::default())
-    };
-
-    // The listener without certificates - using this one until we can figure out how to get certificates signed by a central authority (CA)
-    let no_cert_listener = TcpListener::bind(bind_address);
-
-    // Run the server with the selected listener type
-    let server_future = Server::new(no_cert_listener).run(app);
-
-    // Race between the server and the shutdown signal
     match tokio::select! {
-        result = server_future => result.map_err(|e| e.to_string()),
-        _ = shutdown_future => {
+        result = server => result.map_err(|e| e.to_string()),
+        _ = shutdown => {
             println!("Server shutdown requested");
             Ok(())
         }
     } {
-        Ok(_) => Ok(()),
+        Ok(()) => Ok(()),
         Err(e) => {
-            eprintln!("Server error: {}", e);
+            eprintln!("Server error: {e}");
             Err(e)
         }
     }
@@ -962,6 +890,7 @@ pub fn run() {
             get_pairing_info,
             sync_with_cloud_command,
             get_database_stats,
+            get_authorized_clinics,
             clear_all_data,
         ])
         .run(tauri::generate_context!())
@@ -1041,6 +970,183 @@ fn get_database_stats() -> Result<(u64, u64, u64), String> {
     Ok((count("patients")?, count("visits")?, count("events")?))
 }
 
+/// One clinic this hub is authorized to sync.
+/// `name` is `None` when the clinics table doesn't yet hold a row for the id
+/// (e.g. before the first cloud pull has populated the local clinics table).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct AuthorizedClinic {
+    id: String,
+    name: Option<String>,
+}
+
+/// Returns the clinics this hub is authorized to sync, as configured on the
+/// cloud server's `devices.clinic_ids`. Refreshes the cached device info from
+/// `/api/hub/verify-key` so admin changes (clinic assignments) appear without
+/// re-registration. Falls back to the cached info when the cloud is
+/// unreachable. Resolves names from the local `clinics` table when available;
+/// missing names are returned as `None` so the UI can show the id instead.
+#[tauri::command]
+async fn get_authorized_clinics(
+    stronghold_state: tauri::State<'_, StrongholdState>,
+) -> Result<Vec<AuthorizedClinic>, String> {
+    // Read api_key + server_url so we can refresh from the cloud.
+    let (api_key, server_url) = {
+        let guard = stronghold_state
+            .stronghold
+            .lock()
+            .map_err(|e| format!("Stronghold lock poisoned: {}", e))?;
+        let stronghold = guard.as_ref().ok_or("Stronghold not initialized")?;
+        let client = get_or_create_stronghold_client!(stronghold)?;
+        let key = client
+            .store()
+            .get(b"cloud_api_key")
+            .ok()
+            .flatten()
+            .and_then(|b| String::from_utf8(b).ok())
+            .ok_or("Hub not registered — no API key stored")?;
+        let url = client
+            .store()
+            .get(b"cloud_server_url")
+            .ok()
+            .flatten()
+            .and_then(|b| String::from_utf8(b).ok())
+            .ok_or("Hub not registered — no server URL stored")?;
+        (key, url)
+    };
+
+    // Try a fresh verify-key call. On any failure, fall back to the cached
+    // device info so the UI still works offline.
+    let fresh_device_info = fetch_cloud_device_info(&server_url, &api_key).await;
+
+    let device_info: CloudDeviceInfo = match fresh_device_info {
+        Ok(info) => {
+            // Persist the fresh copy so future calls (and other commands that
+            // read cloud_device_info) see the latest clinic assignments.
+            if let Err(e) = persist_cloud_device_info(&stronghold_state, &info) {
+                eprintln!("[get_authorized_clinics] failed to update cache: {e}");
+            }
+            info
+        }
+        Err(e) => {
+            eprintln!("[get_authorized_clinics] verify-key refresh failed, using cache: {e}");
+            let bytes = {
+                let guard = stronghold_state
+                    .stronghold
+                    .lock()
+                    .map_err(|e| format!("Stronghold lock poisoned: {}", e))?;
+                let stronghold = guard.as_ref().ok_or("Stronghold not initialized")?;
+                let client = get_or_create_stronghold_client!(stronghold)?;
+                client
+                    .store()
+                    .get(b"cloud_device_info")
+                    .ok()
+                    .flatten()
+                    .ok_or("Hub not registered — no device info stored")?
+            };
+            serde_json::from_slice(&bytes)
+                .map_err(|e| format!("Failed to parse stored device info: {}", e))?
+        }
+    };
+
+    let ids: Vec<String> = match device_info.extra.get("clinic_ids") {
+        Some(serde_json::Value::Array(arr)) => arr
+            .iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .collect(),
+        _ => Vec::new(),
+    };
+
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    let conn = open_encrypted_connection().map_err(|e| e.0)?;
+    let placeholders = std::iter::repeat("?")
+        .take(ids.len())
+        .collect::<Vec<_>>()
+        .join(",");
+    let sql = format!(
+        "SELECT id, name FROM clinics WHERE id IN ({}) AND (is_deleted IS NULL OR is_deleted = 0)",
+        placeholders
+    );
+    let mut stmt = conn
+        .prepare(&sql)
+        .map_err(|e| format!("Failed to prepare clinic query: {}", e))?;
+    let rows = stmt
+        .query_map(rusqlite::params_from_iter(ids.iter()), |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, Option<String>>(1)?))
+        })
+        .map_err(|e| format!("Failed to query clinics: {}", e))?;
+
+    let mut name_by_id: HashMap<String, Option<String>> = HashMap::new();
+    for r in rows.flatten() {
+        name_by_id.insert(r.0, r.1);
+    }
+
+    Ok(ids
+        .into_iter()
+        .map(|id| {
+            let name = name_by_id.remove(&id).unwrap_or(None);
+            AuthorizedClinic { id, name }
+        })
+        .collect())
+}
+
+/// POSTs the api_key to `/api/hub/verify-key` and parses the device response.
+async fn fetch_cloud_device_info(
+    server_url: &str,
+    api_key: &str,
+) -> std::result::Result<CloudDeviceInfo, String> {
+    let url = format!("{}/api/hub/verify-key", server_url.trim_end_matches('/'));
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(15))
+        .build()
+        .map_err(|e| format!("Failed to build HTTP client: {e}"))?;
+
+    let resp = client
+        .post(&url)
+        .json(&serde_json::json!({ "api_key": api_key }))
+        .send()
+        .await
+        .map_err(|e| format!("Connection error: {e}"))?;
+
+    if !resp.status().is_success() {
+        let status = resp.status();
+        let body = resp.text().await.unwrap_or_default();
+        return Err(format!("verify-key HTTP {status}: {body}"));
+    }
+
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read body: {e}"))?;
+    serde_json::from_str(&body).map_err(|e| format!("Bad verify-key response: {e}. Body: {body}"))
+}
+
+/// Updates the cached `cloud_device_info` blob in Stronghold.
+fn persist_cloud_device_info(
+    stronghold_state: &tauri::State<'_, StrongholdState>,
+    info: &CloudDeviceInfo,
+) -> std::result::Result<(), String> {
+    let bytes =
+        serde_json::to_vec(info).map_err(|e| format!("Failed to serialize device info: {e}"))?;
+    let guard = stronghold_state
+        .stronghold
+        .lock()
+        .map_err(|e| format!("Stronghold lock poisoned: {e}"))?;
+    let stronghold = guard.as_ref().ok_or("Stronghold not initialized")?;
+    let client = get_or_create_stronghold_client!(stronghold)?;
+    let _ = client.store().delete(b"cloud_device_info");
+    client
+        .store()
+        .insert(b"cloud_device_info".to_vec(), bytes, None)
+        .map_err(|e| format!("Failed to store device info: {e}"))?;
+    stronghold
+        .save()
+        .map_err(|e| format!("Failed to save Stronghold: {e}"))?;
+    Ok(())
+}
+
 // Start server command - more functional with less mutable state
 #[tauri::command]
 async fn start_server_command<'a>(
@@ -1049,9 +1155,30 @@ async fn start_server_command<'a>(
 ) -> Result<String, String> {
     init_db();
 
-    // Check if already running using atomic boolean
+    // If our state thinks the server is running, gracefully stop the prior
+    // task before binding again. This handles cases where the UI got out of
+    // sync (page reload, restart click) without leaving an orphan task.
     if state.is_running.load(std::sync::atomic::Ordering::Acquire) {
-        return Err("Server is already running".to_string());
+        println!("[start_server] internal server still flagged as running — stopping first");
+        let stopped = state.stopped_signal.notified();
+        state.shutdown_token.notify_one();
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(3), stopped).await;
+        // Force-reset state so we definitely proceed past this point.
+        *state.address.write() = None;
+        state
+            .is_running
+            .store(false, std::sync::atomic::Ordering::Release);
+    }
+
+    // Probe the port synchronously so EADDRINUSE surfaces here, not as a
+    // silent eprintln from the spawned task. Drop the probe immediately so
+    // poem can rebind. There's a tiny TOCTOU window, but in practice the
+    // OS releases the port the moment the probe is dropped.
+    if let Err(e) = std::net::TcpListener::bind(HUB_BIND_ADDRESS) {
+        return Err(format!(
+            "Cannot bind {HUB_BIND_ADDRESS}: {e}. \
+             Find the holding process with `lsof -nP -iTCP:4001 -sTCP:LISTEN` and stop it."
+        ));
     }
 
     // Load pairing keys from Stronghold into globals (best-effort — hub may not be registered yet)

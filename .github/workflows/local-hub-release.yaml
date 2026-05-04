@@ -1,0 +1,101 @@
+name: Local Hub Release
+
+# Builds the Tauri local-hub app for macOS, Windows, and Linux, signs the
+# updater artifacts with minisign, and uploads everything to a draft GitHub
+# Release. The release stays in draft until you publish it manually — only
+# published releases are picked up by the in-app auto-updater (which reads
+# /releases/latest/download/latest.json).
+#
+# Trigger: workflow_dispatch from the GitHub UI. Pick the branch in the
+# "Run workflow" dialog and supply a CalVer version like 2026.5.4 (or
+# 2026.5.4-2 for a second release on the same day).
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'CalVer version (YYYY.M.D, optionally -N for multi-per-day)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - name: macOS
+            os: macos-latest
+            args: '--target universal-apple-darwin'
+          - name: Linux
+            os: ubuntu-22.04
+            args: ''
+          - name: Windows
+            os: windows-latest
+            args: ''
+    runs-on: ${{ matrix.platform.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Set CalVer version across package.json / tauri.conf.json / Cargo.toml
+        run: node apps/local-hub/scripts/set-version.mjs "${{ inputs.version }}"
+
+      - name: Add Apple Silicon + Intel Rust targets (macOS only)
+        if: matrix.platform.name == 'macOS'
+        run: |
+          rustup target add aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
+
+      # Tauri 2 Linux system deps — mirrors the test-tauri job in ci.yaml.
+      - name: Install Tauri Linux deps
+        if: matrix.platform.name == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libglib2.0-dev \
+            libgtk-3-dev
+
+      - name: Cache cargo build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/local-hub/src-tauri
+
+      - name: Build, sign, and upload to draft release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: apps/local-hub
+          tagName: local-hub-v${{ inputs.version }}
+          releaseName: 'Local Hub v${{ inputs.version }}'
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.platform.args }}
