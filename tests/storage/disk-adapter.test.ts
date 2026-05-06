@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fc from "fast-check";
 import { createDiskAdapter, resolveSafePath } from "../../src/storage/adapters/disk";
 import { rm, mkdir } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { resolve, join, sep } from "node:path";
 import { createHash } from "node:crypto";
 
 const TEST_DIR = resolve("./test-tmp-disk-adapter");
@@ -81,6 +81,38 @@ describe("resolveSafePath", () => {
         }
       }),
     );
+  });
+
+  it("rejects a path whose resolved form is a sibling directory sharing a name prefix", () => {
+    // Guards against the prefix false-positive: "/base-other/file" starts with "/base"
+    // as a string but should NOT be accepted when base is "/base".
+    // The sep-appended check ("/base" + sep) prevents this.
+    const base = "/safe/base";
+    expect(() => resolveSafePath(base, "/safe/base-other/file.txt")).toThrow(
+      "Path traversal detected",
+    );
+  });
+
+  it("accepts a destination that resolves exactly to the base directory", () => {
+    // Covers the `full === resolvedBase` branch — destination "." collapses to base.
+    const base = "/safe/base";
+    const result = resolveSafePath(base, ".");
+    expect(result).toBe(resolve(base));
+  });
+
+  it("resolved result always begins with base + sep or equals base exactly", () => {
+    // Locks in the platform-native separator requirement introduced by the fix.
+    // If sep were replaced with a hardcoded "/" this would fail on Windows.
+    const base = "/safe/base";
+    const resolvedBase = resolve(base);
+
+    const validCases = ["file.txt", "a/b.txt", "deeply/nested/file.bin", "."];
+    for (const dest of validCases) {
+      const result = resolveSafePath(base, dest);
+      const withinBase =
+        result === resolvedBase || result.startsWith(resolvedBase + sep);
+      expect(withinBase).toBe(true);
+    }
   });
 });
 
@@ -206,5 +238,30 @@ describe("createDiskAdapter", () => {
     await expect(
       adapter.put(data, "bad.exe", "application/x-executable"),
     ).rejects.toThrow("Mimetype not allowed");
+  });
+
+  it("put then download round-trips data for a flat (non-nested) filename", async () => {
+    // Confirms dirname() on a flat path doesn't break single-level put.
+    // Regression guard: the old lastIndexOf("/") + substring approach could
+    // return an empty string on Windows for flat filenames; dirname() is safe.
+    const adapter = await createDiskAdapter(TEST_DIR);
+    const data = new Uint8Array([10, 20, 30]);
+
+    const result = await adapter.put(data, "flat-file.bin");
+
+    expect(result.uri).toBe("flat-file.bin");
+    const downloaded = await adapter.downloadAsBytes("flat-file.bin");
+    expect(downloaded).toEqual(data);
+  });
+
+  it("delete removes a nested file without error", async () => {
+    // Covers resolveSafePath in the delete code path for nested URIs.
+    const adapter = await createDiskAdapter(TEST_DIR);
+    const data = new Uint8Array([7, 8, 9]);
+
+    await adapter.put(data, "nested/dir/file.bin");
+    await adapter.delete("nested/dir/file.bin");
+
+    await expect(adapter.downloadAsBytes("nested/dir/file.bin")).rejects.toThrow();
   });
 });
